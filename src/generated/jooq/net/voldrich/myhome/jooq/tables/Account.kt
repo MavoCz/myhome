@@ -12,12 +12,14 @@ import net.voldrich.myhome.jooq.Public
 import net.voldrich.myhome.jooq.keys.ACCOUNT_EMAIL_KEY
 import net.voldrich.myhome.jooq.keys.ACCOUNT_PKEY
 import net.voldrich.myhome.jooq.keys.ACCOUNT_USER_NAME_KEY
+import net.voldrich.myhome.jooq.tables.records.AccountRecord
 
 import org.jooq.Field
 import org.jooq.ForeignKey
 import org.jooq.Identity
 import org.jooq.Name
 import org.jooq.Record
+import org.jooq.Row5
 import org.jooq.Schema
 import org.jooq.Table
 import org.jooq.TableField
@@ -36,10 +38,10 @@ import org.jooq.impl.TableImpl
 open class Account(
     alias: Name,
     child: Table<out Record>?,
-    path: ForeignKey<out Record, Record>?,
-    aliased: Table<Record>?,
+    path: ForeignKey<out Record, AccountRecord>?,
+    aliased: Table<AccountRecord>?,
     parameters: Array<Field<*>?>?
-): TableImpl<Record>(
+): TableImpl<AccountRecord>(
     alias,
     Public.PUBLIC,
     child,
@@ -60,35 +62,35 @@ open class Account(
     /**
      * The class holding records for this type
      */
-    override fun getRecordType(): Class<Record> = Record::class.java
+    override fun getRecordType(): Class<AccountRecord> = AccountRecord::class.java
 
     /**
      * The column <code>public.account.user_id</code>.
      */
-    val USER_ID: TableField<Record, Int?> = createField(DSL.name("user_id"), SQLDataType.INTEGER.nullable(false).identity(true), this, "")
+    val USER_ID: TableField<AccountRecord, Int?> = createField(DSL.name("user_id"), SQLDataType.INTEGER.nullable(false).identity(true), this, "")
 
     /**
      * The column <code>public.account.user_name</code>.
      */
-    val USER_NAME: TableField<Record, String?> = createField(DSL.name("user_name"), SQLDataType.VARCHAR(50).nullable(false), this, "")
+    val USER_NAME: TableField<AccountRecord, String?> = createField(DSL.name("user_name"), SQLDataType.VARCHAR(50).nullable(false), this, "")
 
     /**
      * The column <code>public.account.password</code>.
      */
-    val PASSWORD: TableField<Record, String?> = createField(DSL.name("password"), SQLDataType.VARCHAR(128).nullable(false), this, "")
+    val PASSWORD: TableField<AccountRecord, String?> = createField(DSL.name("password"), SQLDataType.VARCHAR(128).nullable(false), this, "")
 
     /**
      * The column <code>public.account.email</code>.
      */
-    val EMAIL: TableField<Record, String?> = createField(DSL.name("email"), SQLDataType.VARCHAR(255).nullable(false), this, "")
+    val EMAIL: TableField<AccountRecord, String?> = createField(DSL.name("email"), SQLDataType.VARCHAR(255).nullable(false), this, "")
 
     /**
      * The column <code>public.account.created_on</code>.
      */
-    val CREATED_ON: TableField<Record, LocalDateTime?> = createField(DSL.name("created_on"), SQLDataType.LOCALDATETIME(6).nullable(false), this, "")
+    val CREATED_ON: TableField<AccountRecord, LocalDateTime?> = createField(DSL.name("created_on"), SQLDataType.LOCALDATETIME(6).nullable(false), this, "")
 
-    private constructor(alias: Name, aliased: Table<Record>?): this(alias, null, null, aliased, null)
-    private constructor(alias: Name, aliased: Table<Record>?, parameters: Array<Field<*>?>?): this(alias, null, null, aliased, parameters)
+    private constructor(alias: Name, aliased: Table<AccountRecord>?): this(alias, null, null, aliased, null)
+    private constructor(alias: Name, aliased: Table<AccountRecord>?, parameters: Array<Field<*>?>?): this(alias, null, null, aliased, parameters)
 
     /**
      * Create an aliased <code>public.account</code> table reference
@@ -105,11 +107,11 @@ open class Account(
      */
     constructor(): this(DSL.name("account"), null)
 
-    constructor(child: Table<out Record>, key: ForeignKey<out Record, Record>): this(Internal.createPathAlias(child, key), child, key, ACCOUNT, null)
+    constructor(child: Table<out Record>, key: ForeignKey<out Record, AccountRecord>): this(Internal.createPathAlias(child, key), child, key, ACCOUNT, null)
     override fun getSchema(): Schema? = if (aliased()) null else Public.PUBLIC
-    override fun getIdentity(): Identity<Record, Int?> = super.getIdentity() as Identity<Record, Int?>
-    override fun getPrimaryKey(): UniqueKey<Record> = ACCOUNT_PKEY
-    override fun getUniqueKeys(): List<UniqueKey<Record>> = listOf(ACCOUNT_USER_NAME_KEY, ACCOUNT_EMAIL_KEY)
+    override fun getIdentity(): Identity<AccountRecord, Int?> = super.getIdentity() as Identity<AccountRecord, Int?>
+    override fun getPrimaryKey(): UniqueKey<AccountRecord> = ACCOUNT_PKEY
+    override fun getUniqueKeys(): List<UniqueKey<AccountRecord>> = listOf(ACCOUNT_USER_NAME_KEY, ACCOUNT_EMAIL_KEY)
     override fun `as`(alias: String): Account = Account(DSL.name(alias), this)
     override fun `as`(alias: Name): Account = Account(alias, this)
 
@@ -122,4 +124,9 @@ open class Account(
      * Rename this table
      */
     override fun rename(name: Name): Account = Account(name, null)
+
+    // -------------------------------------------------------------------------
+    // Row5 type methods
+    // -------------------------------------------------------------------------
+    override fun fieldsRow(): Row5<Int?, String?, String?, String?, LocalDateTime?> = super.fieldsRow() as Row5<Int?, String?, String?, String?, LocalDateTime?>
 }

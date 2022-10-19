@@ -94,6 +94,10 @@ jooq {
 						isRecords = false
 						isImmutablePojos = false
 						isFluentSetters = false
+						withPojos(true)
+						withDaos(true)
+						withSerializablePojos(false)
+						withImmutablePojos(true)
 					}
 					target.apply {
 						packageName = "net.voldrich.myhome.jooq"

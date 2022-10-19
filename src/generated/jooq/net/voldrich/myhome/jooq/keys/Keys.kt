@@ -5,8 +5,8 @@ package net.voldrich.myhome.jooq.keys
 
 
 import net.voldrich.myhome.jooq.tables.Account
+import net.voldrich.myhome.jooq.tables.records.AccountRecord
 
-import org.jooq.Record
 import org.jooq.UniqueKey
 import org.jooq.impl.DSL
 import org.jooq.impl.Internal
@@ -17,6 +17,6 @@ import org.jooq.impl.Internal
 // UNIQUE and PRIMARY KEY definitions
 // -------------------------------------------------------------------------
 
-val ACCOUNT_EMAIL_KEY: UniqueKey<Record> = Internal.createUniqueKey(Account.ACCOUNT, DSL.name("account_email_key"), arrayOf(Account.ACCOUNT.EMAIL), true)
-val ACCOUNT_PKEY: UniqueKey<Record> = Internal.createUniqueKey(Account.ACCOUNT, DSL.name("account_pkey"), arrayOf(Account.ACCOUNT.USER_ID), true)
-val ACCOUNT_USER_NAME_KEY: UniqueKey<Record> = Internal.createUniqueKey(Account.ACCOUNT, DSL.name("account_user_name_key"), arrayOf(Account.ACCOUNT.USER_NAME), true)
+val ACCOUNT_EMAIL_KEY: UniqueKey<AccountRecord> = Internal.createUniqueKey(Account.ACCOUNT, DSL.name("account_email_key"), arrayOf(Account.ACCOUNT.EMAIL), true)
+val ACCOUNT_PKEY: UniqueKey<AccountRecord> = Internal.createUniqueKey(Account.ACCOUNT, DSL.name("account_pkey"), arrayOf(Account.ACCOUNT.USER_ID), true)
+val ACCOUNT_USER_NAME_KEY: UniqueKey<AccountRecord> = Internal.createUniqueKey(Account.ACCOUNT, DSL.name("account_user_name_key"), arrayOf(Account.ACCOUNT.USER_NAME), true)

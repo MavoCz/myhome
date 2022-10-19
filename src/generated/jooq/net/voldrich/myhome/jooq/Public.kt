@@ -6,7 +6,9 @@ package net.voldrich.myhome.jooq
 
 import kotlin.collections.List
 
-import net.voldrich.myhome.jooq.tables.Account
+import net.voldrich.myhome.jooq.tables.Home
+import net.voldrich.myhome.jooq.tables.HomeUser
+import net.voldrich.myhome.jooq.tables.InventoryItem
 
 import org.jooq.Catalog
 import org.jooq.Table
@@ -27,13 +29,25 @@ open class Public : SchemaImpl("public", DefaultCatalog.DEFAULT_CATALOG) {
     }
 
     /**
-     * The table <code>public.account</code>.
+     * The table <code>public.home</code>.
      */
-    val ACCOUNT: Account get() = Account.ACCOUNT
+    val HOME: Home get() = Home.HOME
+
+    /**
+     * The table <code>public.home_user</code>.
+     */
+    val HOME_USER: HomeUser get() = HomeUser.HOME_USER
+
+    /**
+     * The table <code>public.inventory_item</code>.
+     */
+    val INVENTORY_ITEM: InventoryItem get() = InventoryItem.INVENTORY_ITEM
 
     override fun getCatalog(): Catalog = DefaultCatalog.DEFAULT_CATALOG
 
     override fun getTables(): List<Table<*>> = listOf(
-        Account.ACCOUNT
+        Home.HOME,
+        HomeUser.HOME_USER,
+        InventoryItem.INVENTORY_ITEM
     )
 }

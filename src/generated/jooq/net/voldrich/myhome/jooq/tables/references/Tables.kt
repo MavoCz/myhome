@@ -4,11 +4,23 @@
 package net.voldrich.myhome.jooq.tables.references
 
 
-import net.voldrich.myhome.jooq.tables.Account
+import net.voldrich.myhome.jooq.tables.Home
+import net.voldrich.myhome.jooq.tables.HomeUser
+import net.voldrich.myhome.jooq.tables.InventoryItem
 
 
 
 /**
- * The table <code>public.account</code>.
+ * The table <code>public.home</code>.
  */
-val ACCOUNT: Account = Account.ACCOUNT
+val HOME: Home = Home.HOME
+
+/**
+ * The table <code>public.home_user</code>.
+ */
+val HOME_USER: HomeUser = HomeUser.HOME_USER
+
+/**
+ * The table <code>public.inventory_item</code>.
+ */
+val INVENTORY_ITEM: InventoryItem = InventoryItem.INVENTORY_ITEM

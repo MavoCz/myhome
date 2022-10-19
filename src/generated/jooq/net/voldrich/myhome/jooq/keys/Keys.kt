@@ -4,9 +4,12 @@
 package net.voldrich.myhome.jooq.keys
 
 
-import net.voldrich.myhome.jooq.tables.Account
-import net.voldrich.myhome.jooq.tables.records.AccountRecord
+import net.voldrich.myhome.jooq.tables.Home
+import net.voldrich.myhome.jooq.tables.HomeUser
+import net.voldrich.myhome.jooq.tables.InventoryItem
 
+import org.jooq.ForeignKey
+import org.jooq.Record
 import org.jooq.UniqueKey
 import org.jooq.impl.DSL
 import org.jooq.impl.Internal
@@ -17,6 +20,14 @@ import org.jooq.impl.Internal
 // UNIQUE and PRIMARY KEY definitions
 // -------------------------------------------------------------------------
 
-val ACCOUNT_EMAIL_KEY: UniqueKey<AccountRecord> = Internal.createUniqueKey(Account.ACCOUNT, DSL.name("account_email_key"), arrayOf(Account.ACCOUNT.EMAIL), true)
-val ACCOUNT_PKEY: UniqueKey<AccountRecord> = Internal.createUniqueKey(Account.ACCOUNT, DSL.name("account_pkey"), arrayOf(Account.ACCOUNT.USER_ID), true)
-val ACCOUNT_USER_NAME_KEY: UniqueKey<AccountRecord> = Internal.createUniqueKey(Account.ACCOUNT, DSL.name("account_user_name_key"), arrayOf(Account.ACCOUNT.USER_NAME), true)
+val HOME_PK: UniqueKey<Record> = Internal.createUniqueKey(Home.HOME, DSL.name("home_pk"), arrayOf(Home.HOME.ID), true)
+val USER_EMAIL_UNIQUE: UniqueKey<Record> = Internal.createUniqueKey(HomeUser.HOME_USER, DSL.name("user_email_unique"), arrayOf(HomeUser.HOME_USER.EMAIL), true)
+val USER_PK: UniqueKey<Record> = Internal.createUniqueKey(HomeUser.HOME_USER, DSL.name("user_pk"), arrayOf(HomeUser.HOME_USER.ID), true)
+val INVENTORY_ITEM_PK: UniqueKey<Record> = Internal.createUniqueKey(InventoryItem.INVENTORY_ITEM, DSL.name("inventory_item_pk"), arrayOf(InventoryItem.INVENTORY_ITEM.ID), true)
+
+// -------------------------------------------------------------------------
+// FOREIGN KEY definitions
+// -------------------------------------------------------------------------
+
+val INVENTORY_ITEM__INVENTORY_ITEM_HOME_FK: ForeignKey<Record, Record> = Internal.createForeignKey(InventoryItem.INVENTORY_ITEM, DSL.name("inventory_item_home_fk"), arrayOf(InventoryItem.INVENTORY_ITEM.HOME_ID), net.voldrich.myhome.jooq.keys.HOME_PK, arrayOf(Home.HOME.ID), true)
+val INVENTORY_ITEM__INVENTORY_ITEM_USER_FK: ForeignKey<Record, Record> = Internal.createForeignKey(InventoryItem.INVENTORY_ITEM, DSL.name("inventory_item_user_fk"), arrayOf(InventoryItem.INVENTORY_ITEM.CREATED_BY_USER_ID), net.voldrich.myhome.jooq.keys.USER_PK, arrayOf(HomeUser.HOME_USER.ID), true)

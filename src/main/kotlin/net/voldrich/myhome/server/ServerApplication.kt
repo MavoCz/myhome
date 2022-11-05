@@ -9,7 +9,6 @@ import org.springframework.transaction.annotation.EnableTransactionManagement
 @EnableTransactionManagement
 class ServerApplication {
 
-
 }
 
 fun main(args: Array<String>) {

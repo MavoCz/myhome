@@ -29,10 +29,17 @@ dependencies {
 	implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
 	implementation("org.jetbrains.kotlin:kotlin-reflect")
 	implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
+	implementation("org.springdoc:springdoc-openapi-webmvc-core:1.6.12")
+	implementation("org.springdoc:springdoc-openapi-kotlin:1.6.12")
+	implementation("org.jooq:jooq-kotlin:3.17.4")
+
 	developmentOnly("org.springframework.boot:spring-boot-devtools")
+
 	runtimeOnly("org.postgresql:postgresql")
+
 	jooqGenerator("org.postgresql:postgresql:42.5.0")
 	jooqGenerator("jakarta.xml.bind:jakarta.xml.bind-api:4.0.0")
+
 	testImplementation("org.springframework.boot:spring-boot-starter-test")
 	testImplementation("org.springframework:spring-webflux")
 	testImplementation("org.springframework.graphql:spring-graphql-test")
@@ -86,6 +93,18 @@ jooq {
 								name = "varchar"
 								includeExpression = ".*"
 								includeTypes = "INET"
+							},
+							ForcedType().apply {
+								isEnumConverter = true
+								userType = "net.voldrich.myhome.server.api.ItemState"
+								includeExpression = ".*inventory_item.state"
+								includeTypes = ".*"
+							},
+							ForcedType().apply {
+								isEnumConverter = true
+								userType = "net.voldrich.myhome.server.api.ItemCondition"
+								includeExpression = ".*inventory_item.condition"
+								includeTypes = ".*"
 							}
 						)
 					}

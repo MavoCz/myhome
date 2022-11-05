@@ -3,3 +3,7 @@ spring:
     url: jdbc:postgresql://localhost:5432/postgres
     username: postgres
     password:
+
+server:
+  error:
+    include-stacktrace: never

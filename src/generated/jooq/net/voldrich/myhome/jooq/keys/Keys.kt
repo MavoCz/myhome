@@ -6,10 +6,16 @@ package net.voldrich.myhome.jooq.keys
 
 import net.voldrich.myhome.jooq.tables.Home
 import net.voldrich.myhome.jooq.tables.HomeUser
-import net.voldrich.myhome.jooq.tables.InventoryItem
+import net.voldrich.myhome.jooq.tables.Item
+import net.voldrich.myhome.jooq.tables.ItemCategory
+import net.voldrich.myhome.jooq.tables.ItemConsumption
+import net.voldrich.myhome.jooq.tables.records.HomeRecord
+import net.voldrich.myhome.jooq.tables.records.HomeUserRecord
+import net.voldrich.myhome.jooq.tables.records.ItemCategoryRecord
+import net.voldrich.myhome.jooq.tables.records.ItemConsumptionRecord
+import net.voldrich.myhome.jooq.tables.records.ItemRecord
 
 import org.jooq.ForeignKey
-import org.jooq.Record
 import org.jooq.UniqueKey
 import org.jooq.impl.DSL
 import org.jooq.impl.Internal
@@ -20,14 +26,21 @@ import org.jooq.impl.Internal
 // UNIQUE and PRIMARY KEY definitions
 // -------------------------------------------------------------------------
 
-val HOME_PK: UniqueKey<Record> = Internal.createUniqueKey(Home.HOME, DSL.name("home_pk"), arrayOf(Home.HOME.ID), true)
-val USER_EMAIL_UNIQUE: UniqueKey<Record> = Internal.createUniqueKey(HomeUser.HOME_USER, DSL.name("user_email_unique"), arrayOf(HomeUser.HOME_USER.EMAIL), true)
-val USER_PK: UniqueKey<Record> = Internal.createUniqueKey(HomeUser.HOME_USER, DSL.name("user_pk"), arrayOf(HomeUser.HOME_USER.ID), true)
-val INVENTORY_ITEM_PK: UniqueKey<Record> = Internal.createUniqueKey(InventoryItem.INVENTORY_ITEM, DSL.name("inventory_item_pk"), arrayOf(InventoryItem.INVENTORY_ITEM.ID), true)
+val HOME_PK: UniqueKey<HomeRecord> = Internal.createUniqueKey(Home.HOME, DSL.name("home_pk"), arrayOf(Home.HOME.ID), true)
+val USER_EMAIL_UNIQUE: UniqueKey<HomeUserRecord> = Internal.createUniqueKey(HomeUser.HOME_USER, DSL.name("user_email_unique"), arrayOf(HomeUser.HOME_USER.EMAIL), true)
+val USER_PK: UniqueKey<HomeUserRecord> = Internal.createUniqueKey(HomeUser.HOME_USER, DSL.name("user_pk"), arrayOf(HomeUser.HOME_USER.ID), true)
+val ITEM_PK: UniqueKey<ItemRecord> = Internal.createUniqueKey(Item.ITEM, DSL.name("item_pk"), arrayOf(Item.ITEM.ID), true)
+val ITEM_CATEGORY_PK: UniqueKey<ItemCategoryRecord> = Internal.createUniqueKey(ItemCategory.ITEM_CATEGORY, DSL.name("item_category_pk"), arrayOf(ItemCategory.ITEM_CATEGORY.ID), true)
+val ITEM_CONSUMPTION_PK: UniqueKey<ItemConsumptionRecord> = Internal.createUniqueKey(ItemConsumption.ITEM_CONSUMPTION, DSL.name("item_consumption_pk"), arrayOf(ItemConsumption.ITEM_CONSUMPTION.ID), true)
 
 // -------------------------------------------------------------------------
 // FOREIGN KEY definitions
 // -------------------------------------------------------------------------
 
-val INVENTORY_ITEM__INVENTORY_ITEM_HOME_FK: ForeignKey<Record, Record> = Internal.createForeignKey(InventoryItem.INVENTORY_ITEM, DSL.name("inventory_item_home_fk"), arrayOf(InventoryItem.INVENTORY_ITEM.HOME_ID), net.voldrich.myhome.jooq.keys.HOME_PK, arrayOf(Home.HOME.ID), true)
-val INVENTORY_ITEM__INVENTORY_ITEM_USER_FK: ForeignKey<Record, Record> = Internal.createForeignKey(InventoryItem.INVENTORY_ITEM, DSL.name("inventory_item_user_fk"), arrayOf(InventoryItem.INVENTORY_ITEM.CREATED_BY_USER_ID), net.voldrich.myhome.jooq.keys.USER_PK, arrayOf(HomeUser.HOME_USER.ID), true)
+val HOME_USER__HOME_USER_HOME_FK: ForeignKey<HomeUserRecord, HomeRecord> = Internal.createForeignKey(HomeUser.HOME_USER, DSL.name("home_user_home_fk"), arrayOf(HomeUser.HOME_USER.HOME_ID), net.voldrich.myhome.jooq.keys.HOME_PK, arrayOf(Home.HOME.ID), true)
+val ITEM__ITEM_CATEGORY_FK: ForeignKey<ItemRecord, ItemCategoryRecord> = Internal.createForeignKey(Item.ITEM, DSL.name("item_category_fk"), arrayOf(Item.ITEM.CATEGORY_ID), net.voldrich.myhome.jooq.keys.ITEM_CATEGORY_PK, arrayOf(ItemCategory.ITEM_CATEGORY.ID), true)
+val ITEM__ITEM_HOME_FK: ForeignKey<ItemRecord, HomeRecord> = Internal.createForeignKey(Item.ITEM, DSL.name("item_home_fk"), arrayOf(Item.ITEM.HOME_ID), net.voldrich.myhome.jooq.keys.HOME_PK, arrayOf(Home.HOME.ID), true)
+val ITEM__ITEM_USER_FK: ForeignKey<ItemRecord, HomeUserRecord> = Internal.createForeignKey(Item.ITEM, DSL.name("item_user_fk"), arrayOf(Item.ITEM.CREATED_BY_USER_ID), net.voldrich.myhome.jooq.keys.USER_PK, arrayOf(HomeUser.HOME_USER.ID), true)
+val ITEM_CATEGORY__ITEM_CATEGORY_HOME_FK: ForeignKey<ItemCategoryRecord, HomeRecord> = Internal.createForeignKey(ItemCategory.ITEM_CATEGORY, DSL.name("item_category_home_fk"), arrayOf(ItemCategory.ITEM_CATEGORY.HOME_ID), net.voldrich.myhome.jooq.keys.HOME_PK, arrayOf(Home.HOME.ID), true)
+val ITEM_CONSUMPTION__ITEM_CONSUMPTION_HOME_FK: ForeignKey<ItemConsumptionRecord, HomeRecord> = Internal.createForeignKey(ItemConsumption.ITEM_CONSUMPTION, DSL.name("item_consumption_home_fk"), arrayOf(ItemConsumption.ITEM_CONSUMPTION.HOME_ID), net.voldrich.myhome.jooq.keys.HOME_PK, arrayOf(Home.HOME.ID), true)
+val ITEM_CONSUMPTION__ITEM_CONSUMPTION_ITEM_FK: ForeignKey<ItemConsumptionRecord, ItemRecord> = Internal.createForeignKey(ItemConsumption.ITEM_CONSUMPTION, DSL.name("item_consumption_item_fk"), arrayOf(ItemConsumption.ITEM_CONSUMPTION.ITEM_ID), net.voldrich.myhome.jooq.keys.ITEM_PK, arrayOf(Item.ITEM.ID), true)

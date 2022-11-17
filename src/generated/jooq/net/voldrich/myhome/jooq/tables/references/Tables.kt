@@ -6,7 +6,9 @@ package net.voldrich.myhome.jooq.tables.references
 
 import net.voldrich.myhome.jooq.tables.Home
 import net.voldrich.myhome.jooq.tables.HomeUser
-import net.voldrich.myhome.jooq.tables.InventoryItem
+import net.voldrich.myhome.jooq.tables.Item
+import net.voldrich.myhome.jooq.tables.ItemCategory
+import net.voldrich.myhome.jooq.tables.ItemConsumption
 
 
 
@@ -21,6 +23,16 @@ val HOME: Home = Home.HOME
 val HOME_USER: HomeUser = HomeUser.HOME_USER
 
 /**
- * The table <code>public.inventory_item</code>.
+ * The table <code>public.item</code>.
  */
-val INVENTORY_ITEM: InventoryItem = InventoryItem.INVENTORY_ITEM
+val ITEM: Item = Item.ITEM
+
+/**
+ * The table <code>public.item_category</code>.
+ */
+val ITEM_CATEGORY: ItemCategory = ItemCategory.ITEM_CATEGORY
+
+/**
+ * The table <code>public.item_consumption</code>.
+ */
+val ITEM_CONSUMPTION: ItemConsumption = ItemConsumption.ITEM_CONSUMPTION

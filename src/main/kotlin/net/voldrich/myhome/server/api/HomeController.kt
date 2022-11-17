@@ -1,27 +1,19 @@
 package net.voldrich.myhome.server.api
 
 import io.swagger.v3.oas.annotations.tags.Tag
-import net.voldrich.myhome.jooq.tables.references.HOME
-import org.jooq.DSLContext
+import net.voldrich.myhome.server.repository.HomeRepository
 import org.springframework.web.bind.annotation.*
 
 @Tag(name = "Home")
 @RestController
 @RequestMapping("/api/home", produces = ["application/json"])
-class HomeController (val dsl: DSLContext) {
+class HomeController (val homeRepository: HomeRepository) {
 
     @GetMapping
-    fun getHomes() = dsl
-        .selectFrom(HOME)
-        .fetch()
-        .formatJSON(DB_RESULT_JSON_FORMAT)
+    fun getHomes() = homeRepository.getAll().formatJSON(DB_RESULT_JSON_FORMAT)
 
     @PostMapping
-    fun addHome(@RequestBody homeDto: CreateHomeDto) = dsl
-        .insertInto(HOME)
-        .set(HOME.NAME, homeDto.name)
-        .returningResult(HOME.ID)
-        .fetchIdDto()
+    fun addHome(@RequestBody homeDto: CreateHomeDto) = homeRepository.insert(homeDto) { }
 }
 
 data class CreateHomeDto(val name: String)

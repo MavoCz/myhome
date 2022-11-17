@@ -1,27 +1,20 @@
 package net.voldrich.myhome.server.api
 
 import io.swagger.v3.oas.annotations.tags.Tag
-import net.voldrich.myhome.jooq.tables.references.HOME_USER
-import org.jooq.DSLContext
+import net.voldrich.myhome.server.repository.UserRepository
 import org.springframework.web.bind.annotation.*
 
 @Tag(name = "User")
 @RestController
 @RequestMapping("/api/user", produces = ["application/json"])
-class UserController(val dsl: DSLContext) {
+class UserController(val userRepository: UserRepository) {
 
     @GetMapping
-    fun getUsers() = dsl
-        .selectFrom(HOME_USER)
-        .fetch()
+    fun getUsers() = userRepository.getAll()
         .formatJSON(DB_RESULT_JSON_FORMAT)
 
     @PostMapping
-    fun addUser(@RequestBody userDto: CreateUserDto) = dsl
-        .insertInto(HOME_USER)
-        .set(dsl.newRecord(HOME_USER, userDto))
-        .returningResult(HOME_USER.ID)
-        .fetchIdDto()
+    fun addUser(@RequestBody userDto: CreateUserDto) = userRepository.insert(userDto) {}
 }
 
-data class CreateUserDto(val email: String)
+data class CreateUserDto(val email: String, val name: String)

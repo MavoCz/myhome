@@ -90,27 +90,16 @@ jooq {
 								includeTypes = "JSONB?"
 							},
 							ForcedType().apply {
-								name = "varchar"
-								includeExpression = ".*"
-								includeTypes = "INET"
-							},
-							ForcedType().apply {
 								isEnumConverter = true
 								userType = "net.voldrich.myhome.server.api.ItemState"
-								includeExpression = ".*inventory_item.state"
-								includeTypes = ".*"
-							},
-							ForcedType().apply {
-								isEnumConverter = true
-								userType = "net.voldrich.myhome.server.api.ItemCondition"
-								includeExpression = ".*inventory_item.condition"
+								includeExpression = ".*item.state"
 								includeTypes = ".*"
 							}
 						)
 					}
 					generate.apply {
 						isDeprecated = false
-						isRecords = false
+						isRecords = true
 						isImmutablePojos = false
 						isFluentSetters = true
 						//withPojos(true)

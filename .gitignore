@@ -1,0 +1,10 @@
+# Dependencies
+node_modules/
+
+# Build output (SPA served from backend static resources)
+backend/src/main/resources/static/*
+!backend/src/main/resources/static/.gitkeep
+
+# OS
+.DS_Store
+Thumbs.db

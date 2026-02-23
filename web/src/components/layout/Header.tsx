@@ -1,0 +1,108 @@
+import { useState } from 'react';
+import AppBar from '@mui/material/AppBar';
+import Toolbar from '@mui/material/Toolbar';
+import Typography from '@mui/material/Typography';
+import IconButton from '@mui/material/IconButton';
+import Button from '@mui/material/Button';
+import Chip from '@mui/material/Chip';
+import Box from '@mui/material/Box';
+import Drawer from '@mui/material/Drawer';
+import List from '@mui/material/List';
+import ListItem from '@mui/material/ListItem';
+import ListItemText from '@mui/material/ListItemText';
+import Divider from '@mui/material/Divider';
+import useMediaQuery from '@mui/material/useMediaQuery';
+import { useTheme } from '@mui/material/styles';
+import MenuIcon from '@mui/icons-material/Menu';
+import LightModeIcon from '@mui/icons-material/LightMode';
+import DarkModeIcon from '@mui/icons-material/DarkMode';
+import LogoutIcon from '@mui/icons-material/Logout';
+import { useAuth } from '../../hooks/useAuth';
+import { useThemeMode } from '../../theme/ThemeProvider';
+
+export function Header() {
+  const { user, clearAuth } = useAuth();
+  const { mode, toggleMode } = useThemeMode();
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  const [drawerOpen, setDrawerOpen] = useState(false);
+
+  const handleLogout = () => {
+    clearAuth();
+    setDrawerOpen(false);
+  };
+
+  if (isMobile) {
+    return (
+      <>
+        <AppBar position="sticky" color="default" elevation={1}>
+          <Toolbar>
+            <Typography variant="h6" sx={{ flexGrow: 1, fontWeight: 700 }}>
+              Family App
+            </Typography>
+            <IconButton onClick={() => setDrawerOpen(true)} aria-label="menu">
+              <MenuIcon />
+            </IconButton>
+          </Toolbar>
+        </AppBar>
+        <Drawer anchor="right" open={drawerOpen} onClose={() => setDrawerOpen(false)}>
+          <Box sx={{ width: 280, p: 2 }}>
+            {user && (
+              <>
+                <Typography variant="h6" gutterBottom>
+                  {user.displayName}
+                </Typography>
+                <Chip
+                  label={user.familyRole}
+                  color="secondary"
+                  size="small"
+                  sx={{ mb: 1 }}
+                />
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                  {user.familyName}
+                </Typography>
+                <Divider sx={{ mb: 1 }} />
+              </>
+            )}
+            <List>
+              <ListItem component="button" onClick={toggleMode} sx={{ cursor: 'pointer', border: 'none', background: 'none', width: '100%' }}>
+                {mode === 'dark' ? <LightModeIcon sx={{ mr: 2 }} /> : <DarkModeIcon sx={{ mr: 2 }} />}
+                <ListItemText primary={mode === 'dark' ? 'Light mode' : 'Dark mode'} />
+              </ListItem>
+              <ListItem component="button" onClick={handleLogout} sx={{ cursor: 'pointer', border: 'none', background: 'none', width: '100%' }}>
+                <LogoutIcon sx={{ mr: 2 }} />
+                <ListItemText primary="Logout" />
+              </ListItem>
+            </List>
+          </Box>
+        </Drawer>
+      </>
+    );
+  }
+
+  return (
+    <AppBar position="sticky" color="default" elevation={1}>
+      <Toolbar>
+        <Typography variant="h6" sx={{ flexGrow: 1, fontWeight: 700 }}>
+          Family App
+        </Typography>
+        {user && (
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+            <Typography variant="body1">{user.displayName}</Typography>
+            <Chip label={user.familyRole} color="secondary" size="small" />
+          </Box>
+        )}
+        <IconButton onClick={toggleMode} sx={{ ml: 1 }} aria-label="toggle theme">
+          {mode === 'dark' ? <LightModeIcon /> : <DarkModeIcon />}
+        </IconButton>
+        <Button
+          onClick={handleLogout}
+          startIcon={<LogoutIcon />}
+          sx={{ ml: 1 }}
+        >
+          Logout
+        </Button>
+      </Toolbar>
+    </AppBar>
+  );
+}

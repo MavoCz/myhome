@@ -30,6 +30,7 @@ dependencies {
 	implementation("org.springframework.boot:spring-boot-starter-webmvc")
 	implementation("org.springframework:spring-aspects")
 	implementation("org.springframework.boot:spring-boot-starter-validation")
+	implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:3.0.1")
 	implementation("io.jsonwebtoken:jjwt-api:0.12.6")
 	implementation("org.springframework.modulith:spring-modulith-starter-core")
 
@@ -75,7 +76,7 @@ jooq {
 				properties = listOf(
 					org.jooq.meta.jaxb.Property()
 						.withKey("containerImage")
-						.withValue("postgres:17"),
+						.withValue("postgres:18"),
 					org.jooq.meta.jaxb.Property()
 						.withKey("flywayLocations")
 						.withValue("filesystem:src/main/resources/db/migration")

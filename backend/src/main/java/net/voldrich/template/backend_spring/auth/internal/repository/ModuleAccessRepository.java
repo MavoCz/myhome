@@ -5,7 +5,6 @@ import net.voldrich.template.backend_spring.jooq.tables.ModuleAccessSchedules;
 import net.voldrich.template.backend_spring.jooq.tables.records.ModuleAccessRecord;
 import net.voldrich.template.backend_spring.jooq.tables.records.ModuleAccessSchedulesRecord;
 import org.jooq.DSLContext;
-import org.jooq.Result;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalTime;

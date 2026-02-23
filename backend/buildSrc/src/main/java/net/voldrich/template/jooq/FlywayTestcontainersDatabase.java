@@ -31,7 +31,7 @@ public class FlywayTestcontainersDatabase extends PostgresDatabase {
             return DSL.using(connection);
         }
 
-        String containerImage = getProperties().getProperty("containerImage", "postgres:17");
+        String containerImage = getProperties().getProperty("containerImage", "postgres:18");
         String flywayLocations = getProperties().getProperty("flywayLocations",
                 "filesystem:src/main/resources/db/migration");
 

@@ -3,9 +3,6 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 
-export SPRING_DATASOURCE_USERNAME=root
-export SPRING_DATASOURCE_PASSWORD=root
-
 # Colors
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
@@ -23,38 +20,8 @@ cleanup() {
   log "Done."
 }
 
-# --- PostgreSQL ---
-log "Checking PostgreSQL..."
-if docker ps --format '{{.Names}}' | grep -q '^postgres_backend$'; then
-  log "PostgreSQL container already running."
-elif docker ps -a --format '{{.Names}}' | grep -q '^postgres_backend$'; then
-  log "Starting existing PostgreSQL container..."
-  docker start postgres_backend
-else
-  log "Creating PostgreSQL container..."
-  docker run -d --name postgres_backend \
-    -e POSTGRES_USER=root \
-    -e POSTGRES_PASSWORD=root \
-    -e POSTGRES_DB=backend \
-    -p 5433:5432 \
-    postgres:18
-fi
-
-# Wait for PostgreSQL to accept connections
-log "Waiting for PostgreSQL to be ready..."
-for i in $(seq 1 30); do
-  if docker exec postgres_backend pg_isready -U root -d backend >/dev/null 2>&1; then
-    log "PostgreSQL is ready."
-    break
-  fi
-  if [ "$i" -eq 30 ]; then
-    err "PostgreSQL did not become ready in time."
-    exit 1
-  fi
-  sleep 1
-done
-
 # --- Backend ---
+# PostgreSQL is auto-managed by Spring Boot Docker Compose support (see backend/compose.yml)
 log "Starting backend (port 8080)..."
 cd "$SCRIPT_DIR/backend"
 ./gradlew bootRun --console=plain -q &

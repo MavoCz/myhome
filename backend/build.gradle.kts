@@ -3,6 +3,7 @@ plugins {
 	id("org.springframework.boot") version "4.0.2"
 	id("io.spring.dependency-management") version "1.1.7"
 	id("org.jooq.jooq-codegen-gradle") version "3.19.29"
+	id("org.springdoc.openapi-gradle-plugin") version "1.9.0"
 }
 
 group = "net.voldrich.template"
@@ -43,6 +44,7 @@ dependencies {
 	runtimeOnly("org.springframework.modulith:spring-modulith-observability")
 
 	developmentOnly("org.springframework.boot:spring-boot-devtools")
+	developmentOnly("org.springframework.boot:spring-boot-docker-compose")
 
 	jooqCodegen(files("buildSrc/build/classes/java/main"))
 	jooqCodegen("org.postgresql:postgresql")
@@ -107,4 +109,13 @@ sourceSets {
 
 tasks.withType<Test> {
 	useJUnitPlatform()
+}
+
+openApi {
+	apiDocsUrl.set("http://localhost:8080/api-docs")
+	outputDir.set(layout.buildDirectory.dir("docs"))
+	outputFileName.set("openapi.json")
+	customBootRun {
+		args.set(listOf("--spring.docker.compose.file=${projectDir}/compose.yml"))
+	}
 }

@@ -12,14 +12,18 @@ Spring Boot 4.0.2 backend template using Java 25, Gradle 9.3.0 (Kotlin DSL), and
 
 ```bash
 ./gradlew build              # Full build with tests
-./gradlew bootRun            # Run application (DevTools enabled for live reload)
+./gradlew bootRun            # Run app (auto-starts PostgreSQL via Docker Compose)
 ./gradlew test               # Run all tests
 ./gradlew test --tests "ClassName"           # Run a single test class
 ./gradlew test --tests "ClassName.methodName" # Run a single test method
+./gradlew jooqCodegen        # Generate JOOQ classes (requires Docker)
+./gradlew generateOpenApiDocs # Export OpenAPI spec to build/docs/openapi.json
 ./gradlew bootJar            # Build executable JAR
 ./gradlew bootBuildImage     # Build OCI container image
 ./gradlew clean build        # Clean rebuild
 ```
+
+PostgreSQL is auto-managed by Spring Boot Docker Compose support (`compose.yml`). No manual Docker commands needed for development. For a fresh database: `docker compose down -v` then restart.
 
 ## Tech Stack
 
@@ -49,7 +53,7 @@ net.voldrich.template.backend_spring/
 
 - Flyway migrations go in `src/main/resources/db/migration/`
 - Naming convention: `V{version}__{description}.sql` (e.g., `V1__Create_users_table.sql`)
-- Database connection must be configured in `application.properties` or via environment variables
+- Database connection is auto-configured from Docker Compose in development; override via environment variables in non-dev environments
 - JOOQ is the primary query layer (type-safe SQL builder, not an ORM)
 - JOOQ code generation: `./gradlew jooqCodegen` — spins up a PostgreSQL Testcontainer, runs Flyway migrations, and generates type-safe table/record classes from the schema into `build/generated-sources/jooq` (package `net.voldrich.template.backend_spring.jooq`). Flyway tables are excluded. Requires Docker to be running. The custom database class is in `buildSrc/src/main/java/net/voldrich/template/jooq/FlywayTestcontainersDatabase.java`.
 

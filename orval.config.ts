@@ -3,7 +3,7 @@ import { defineConfig } from 'orval';
 export default defineConfig({
   common: {
     input: {
-      target: 'http://localhost:8080/api-docs',
+      target: 'backend/build/docs/openapi.json',
     },
     output: {
       client: 'fetch',
@@ -20,7 +20,7 @@ export default defineConfig({
   },
   web: {
     input: {
-      target: 'http://localhost:8080/api-docs',
+      target: 'backend/build/docs/openapi.json',
     },
     output: {
       client: 'react-query',

@@ -77,6 +77,7 @@ The frontend is a React + TypeScript SPA served from the backend's `static/` dir
 - **`common/`** — Shared API types + fetch client (no React deps). Used by both web and future React Native apps.
 - **`web/`** — React SPA with Vite, MUI v6, React Router v7, Zustand, TanStack Query v5.
 
+
 ### Frontend Commands
 
 Run from project root:
@@ -87,6 +88,19 @@ pnpm dev                     # Start Vite dev server (port 5173, proxies /api to
 pnpm build                   # Build SPA → backend/src/main/resources/static/
 pnpm generate-api            # Run orval to regenerate API types + hooks (requires backend running)
 ```
+
+### API Code Generation (Orval)
+
+[Orval](https://orval.dev) generates TypeScript types and API client code from the backend's OpenAPI spec. Config is in `orval.config.ts` at the project root with two targets:
+
+- **`common`** target → `common/src/api/generated/` — framework-agnostic fetch functions and TypeScript model types (shared between web and future mobile apps)
+- **`web`** target → `web/src/api/generated/` — React Query hooks for TanStack Query v5
+
+Both targets use `common/src/api/client.ts` (`customFetch`) as their HTTP mutator. The `customFetch` function handles both calling conventions: `(url: string, options)` for direct use and `({url, method, data, params}, options)` for Orval-generated code.
+
+**When to regenerate:** After any backend endpoint change (new endpoints, modified request/response DTOs, changed URL paths). The backend must be running at `http://localhost:8080` so Orval can fetch `/api-docs`.
+
+**Generated files are committed** to the repo so frontend builds work without the backend running.
 
 ### Frontend Architecture
 

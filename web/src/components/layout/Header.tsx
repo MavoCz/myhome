@@ -19,6 +19,7 @@ import DarkModeIcon from '@mui/icons-material/DarkMode';
 import LogoutIcon from '@mui/icons-material/Logout';
 import { useAuth } from '../../hooks/useAuth';
 import { useThemeMode } from '../../theme/ThemeProvider';
+import { NotificationBell } from './NotificationBell';
 
 export function Header() {
   const { user, clearAuth } = useAuth();
@@ -40,6 +41,7 @@ export function Header() {
             <Typography variant="h6" sx={{ flexGrow: 1, fontWeight: 700 }}>
               Family App
             </Typography>
+            <NotificationBell />
             <IconButton onClick={() => setDrawerOpen(true)} aria-label="menu">
               <MenuIcon />
             </IconButton>
@@ -92,6 +94,7 @@ export function Header() {
             <Chip label={user.familyRole} color="secondary" size="small" />
           </Box>
         )}
+        <NotificationBell />
         <IconButton onClick={toggleMode} sx={{ ml: 1 }} aria-label="toggle theme">
           {mode === 'dark' ? <LightModeIcon /> : <DarkModeIcon />}
         </IconButton>

@@ -107,6 +107,7 @@ public interface AuthModuleApi {
     Optional<AuthUser> getCurrentUser();
     boolean hasModuleAccess(Long userId, Long familyId, String moduleName, ModulePermission permission);
     Optional<FamilyRole> getFamilyRole(Long userId, Long familyId);
+    List<AuthUser> getFamilyMembers(Long familyId);
 }
 ```
 
@@ -275,16 +276,31 @@ app.jwt.refresh-token-expiration-ms=604800000    # 7 days
 app.jwt.issuer=backend-spring
 ```
 
-## 11. Module Structure (Spring Modulith)
+## 11. Domain Events
+
+The auth module publishes domain events via `ApplicationEventPublisher` when family membership changes. These events are consumed by other modules (e.g., the notification module) using `@ApplicationModuleListener`.
+
+| Event | Published When | Fields |
+|-------|---------------|--------|
+| `FamilyMemberAddedEvent` | New member added to a family | `familyId`, `userId`, `displayName`, `role` |
+| `FamilyMemberRemovedEvent` | Member removed from a family | `familyId`, `userId`, `displayName` |
+| `FamilyMemberRoleChangedEvent` | Member's role changed | `familyId`, `userId`, `displayName`, `newRole` |
+
+Events are published within the `@Transactional` boundary of `FamilyService` methods, ensuring they are only dispatched if the transaction commits successfully. Spring Modulith's JDBC event publication store provides at-least-once delivery guarantees.
+
+## 12. Module Structure (Spring Modulith)
 
 ```
 auth/
-  AuthModuleApi.java              # Public interface for other modules
-  AuthUser.java                   # Public record
-  FamilyRole.java                 # Public enum
-  ModulePermission.java           # Public enum
-  RequiresModuleAccess.java       # Public annotation
-  internal/                       # Hidden from other modules
+  AuthModuleApi.java                  # Public interface for other modules
+  AuthUser.java                       # Public record
+  FamilyRole.java                     # Public enum
+  ModulePermission.java               # Public enum
+  RequiresModuleAccess.java           # Public annotation
+  FamilyMemberAddedEvent.java         # Public domain event
+  FamilyMemberRemovedEvent.java       # Public domain event
+  FamilyMemberRoleChangedEvent.java   # Public domain event
+  internal/                           # Hidden from other modules
     config/
     controller/
     dto/
@@ -294,9 +310,9 @@ auth/
     service/
 ```
 
-Only the five types at the module root are accessible to other modules. Everything under `internal/` is enforced as module-private by Spring Modulith.
+Only types at the module root are accessible to other modules. Everything under `internal/` is enforced as module-private by Spring Modulith.
 
-## 12. Validation Rules
+## 13. Validation Rules
 
 | Field | Rules |
 |-------|-------|

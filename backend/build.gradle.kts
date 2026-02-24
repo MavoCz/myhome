@@ -33,6 +33,7 @@ dependencies {
 	implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:3.0.1")
 	implementation("io.jsonwebtoken:jjwt-api:0.12.6")
 	implementation("org.springframework.modulith:spring-modulith-starter-core")
+	implementation("org.springframework.modulith:spring-modulith-starter-jdbc")
 
 	runtimeOnly("org.flywaydb:flyway-database-postgresql")
 	runtimeOnly("org.postgresql:postgresql")

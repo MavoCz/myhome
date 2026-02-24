@@ -9,6 +9,7 @@ import net.voldrich.template.backend_spring.auth.internal.security.AuthUserDetai
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -45,5 +46,11 @@ public class AuthModuleApiImpl implements AuthModuleApi {
     public Optional<FamilyRole> getFamilyRole(Long userId, Long familyId) {
         return familyMemberRepository.findByFamilyAndUser(familyId, userId)
                 .map(m -> FamilyRole.valueOf(m.getRole()));
+    }
+
+    @Override
+    public List<AuthUser> getFamilyMembers(Long familyId) {
+        return familyMemberRepository.findMembersWithUserInfo(familyId)
+                .map(r -> new AuthUser(r.value1(), r.value2(), r.value3(), familyId, FamilyRole.valueOf(r.value4())));
     }
 }

@@ -1,5 +1,6 @@
 package net.voldrich.template.backend_spring.auth;
 
+import java.util.List;
 import java.util.Optional;
 
 public interface AuthModuleApi {
@@ -9,4 +10,6 @@ public interface AuthModuleApi {
     boolean hasModuleAccess(Long userId, Long familyId, String moduleName, ModulePermission permission);
 
     Optional<FamilyRole> getFamilyRole(Long userId, Long familyId);
+
+    List<AuthUser> getFamilyMembers(Long familyId);
 }

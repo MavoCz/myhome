@@ -32,6 +32,16 @@ All Gradle commands run from `backend/`:
 ./gradlew bootBuildImage     # Build OCI container image
 ```
 
+The backend requires these environment variables (matching the PostgreSQL container):
+
+```bash
+SPRING_DATASOURCE_USERNAME=root
+SPRING_DATASOURCE_PASSWORD=root
+```
+
+These are also set as defaults in `application.properties`, but should be overridden via env vars in non-dev environments.
+
+
 ## Architecture
 
 ### Spring Modulith (Modular Monolith)

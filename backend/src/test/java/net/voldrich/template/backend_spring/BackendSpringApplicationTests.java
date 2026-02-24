@@ -1,13 +1,19 @@
 package net.voldrich.template.backend_spring;
 
+import com.tngtech.archunit.core.domain.JavaClass;
 import org.junit.jupiter.api.Test;
-import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.modulith.core.ApplicationModules;
 
-@SpringBootTest
+
 class BackendSpringApplicationTests {
 
 	@Test
-	void contextLoads() {
+	void verifyModules() {
+		ApplicationModules.of(
+				BackendSpringApplication.class,
+				JavaClass.Predicates.resideInAPackage(
+						"net.voldrich.template.backend_spring.jooq..")
+		).verify();
 	}
 
 }

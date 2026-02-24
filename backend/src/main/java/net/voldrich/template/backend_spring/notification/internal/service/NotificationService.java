@@ -1,5 +1,6 @@
 package net.voldrich.template.backend_spring.notification.internal.service;
 
+import net.voldrich.template.backend_spring.auth.internal.service.FamilyService;
 import net.voldrich.template.backend_spring.notification.NotificationModuleApi;
 import net.voldrich.template.backend_spring.notification.NotificationType;
 import net.voldrich.template.backend_spring.notification.internal.dto.NotificationResponse;

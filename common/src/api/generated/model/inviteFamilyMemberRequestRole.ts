@@ -5,11 +5,11 @@
  * OpenAPI spec version: v0
  */
 
-export type FamilyMemberResponseRole = typeof FamilyMemberResponseRole[keyof typeof FamilyMemberResponseRole];
+export type InviteFamilyMemberRequestRole = typeof InviteFamilyMemberRequestRole[keyof typeof InviteFamilyMemberRequestRole];
 
 
 // eslint-disable-next-line @typescript-eslint/no-redeclare
-export const FamilyMemberResponseRole = {
+export const InviteFamilyMemberRequestRole = {
   ADMIN: 'ADMIN',
   PARENT: 'PARENT',
   CHILD: 'CHILD',

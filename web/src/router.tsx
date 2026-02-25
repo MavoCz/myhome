@@ -5,6 +5,7 @@ import { PublicRoute } from './components/common/PublicRoute';
 import { LoginPage } from './modules/auth/pages/LoginPage';
 import { RegisterPage } from './modules/auth/pages/RegisterPage';
 import { HomePage } from './pages/HomePage';
+import { FamilyPage } from './modules/auth/pages/FamilyPage';
 
 export const router = createBrowserRouter([
   {
@@ -21,6 +22,7 @@ export const router = createBrowserRouter([
         element: <AppShell />,
         children: [
           { path: '/home', element: <HomePage /> },
+          { path: '/family', element: <FamilyPage /> },
           { index: true, element: <Navigate to="/home" replace /> },
         ],
       },

@@ -15,7 +15,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/family/module-access")
-@PreAuthorize("hasRole('PARENT')")
+@PreAuthorize("hasRole('ADMIN')")
 public class ModuleAccessController {
 
     private final ModuleAccessService moduleAccessService;

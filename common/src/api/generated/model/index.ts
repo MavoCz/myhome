@@ -14,6 +14,8 @@ export * from './familyMemberResponse';
 export * from './familyMemberResponseRole';
 export * from './grantModuleAccessRequest';
 export * from './grantModuleAccessRequestPermission';
+export * from './inviteFamilyMemberRequest';
+export * from './inviteFamilyMemberRequestRole';
 export * from './listAccessParams';
 export * from './loginRequest';
 export * from './moduleAccessResponse';

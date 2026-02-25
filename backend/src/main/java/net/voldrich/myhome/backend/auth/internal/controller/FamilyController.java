@@ -3,6 +3,7 @@ package net.voldrich.myhome.backend.auth.internal.controller;
 import jakarta.validation.Valid;
 import net.voldrich.myhome.backend.auth.internal.dto.AddFamilyMemberRequest;
 import net.voldrich.myhome.backend.auth.internal.dto.FamilyMemberResponse;
+import net.voldrich.myhome.backend.auth.internal.dto.InviteFamilyMemberRequest;
 import net.voldrich.myhome.backend.auth.internal.dto.UpdateRoleRequest;
 import net.voldrich.myhome.backend.auth.internal.security.AuthUserDetails;
 import net.voldrich.myhome.backend.auth.internal.service.FamilyService;
@@ -29,15 +30,23 @@ public class FamilyController {
     }
 
     @PostMapping("/members")
-    @PreAuthorize("hasRole('PARENT')")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<FamilyMemberResponse> addMember(
             @AuthenticationPrincipal AuthUserDetails currentUser,
             @Valid @RequestBody AddFamilyMemberRequest request) {
         return ResponseEntity.ok(familyService.addMember(currentUser, request));
     }
 
+    @PostMapping("/members/invite")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<FamilyMemberResponse> inviteMember(
+            @AuthenticationPrincipal AuthUserDetails currentUser,
+            @Valid @RequestBody InviteFamilyMemberRequest request) {
+        return ResponseEntity.ok(familyService.inviteMember(currentUser, request));
+    }
+
     @DeleteMapping("/members/{userId}")
-    @PreAuthorize("hasRole('PARENT')")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> removeMember(
             @AuthenticationPrincipal AuthUserDetails currentUser,
             @PathVariable Long userId) {
@@ -46,7 +55,7 @@ public class FamilyController {
     }
 
     @PutMapping("/members/{userId}/role")
-    @PreAuthorize("hasRole('PARENT')")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> updateRole(
             @AuthenticationPrincipal AuthUserDetails currentUser,
             @PathVariable Long userId,

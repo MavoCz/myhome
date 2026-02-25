@@ -10,6 +10,7 @@ export type AuthUserFamilyRole = typeof AuthUserFamilyRole[keyof typeof AuthUser
 
 // eslint-disable-next-line @typescript-eslint/no-redeclare
 export const AuthUserFamilyRole = {
+  ADMIN: 'ADMIN',
   PARENT: 'PARENT',
   CHILD: 'CHILD',
 } as const;

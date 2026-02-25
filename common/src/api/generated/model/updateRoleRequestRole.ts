@@ -10,6 +10,7 @@ export type UpdateRoleRequestRole = typeof UpdateRoleRequestRole[keyof typeof Up
 
 // eslint-disable-next-line @typescript-eslint/no-redeclare
 export const UpdateRoleRequestRole = {
+  ADMIN: 'ADMIN',
   PARENT: 'PARENT',
   CHILD: 'CHILD',
 } as const;

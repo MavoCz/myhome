@@ -9,6 +9,7 @@ import type {
   AuthResponse,
   FamilyMemberResponse,
   GrantModuleAccessRequest,
+  InviteFamilyMemberRequest,
   ListAccessParams,
   LoginRequest,
   ModuleAccessResponse,
@@ -326,6 +327,40 @@ export const addMember = async (addFamilyMemberRequest: AddFamilyMemberRequest, 
     headers: { 'Content-Type': 'application/json', ...options?.headers },
     body: JSON.stringify(
       addFamilyMemberRequest,)
+  }
+);}
+
+
+
+export type inviteMemberResponse200 = {
+  data: FamilyMemberResponse
+  status: 200
+}
+    
+export type inviteMemberResponseSuccess = (inviteMemberResponse200) & {
+  headers: Headers;
+};
+;
+
+export type inviteMemberResponse = (inviteMemberResponseSuccess)
+
+export const getInviteMemberUrl = () => {
+
+
+  
+
+  return `/api/family/members/invite`
+}
+
+export const inviteMember = async (inviteFamilyMemberRequest: InviteFamilyMemberRequest, options?: RequestInit): Promise<inviteMemberResponse> => {
+  
+  return customFetch<inviteMemberResponse>(getInviteMemberUrl(),
+  {      
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      inviteFamilyMemberRequest,)
   }
 );}
 

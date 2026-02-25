@@ -23,6 +23,7 @@ import type {
   AuthResponse,
   FamilyMemberResponse,
   GrantModuleAccessRequest,
+  InviteFamilyMemberRequest,
   ListAccessParams,
   LoginRequest,
   ModuleAccessResponse,
@@ -573,6 +574,65 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       > => {
 
       const mutationOptions = getAddMemberMutationOptions(options);
+
+      return useMutation(mutationOptions);
+    }
+    
+export const inviteMember = (
+    inviteFamilyMemberRequest: InviteFamilyMemberRequest,
+ options?: SecondParameter<typeof customFetch>,signal?: AbortSignal
+) => {
+      
+      
+      return customFetch<FamilyMemberResponse>(
+      {url: `/api/family/members/invite`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: inviteFamilyMemberRequest, signal
+    },
+      options);
+    }
+  
+
+
+export const getInviteMemberMutationOptions = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof inviteMember>>, TError,{data: InviteFamilyMemberRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof inviteMember>>, TError,{data: InviteFamilyMemberRequest}, TContext> => {
+
+const mutationKey = ['inviteMember'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof inviteMember>>, {data: InviteFamilyMemberRequest}> = (props) => {
+          const {data} = props ?? {};
+
+          return  inviteMember(data,requestOptions)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type InviteMemberMutationResult = NonNullable<Awaited<ReturnType<typeof inviteMember>>>
+    export type InviteMemberMutationBody = InviteFamilyMemberRequest
+    export type InviteMemberMutationError = unknown
+
+    export const useInviteMember = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof inviteMember>>, TError,{data: InviteFamilyMemberRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof inviteMember>>,
+        TError,
+        {data: InviteFamilyMemberRequest},
+        TContext
+      > => {
+
+      const mutationOptions = getInviteMemberMutationOptions(options);
 
       return useMutation(mutationOptions);
     }

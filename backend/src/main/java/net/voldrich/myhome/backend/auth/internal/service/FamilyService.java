@@ -6,6 +6,7 @@ import net.voldrich.myhome.backend.auth.FamilyMemberRoleChangedEvent;
 import net.voldrich.myhome.backend.auth.FamilyRole;
 import net.voldrich.myhome.backend.auth.internal.dto.AddFamilyMemberRequest;
 import net.voldrich.myhome.backend.auth.internal.dto.FamilyMemberResponse;
+import net.voldrich.myhome.backend.auth.internal.dto.InviteFamilyMemberRequest;
 import net.voldrich.myhome.backend.auth.internal.repository.FamilyMemberRepository;
 import net.voldrich.myhome.backend.auth.internal.repository.UserRepository;
 import net.voldrich.myhome.backend.auth.internal.security.AuthUserDetails;
@@ -39,6 +40,23 @@ public class FamilyService {
         }
 
         var user = userRepository.create(request.email(), passwordEncoder.encode(request.password()), request.displayName());
+        familyMemberRepository.create(currentUser.familyId(), user.getId(), request.role());
+
+        eventPublisher.publishEvent(new FamilyMemberAddedEvent(
+                currentUser.familyId(), user.getId(), user.getDisplayName(), request.role()));
+
+        return new FamilyMemberResponse(user.getId(), user.getEmail(), user.getDisplayName(), request.role());
+    }
+
+    @Transactional
+    public FamilyMemberResponse inviteMember(AuthUserDetails currentUser, InviteFamilyMemberRequest request) {
+        var user = userRepository.findByEmail(request.email())
+                .orElseThrow(() -> new IllegalArgumentException("User not found with this email"));
+
+        if (familyMemberRepository.existsByUserId(user.getId())) {
+            throw new IllegalArgumentException("User already belongs to a family");
+        }
+
         familyMemberRepository.create(currentUser.familyId(), user.getId(), request.role());
 
         eventPublisher.publishEvent(new FamilyMemberAddedEvent(

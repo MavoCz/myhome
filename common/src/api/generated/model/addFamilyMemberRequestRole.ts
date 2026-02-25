@@ -10,6 +10,7 @@ export type AddFamilyMemberRequestRole = typeof AddFamilyMemberRequestRole[keyof
 
 // eslint-disable-next-line @typescript-eslint/no-redeclare
 export const AddFamilyMemberRequestRole = {
+  ADMIN: 'ADMIN',
   PARENT: 'PARENT',
   CHILD: 'CHILD',
 } as const;

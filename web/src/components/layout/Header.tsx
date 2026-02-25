@@ -17,6 +17,9 @@ import MenuIcon from '@mui/icons-material/Menu';
 import LightModeIcon from '@mui/icons-material/LightMode';
 import DarkModeIcon from '@mui/icons-material/DarkMode';
 import LogoutIcon from '@mui/icons-material/Logout';
+import HomeIcon from '@mui/icons-material/Home';
+import PeopleIcon from '@mui/icons-material/People';
+import { useNavigate } from 'react-router';
 import { useAuth } from '../../hooks/useAuth';
 import { useThemeMode } from '../../theme/ThemeProvider';
 import { NotificationBell } from './NotificationBell';
@@ -27,6 +30,7 @@ export function Header() {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const navigate = useNavigate();
 
   const handleLogout = () => {
     clearAuth();
@@ -51,22 +55,27 @@ export function Header() {
           <Box sx={{ width: 280, p: 2 }}>
             {user && (
               <>
-                <Typography variant="h6" gutterBottom>
-                  {user.displayName}
-                </Typography>
-                <Chip
-                  label={user.familyRole}
-                  color="secondary"
-                  size="small"
-                  sx={{ mb: 1 }}
-                />
-                <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                  {user.familyName}
-                </Typography>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                  <Chip label={user.familyRole} color="secondary" size="small" />
+                  <Typography variant="h6">{user.displayName}</Typography>
+                </Box>
+                <Box
+                  sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 2, cursor: 'pointer' }}
+                  onClick={() => { navigate('/family'); setDrawerOpen(false); }}
+                >
+                  <PeopleIcon fontSize="small" color="action" />
+                  <Typography variant="body2" color="text.secondary">
+                    {user.familyName}
+                  </Typography>
+                </Box>
                 <Divider sx={{ mb: 1 }} />
               </>
             )}
             <List>
+              <ListItem component="button" onClick={() => { navigate('/home'); setDrawerOpen(false); }} sx={{ cursor: 'pointer', border: 'none', background: 'none', width: '100%' }}>
+                <HomeIcon sx={{ mr: 2 }} />
+                <ListItemText primary="Home" />
+              </ListItem>
               <ListItem component="button" onClick={toggleMode} sx={{ cursor: 'pointer', border: 'none', background: 'none', width: '100%' }}>
                 {mode === 'dark' ? <LightModeIcon sx={{ mr: 2 }} /> : <DarkModeIcon sx={{ mr: 2 }} />}
                 <ListItemText primary={mode === 'dark' ? 'Light mode' : 'Dark mode'} />
@@ -88,10 +97,17 @@ export function Header() {
         <Typography variant="h6" sx={{ flexGrow: 1, fontWeight: 700 }}>
           Family App
         </Typography>
+        <IconButton onClick={() => navigate('/home')} aria-label="home">
+          <HomeIcon />
+        </IconButton>
         {user && (
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-            <Typography variant="body1">{user.displayName}</Typography>
+          <Box
+            sx={{ display: 'flex', alignItems: 'center', gap: 1.5, cursor: 'pointer' }}
+            onClick={() => navigate('/family')}
+          >
             <Chip label={user.familyRole} color="secondary" size="small" />
+            <Typography variant="body1">{user.displayName}</Typography>
+            <PeopleIcon fontSize="small" color="action" />
           </Box>
         )}
         <NotificationBell />

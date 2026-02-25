@@ -57,6 +57,12 @@ public class FamilyMemberRepository {
                 .execute();
     }
 
+    public boolean existsByUserId(Long userId) {
+        return dsl.fetchExists(
+                dsl.selectFrom(FM).where(FM.USER_ID.eq(userId))
+        );
+    }
+
     public void updateRole(Long familyId, Long userId, FamilyRole role) {
         dsl.update(FM)
                 .set(FM.ROLE, role.name())

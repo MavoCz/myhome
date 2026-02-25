@@ -34,9 +34,9 @@ public class AuthModuleApiImpl implements AuthModuleApi {
 
     @Override
     public boolean hasModuleAccess(Long userId, Long familyId, String moduleName, ModulePermission permission) {
-        // Parents always have access
+        // Admins always have access
         var member = familyMemberRepository.findByFamilyAndUser(familyId, userId);
-        if (member.isPresent() && FamilyRole.PARENT.name().equals(member.get().getRole())) {
+        if (member.isPresent() && FamilyRole.ADMIN.name().equals(member.get().getRole())) {
             return true;
         }
         return moduleAccessService.hasAccess(userId, familyId, moduleName, permission);

@@ -27,11 +27,48 @@ async function refreshTokens(): Promise<boolean> {
   }
 }
 
-export const customFetch = async <T>(url: string, options: RequestInit): Promise<T> => {
+interface OrvalRequestConfig {
+  url: string;
+  method: string;
+  headers?: Record<string, string>;
+  data?: unknown;
+  params?: Record<string, unknown>;
+  signal?: AbortSignal;
+}
+
+export const customFetch = async <T>(
+  urlOrConfig: string | OrvalRequestConfig,
+  options?: RequestInit,
+): Promise<T> => {
+  let url: string;
+  let fetchOptions: RequestInit;
+
+  if (typeof urlOrConfig === 'string') {
+    url = urlOrConfig;
+    fetchOptions = options ?? {};
+  } else {
+    const { url: configUrl, method, headers: configHeaders, data, params, signal } = urlOrConfig;
+    url = configUrl;
+    if (params) {
+      const searchParams = new URLSearchParams();
+      for (const [key, value] of Object.entries(params)) {
+        if (value != null) searchParams.set(key, String(value));
+      }
+      url += `?${searchParams.toString()}`;
+    }
+    fetchOptions = {
+      method,
+      headers: configHeaders,
+      body: data != null ? JSON.stringify(data) : undefined,
+      signal,
+      ...options,
+    };
+  }
+
   const storage = getTokenStorage();
 
-  const headers = new Headers(options.headers);
-  if (!headers.has('Content-Type') && options.body) {
+  const headers = new Headers(fetchOptions.headers);
+  if (!headers.has('Content-Type') && fetchOptions.body) {
     headers.set('Content-Type', 'application/json');
   }
 
@@ -40,7 +77,7 @@ export const customFetch = async <T>(url: string, options: RequestInit): Promise
     headers.set('Authorization', `Bearer ${accessToken}`);
   }
 
-  let response = await fetch(url, { ...options, headers });
+  let response = await fetch(url, { ...fetchOptions, headers });
 
   if (response.status === 401 && storage?.getRefreshToken()) {
     if (!isRefreshing) {
@@ -59,7 +96,7 @@ export const customFetch = async <T>(url: string, options: RequestInit): Promise
       if (newAccessToken) {
         retryHeaders.set('Authorization', `Bearer ${newAccessToken}`);
       }
-      response = await fetch(url, { ...options, headers: retryHeaders });
+      response = await fetch(url, { ...fetchOptions, headers: retryHeaders });
     } else {
       storage.clearTokens();
       storage.onAuthFailure();
@@ -78,11 +115,12 @@ export const customFetch = async <T>(url: string, options: RequestInit): Promise
     throw { status: response.status, ...parsed };
   }
 
-  if (response.status === 204) {
+  const text = await response.text();
+  if (!text) {
     return undefined as T;
   }
 
-  return response.json();
+  return JSON.parse(text);
 };
 
 export default customFetch;

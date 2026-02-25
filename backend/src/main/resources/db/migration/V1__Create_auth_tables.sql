@@ -19,7 +19,7 @@ CREATE TABLE family_members (
     id        BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     family_id BIGINT       NOT NULL REFERENCES families (id) ON DELETE CASCADE,
     user_id   BIGINT       NOT NULL REFERENCES users (id) ON DELETE CASCADE,
-    role      VARCHAR(20)  NOT NULL CHECK (role IN ('PARENT', 'CHILD')),
+    role      VARCHAR(20)  NOT NULL CHECK (role IN ('PARENT', 'CHILD', 'ADMIN')),
     UNIQUE (family_id, user_id)
 );
 

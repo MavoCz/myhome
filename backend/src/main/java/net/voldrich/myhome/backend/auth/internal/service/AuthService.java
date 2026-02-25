@@ -53,9 +53,9 @@ public class AuthService {
 
         var family = familyRepository.create(request.familyName());
         var user = userRepository.create(request.email(), passwordEncoder.encode(request.password()), request.displayName());
-        familyMemberRepository.create(family.getId(), user.getId(), FamilyRole.PARENT);
+        familyMemberRepository.create(family.getId(), user.getId(), FamilyRole.ADMIN);
 
-        return generateAuthResponse(user.getId(), user.getEmail(), user.getDisplayName(), family.getId(), FamilyRole.PARENT);
+        return generateAuthResponse(user.getId(), user.getEmail(), user.getDisplayName(), family.getId(), FamilyRole.ADMIN);
     }
 
     public AuthResponse login(LoginRequest request) {

@@ -1,11 +1,9 @@
 plugins {
 	java
 	id("org.springframework.boot") version "4.0.3"
-	//id("org.springframework.boot") version "3.5.11"
 	id("io.spring.dependency-management") version "1.1.7"
 	id("org.jooq.jooq-codegen-gradle") version "3.19.30"
-	//id("org.jooq.jooq-codegen-gradle") version "3.20.11"
-	//id("org.springdoc.openapi-gradle-plugin") version "1.9.0"
+	id("org.springdoc.openapi-gradle-plugin") version "1.9.0"
 }
 
 group = "net.voldrich.template"
@@ -48,11 +46,11 @@ dependencies {
 
 	developmentOnly("org.springframework.boot:spring-boot-devtools")
 	developmentOnly("org.springframework.boot:spring-boot-docker-compose")
+	developmentOnly("org.apache.commons:commons-compress:1.27.1")
 
 	jooqCodegen(files("buildSrc/build/classes/java/main"))
 	jooqCodegen("org.postgresql:postgresql")
-	//jooqCodegen("org.testcontainers:postgresql:1.21.4")
-	jooqCodegen("org.testcontainers:postgresql:2.0.3")
+	jooqCodegen("org.testcontainers:postgresql:1.21.4")
 	jooqCodegen("org.flywaydb:flyway-core")
 	jooqCodegen("org.flywaydb:flyway-database-postgresql")
 
@@ -115,11 +113,11 @@ tasks.withType<Test> {
 	useJUnitPlatform()
 }
 
-/*openApi {
+openApi {
 	apiDocsUrl.set("http://localhost:8080/api-docs")
 	outputDir.set(layout.buildDirectory.dir("docs"))
 	outputFileName.set("openapi.json")
 	customBootRun {
 		args.set(listOf("--spring.docker.compose.file=${projectDir}/compose.yml"))
 	}
-}*/
+}

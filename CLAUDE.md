@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 A Spring Boot 4.0.2 backend template using Java 25, Gradle 9.3.0 (Kotlin DSL), and Spring Modulith for modular monolith architecture. The project lives in the `backend/` directory.
 
-**Base package:** `net.voldrich.template.backend_spring`
+**Base package:** `net.voldrich.myhome.backend`
 
 ## Prerequisites
 
@@ -51,7 +51,7 @@ PostgreSQL is managed automatically by Spring Boot Docker Compose support (`back
 Modules are direct sub-packages under the base package. Spring Modulith enforces boundaries — only types at the module root are public API; anything in `internal/` is hidden from other modules.
 
 ```
-net.voldrich.template.backend_spring/
+net.voldrich.myhome.backend/
 ├── auth/                    # Auth module public API (AuthModuleApi, AuthUser, annotations)
 │   └── internal/            # Hidden: controllers, services, repositories, filters, DTOs
 ├── jooq/                    # Generated JOOQ classes (build/generated-sources/jooq)
@@ -137,4 +137,4 @@ When implementing a new feature, follow these steps in order:
 
 ## Documentation
 
-Each module has a PRD document in `backend/docs/`. Always update PRD documents when adding or modifying use cases.
+Each module has a PRD document in `docs/prd`. Always update PRD documents when adding or modifying use cases.

@@ -123,7 +123,7 @@ Generated files are committed so builds work without the backend running.
 
 ### Backend
 
-- **Spring Modulith** — modules are sub-packages under `net.voldrich.template.backend_spring`; `internal/` packages are hidden from other modules
+- **Spring Modulith** — modules are sub-packages under `net.voldrich.myhome.backend`; `internal/` packages are hidden from other modules
 - **JOOQ** — type-safe SQL (not an ORM); run `./gradlew jooqCodegen` after schema changes
 - **Flyway** — migrations in `backend/src/main/resources/db/migration/`
 - **JWT auth** — HMAC-SHA256 access tokens (15 min) + rotating refresh tokens (7 days)
@@ -142,7 +142,7 @@ Generated files are committed so builds work without the backend running.
 
 1. Add a Flyway migration in `backend/src/main/resources/db/migration/` if the module needs database tables
 2. Run `./gradlew jooqCodegen` (from `backend/`) to regenerate JOOQ classes
-3. Create the backend module under `net.voldrich.template.backend_spring.<module_name>` — implement repositories, services, controllers, DTOs
+3. Create the backend module under `net.voldrich.myhome.backend.<module_name>` — implement repositories, services, controllers, DTOs
 4. Run `pnpm generate-api` (from project root) to export the OpenAPI spec and generate TypeScript types + hooks
 5. Add frontend pages under `web/src/modules/<module_name>/`
 6. Register the module in `web/src/modules/registry.ts` for the dashboard tile

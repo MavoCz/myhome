@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Spring Boot 4.0.2 backend template using Java 25, Gradle 9.3.0 (Kotlin DSL), and Spring Modulith for modular monolith architecture.
 
-**Base package:** `net.voldrich.template.backend_spring`
+**Base package:** `net.voldrich.myhome.backend`
 
 ## Build & Development Commands
 
@@ -43,7 +43,7 @@ This is a **Spring Modulith** project. Business logic should be organized into s
 
 **Module structure pattern:**
 ```
-net.voldrich.template.backend_spring/
+net.voldrich.myhome.backend/
 ├── <module_name>/          # Each module is a direct sub-package
 │   ├── *Service.java       # Exposed API (accessible to other modules)
 │   └── internal/           # Module internals (hidden from other modules)
@@ -55,7 +55,7 @@ net.voldrich.template.backend_spring/
 - Naming convention: `V{version}__{description}.sql` (e.g., `V1__Create_users_table.sql`)
 - Database connection is auto-configured from Docker Compose in development; override via environment variables in non-dev environments
 - JOOQ is the primary query layer (type-safe SQL builder, not an ORM)
-- JOOQ code generation: `./gradlew jooqCodegen` — spins up a PostgreSQL Testcontainer, runs Flyway migrations, and generates type-safe table/record classes from the schema into `build/generated-sources/jooq` (package `net.voldrich.template.backend_spring.jooq`). Flyway tables are excluded. Requires Docker to be running. The custom database class is in `buildSrc/src/main/java/net/voldrich/template/jooq/FlywayTestcontainersDatabase.java`.
+- JOOQ code generation: `./gradlew jooqCodegen` — spins up a PostgreSQL Testcontainer, runs Flyway migrations, and generates type-safe table/record classes from the schema into `build/generated-sources/jooq` (package `net.voldrich.myhome.backend.jooq`). Flyway tables are excluded. Requires Docker to be running. The custom database class is in `buildSrc/src/main/java/net/voldrich/template/jooq/FlywayTestcontainersDatabase.java`.
 
 ## Documentation
 

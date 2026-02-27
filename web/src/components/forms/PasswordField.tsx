@@ -8,6 +8,7 @@ import type { TextFieldProps } from '@mui/material/TextField';
 
 type PasswordFieldProps = Omit<TextFieldProps, 'type'> & {
   label: string;
+  testId?: string;
 };
 
 export function PasswordField({ label, ...props }: PasswordFieldProps) {

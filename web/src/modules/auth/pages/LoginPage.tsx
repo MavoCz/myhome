@@ -71,7 +71,7 @@ export function LoginPage() {
           </Typography>
 
           {error && (
-            <Alert severity="error" sx={{ mb: 2 }}>
+            <Alert severity="error" sx={{ mb: 2 }} data-testid="login-error-alert">
               {error}
             </Alert>
           )}
@@ -80,6 +80,7 @@ export function LoginPage() {
             <FormField
               label="Email"
               type="email"
+              testId="login-email-input"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               autoComplete="email"
@@ -87,6 +88,7 @@ export function LoginPage() {
             />
             <PasswordField
               label="Password"
+              testId="login-password-input"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               autoComplete="current-password"
@@ -98,6 +100,7 @@ export function LoginPage() {
               fullWidth
               disabled={loading}
               sx={{ mt: 1 }}
+              data-testid="login-submit-btn"
             >
               {loading ? 'Signing in...' : 'Sign In'}
             </Button>

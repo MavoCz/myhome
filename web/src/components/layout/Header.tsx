@@ -46,7 +46,7 @@ export function Header() {
               Family App
             </Typography>
             <NotificationBell />
-            <IconButton onClick={() => setDrawerOpen(true)} aria-label="menu">
+            <IconButton onClick={() => setDrawerOpen(true)} aria-label="menu" data-testid="header-menu-btn">
               <MenuIcon />
             </IconButton>
           </Toolbar>
@@ -62,6 +62,7 @@ export function Header() {
                 <Box
                   sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 2, cursor: 'pointer' }}
                   onClick={() => { navigate('/family'); setDrawerOpen(false); }}
+                  data-testid="header-mobile-family-info"
                 >
                   <PeopleIcon fontSize="small" color="action" />
                   <Typography variant="body2" color="text.secondary">
@@ -72,15 +73,15 @@ export function Header() {
               </>
             )}
             <List>
-              <ListItem component="button" onClick={() => { navigate('/home'); setDrawerOpen(false); }} sx={{ cursor: 'pointer', border: 'none', background: 'none', width: '100%' }}>
+              <ListItem component="button" onClick={() => { navigate('/home'); setDrawerOpen(false); }} sx={{ cursor: 'pointer', border: 'none', background: 'none', width: '100%' }} data-testid="header-mobile-home-btn">
                 <HomeIcon sx={{ mr: 2 }} />
                 <ListItemText primary="Home" />
               </ListItem>
-              <ListItem component="button" onClick={toggleMode} sx={{ cursor: 'pointer', border: 'none', background: 'none', width: '100%' }}>
+              <ListItem component="button" onClick={toggleMode} sx={{ cursor: 'pointer', border: 'none', background: 'none', width: '100%' }} data-testid="header-mobile-theme-btn">
                 {mode === 'dark' ? <LightModeIcon sx={{ mr: 2 }} /> : <DarkModeIcon sx={{ mr: 2 }} />}
                 <ListItemText primary={mode === 'dark' ? 'Light mode' : 'Dark mode'} />
               </ListItem>
-              <ListItem component="button" onClick={handleLogout} sx={{ cursor: 'pointer', border: 'none', background: 'none', width: '100%' }}>
+              <ListItem component="button" onClick={handleLogout} sx={{ cursor: 'pointer', border: 'none', background: 'none', width: '100%' }} data-testid="header-mobile-logout-btn">
                 <LogoutIcon sx={{ mr: 2 }} />
                 <ListItemText primary="Logout" />
               </ListItem>
@@ -97,13 +98,14 @@ export function Header() {
         <Typography variant="h6" sx={{ flexGrow: 1, fontWeight: 700 }}>
           Family App
         </Typography>
-        <IconButton onClick={() => navigate('/home')} aria-label="home">
+        <IconButton onClick={() => navigate('/home')} aria-label="home" data-testid="header-home-btn">
           <HomeIcon />
         </IconButton>
         {user && (
           <Box
             sx={{ display: 'flex', alignItems: 'center', gap: 1.5, cursor: 'pointer' }}
             onClick={() => navigate('/family')}
+            data-testid="header-family-info"
           >
             <Chip label={user.familyRole} color="secondary" size="small" />
             <Typography variant="body1">{user.displayName}</Typography>
@@ -111,13 +113,14 @@ export function Header() {
           </Box>
         )}
         <NotificationBell />
-        <IconButton onClick={toggleMode} sx={{ ml: 1 }} aria-label="toggle theme">
+        <IconButton onClick={toggleMode} sx={{ ml: 1 }} aria-label="toggle theme" data-testid="header-theme-toggle-btn">
           {mode === 'dark' ? <LightModeIcon /> : <DarkModeIcon />}
         </IconButton>
         <Button
           onClick={handleLogout}
           startIcon={<LogoutIcon />}
           sx={{ ml: 1 }}
+          data-testid="header-logout-btn"
         >
           Logout
         </Button>

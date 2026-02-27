@@ -64,7 +64,7 @@ export function NotificationBell() {
 
   return (
     <>
-      <IconButton onClick={handleOpen} aria-label="notifications">
+      <IconButton onClick={handleOpen} aria-label="notifications" data-testid="notif-bell-btn">
         <Badge badgeContent={unreadCount} color="error">
           <NotificationsIcon />
         </Badge>
@@ -94,7 +94,7 @@ export function NotificationBell() {
             Notifications
           </Typography>
           {unreadCount > 0 && (
-            <Button size="small" onClick={handleMarkAllAsRead}>
+            <Button size="small" onClick={handleMarkAllAsRead} data-testid="notif-mark-all-read-btn">
               Mark all read
             </Button>
           )}
@@ -114,6 +114,7 @@ export function NotificationBell() {
             {notifications.map((notification) => (
               <ListItemButton
                 key={notification.id}
+                data-testid={`notif-item-${notification.id}`}
                 onClick={() => {
                   if (!notification.read) {
                     handleMarkAsRead(notification.id);

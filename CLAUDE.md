@@ -133,8 +133,9 @@ When implementing a new feature, follow these steps in order:
 2. **JOOQ codegen** — Run `./gradlew jooqCodegen` (from `backend/`) to regenerate type-safe table classes
 3. **Backend implementation** — Implement repositories, services, controllers, DTOs
 4. **API codegen** — Run `pnpm generate-api` (from project root) to export the OpenAPI spec and generate TypeScript types + React Query hooks
-5. **Frontend implementation** — Build UI using the generated API types and hooks
+5. **Frontend implementation** — Build UI using the generated API types and hooks; add `data-testid` attributes to all interactive elements (see UI Testability below)
 6. **E2E tests** — Write Playwright tests covering the new feature (both API and UI, see below)
+7. **Run tests** — Run `./gradlew test` (from `backend/`) after backend changes, `pnpm test:api` and/or `pnpm test:web` after frontend/E2E changes, and fix any failures
 
 ## E2E Tests
 
@@ -142,8 +143,34 @@ E2E tests live in `e2e/` and use Playwright. **Always write E2E tests when addin
 
 ```bash
 pnpm test:api    # API-only tests (from project root)
-pnpm test:web     # Full-stack browser tests (from project root)
+pnpm test:web    # Full-stack browser tests (from project root)
 ```
+
+**Always run the relevant tests after implementation** — run `pnpm test:api` after backend changes, `pnpm test:web` after frontend changes, or both after full-stack changes. Fix any failures before considering the task done.
+
+## UI Testability
+
+All interactive UI elements **must include `data-testid` attributes** so Playwright tests can locate them reliably.
+
+**Naming convention:** `{scope}-{element}` in kebab-case, e.g. `login-email-input`, `family-delete-btn-123`.
+
+**Rules:**
+- Form inputs: pass `testId` prop to `FormField` / `PasswordField` — it lands on the raw `<input>` via `slotProps.htmlInput`
+- Buttons, dialogs, table rows, list items: add `data-testid` directly as a prop
+- Dynamic/repeated elements: append the unique key, e.g. `family-member-row-{userId}`
+- MUI Select: put `data-testid` on the wrapping `<FormControl>`, then use `.getByRole('combobox')` inside it in tests
+
+**When to use `data-testid` vs semantic locators in tests:**
+
+| Scenario | Preferred locator |
+|---|---|
+| Unique text button ("Sign In") | `getByRole('button', { name: /sign in/i })` |
+| Heading, link | `getByRole('heading', ...)`, `getByRole('link', ...)` |
+| Form input (label may change or appears in multiple dialogs) | `getByTestId('login-email-input')` |
+| Password input | `getByTestId('login-password-input')` |
+| Icon button without visible text | `getByTestId('header-logout-btn')` |
+| MUI Select | `getByTestId('family-role-select-123').getByRole('combobox')` |
+| Container text check | `getByTestId('header-family-info').toContainText('ADMIN')` |
 
 ## Documentation
 

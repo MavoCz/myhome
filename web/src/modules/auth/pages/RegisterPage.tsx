@@ -87,7 +87,7 @@ export function RegisterPage() {
           </Typography>
 
           {error && (
-            <Alert severity="error" sx={{ mb: 2 }}>
+            <Alert severity="error" sx={{ mb: 2 }} data-testid="register-error-alert">
               {error}
             </Alert>
           )}
@@ -95,6 +95,7 @@ export function RegisterPage() {
           <Box component="form" onSubmit={handleSubmit} sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
             <FormField
               label="Display Name"
+              testId="register-display-name-input"
               value={displayName}
               onChange={(e) => setDisplayName(e.target.value)}
               autoComplete="name"
@@ -102,18 +103,21 @@ export function RegisterPage() {
             />
             <FormField
               label="Family Name"
+              testId="register-family-name-input"
               value={familyName}
               onChange={(e) => setFamilyName(e.target.value)}
             />
             <FormField
               label="Email"
               type="email"
+              testId="register-email-input"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               autoComplete="email"
             />
             <PasswordField
               label="Password"
+              testId="register-password-input"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               autoComplete="new-password"
@@ -126,6 +130,7 @@ export function RegisterPage() {
               fullWidth
               disabled={loading}
               sx={{ mt: 1 }}
+              data-testid="register-submit-btn"
             >
               {loading ? 'Creating account...' : 'Create Account'}
             </Button>

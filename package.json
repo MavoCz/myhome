@@ -3,7 +3,9 @@
   "scripts": {
     "dev": "pnpm --filter web dev",
     "build": "pnpm --filter web build",
-    "generate-api": "cd backend && ./gradlew generateOpenApiDocs && cd .. && orval"
+    "generate-api": "cd backend && ./gradlew generateOpenApiDocs && cd .. && orval",
+    "test:api": "pnpm --filter e2e test:api",
+    "test:web": "pnpm --filter e2e test:web"
   },
   "devDependencies": {
     "orval": "^7.8.0"

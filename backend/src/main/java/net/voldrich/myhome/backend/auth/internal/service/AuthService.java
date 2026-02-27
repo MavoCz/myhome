@@ -2,6 +2,8 @@ package net.voldrich.myhome.backend.auth.internal.service;
 
 import net.voldrich.myhome.backend.auth.AuthUser;
 import net.voldrich.myhome.backend.auth.FamilyRole;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
 import net.voldrich.myhome.backend.auth.internal.dto.AuthResponse;
 import net.voldrich.myhome.backend.auth.internal.dto.LoginRequest;
 import net.voldrich.myhome.backend.auth.internal.dto.RegisterRequest;
@@ -48,7 +50,7 @@ public class AuthService {
     @Transactional
     public AuthResponse register(RegisterRequest request) {
         if (userRepository.existsByEmail(request.email())) {
-            throw new IllegalArgumentException("Email already registered");
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Email already registered");
         }
 
         var family = familyRepository.create(request.familyName());
@@ -74,7 +76,7 @@ public class AuthService {
     public AuthResponse refresh(TokenRefreshRequest request) {
         String tokenHash = jwtTokenService.hashRefreshToken(request.refreshToken());
         var storedToken = refreshTokenRepository.findByTokenHash(tokenHash)
-                .orElseThrow(() -> new IllegalArgumentException("Invalid refresh token"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid refresh token"));
 
         // Revoke old token (rotation)
         refreshTokenRepository.revokeByTokenHash(tokenHash);

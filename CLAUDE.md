@@ -134,6 +134,16 @@ When implementing a new feature, follow these steps in order:
 3. **Backend implementation** — Implement repositories, services, controllers, DTOs
 4. **API codegen** — Run `pnpm generate-api` (from project root) to export the OpenAPI spec and generate TypeScript types + React Query hooks
 5. **Frontend implementation** — Build UI using the generated API types and hooks
+6. **E2E tests** — Write Playwright tests covering the new feature (both API and UI, see below)
+
+## E2E Tests
+
+E2E tests live in `e2e/` and use Playwright. **Always write E2E tests when adding or modifying any feature** by invoking the `/e2e` skill.
+
+```bash
+pnpm test:api    # API-only tests (from project root)
+pnpm test:web     # Full-stack browser tests (from project root)
+```
 
 ## Documentation
 

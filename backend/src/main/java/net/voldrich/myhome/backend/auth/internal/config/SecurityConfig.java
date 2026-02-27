@@ -1,5 +1,6 @@
 package net.voldrich.myhome.backend.auth.internal.config;
 
+import jakarta.servlet.http.HttpServletResponse;
 import net.voldrich.myhome.backend.auth.internal.filter.JwtAuthenticationFilter;
 import net.voldrich.myhome.backend.auth.internal.security.ModuleAccessPermissionEvaluator;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -29,14 +30,18 @@ public class SecurityConfig {
     }
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain securityFilterChain(HttpSecurity http) {
         http
                 .csrf(AbstractHttpConfigurer::disable)
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/auth/register", "/api/auth/login", "/api/auth/refresh").permitAll()
+                        .requestMatchers("/api/auth/register", "/api/auth/login", "/api/auth/refresh", "/api/auth/logout").permitAll()
                         .requestMatchers("/api/**").authenticated()
                         .anyRequest().permitAll()
+                )
+                .exceptionHandling(e -> e
+                        .authenticationEntryPoint((req, res, ex) ->
+                                res.sendError(HttpServletResponse.SC_UNAUTHORIZED, ex.getMessage()))
                 )
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
         return http.build();

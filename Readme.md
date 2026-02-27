@@ -13,7 +13,10 @@ A full-stack modular monolith template with a Spring Boot 4 backend and React SP
 ### 1. Install Java
 
 ```bash
+brew install sdkman
 sdk install java 25.0.2-tem
+brew install pnpm
+brea install node
 ```
 
 ### 2. Install frontend dependencies
@@ -53,6 +56,7 @@ starter/
 ├── backend/          # Spring Boot 4, Java 25, Gradle (Kotlin DSL)
 ├── common/           # Shared API types + fetch client (no React deps)
 ├── web/              # React SPA (Vite, MUI, React Router, Zustand)
+├── e2e/              # Playwright E2E tests (API + UI)
 ├── orval.config.ts   # API codegen config
 └── package.json      # pnpm workspace root
 ```
@@ -67,6 +71,8 @@ starter/
 | `pnpm dev` | Start Vite dev server with API proxy |
 | `pnpm build` | Production build → `backend/src/main/resources/static/` |
 | `pnpm generate-api` | Export OpenAPI spec + regenerate TypeScript types & React Query hooks |
+| `pnpm test:api` | Run API-only E2E tests (no browser) |
+| `pnpm test:web` | Run full-stack browser E2E tests |
 
 ### Backend (from `backend/`)
 
@@ -80,6 +86,47 @@ starter/
 | `./gradlew jooqCodegen` | Generate JOOQ classes (requires Docker) |
 | `./gradlew generateOpenApiDocs` | Export OpenAPI spec to `build/docs/openapi.json` |
 | `./gradlew bootJar` | Build executable JAR |
+
+## E2E Tests
+
+The project uses [Playwright](https://playwright.dev) for end-to-end tests. Tests live in `e2e/` and are split into two projects:
+
+- **`api`** — pure HTTP tests against the backend (no browser). Fast, good for testing all endpoint behaviours.
+- **`ui`** — full-stack browser tests (Chromium) against the React frontend + backend.
+
+Both projects start a dedicated test database (Postgres on port 5435) and backend (port 8081) automatically via `global-setup.ts`, so **no manual setup is needed**.
+
+### Prerequisites
+
+Docker must be running (for the test Postgres container) and the backend must be buildable (Java 25 via SDKMAN).
+
+Install Playwright's browser binary once after cloning:
+
+```bash
+pnpm --filter e2e exec playwright install chromium
+```
+
+### Running tests
+
+```bash
+# From the project root:
+pnpm test:api          # API-only tests (backend + Postgres, no browser)
+pnpm test:web           # Full-stack browser tests
+
+# Or from e2e/ directly:
+cd e2e
+pnpm exec playwright test --project=api
+pnpm exec playwright test --project=ui
+pnpm exec playwright test --project=api tests/api/auth.spec.ts   # single file
+```
+
+### Test report
+
+An HTML report is written to `e2e/playwright-report/` after each run. Open it with:
+
+```bash
+pnpm exec playwright show-report e2e/playwright-report
+```
 
 ## Production Build
 
@@ -147,4 +194,5 @@ Generated files are committed so builds work without the backend running.
 5. Add frontend pages under `web/src/modules/<module_name>/`
 6. Register the module in `web/src/modules/registry.ts` for the dashboard tile
 7. Add routes in `web/src/router.tsx`
-8. Document the module in `backend/docs/<module_name>-prd.md`
+8. Add E2E tests in `e2e/tests/api/<module_name>.spec.ts` and `e2e/tests/ui/<module_name>.spec.ts`
+9. Document the module in `backend/docs/<module_name>-prd.md`

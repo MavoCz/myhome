@@ -5,6 +5,10 @@ node_modules/
 backend/src/main/resources/static/*
 !backend/src/main/resources/static/.gitkeep
 
+# E2E test artifacts
+e2e/playwright-report/
+e2e/test-results/
+
 # OS
 .DS_Store
 Thumbs.db

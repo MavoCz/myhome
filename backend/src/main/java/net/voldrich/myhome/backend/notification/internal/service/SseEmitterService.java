@@ -1,6 +1,6 @@
 package net.voldrich.myhome.backend.notification.internal.service;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -17,7 +17,11 @@ public class SseEmitterService {
     private static final long EMITTER_TIMEOUT = 5 * 60 * 1000L; // 5 minutes
 
     private final ConcurrentHashMap<Long, CopyOnWriteArrayList<SseEmitter>> emitters = new ConcurrentHashMap<>();
-    private final ObjectMapper objectMapper = new ObjectMapper();
+    private final ObjectMapper objectMapper;
+
+    public SseEmitterService(ObjectMapper objectMapper) {
+        this.objectMapper = objectMapper;
+    }
 
     public SseEmitter createEmitter(Long userId) {
         var emitter = new SseEmitter(EMITTER_TIMEOUT);
@@ -56,7 +60,7 @@ public class SseEmitterService {
         String json;
         try {
             json = objectMapper.writeValueAsString(payload);
-        } catch (IOException e) {
+        } catch (Exception e) {
             log.error("Failed to serialize SSE payload", e);
             return;
         }

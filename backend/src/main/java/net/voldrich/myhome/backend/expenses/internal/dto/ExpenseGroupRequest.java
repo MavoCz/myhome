@@ -9,5 +9,6 @@ public record ExpenseGroupRequest(
         @NotBlank @Size(max = 100) String name,
         @Size(max = 500) String description,
         LocalDate startDate,
-        LocalDate endDate
+        LocalDate endDate,
+        Boolean allowChildren
 ) {}

@@ -3,9 +3,9 @@
 **Product:** myhome
 **Module name:** `expenses`
 **Author:** Matous Voldrich
-**Status:** Draft
-**Date:** 2026-02-25
-**Version:** 2.0
+**Status:** Implemented
+**Date:** 2026-02-28
+**Version:** 3.0
 **Dependencies:** auth-module, notification-module
 
 ---
@@ -20,11 +20,12 @@ The module integrates with the existing auth module (family/role model, module a
 
 ## 2. Goals
 
-1. Allow PARENT-role members to log shared expenses with per-group split configurations and automatic EUR/multi-currency → CZK conversion.
+1. Allow family members to log shared expenses with per-group split configurations and automatic EUR/multi-currency → CZK conversion.
 2. Provide a real-time running balance per family member so every family knows who owes whom without manual calculation.
 3. Deliver a monthly summary dashboard with spend-by-group breakdown and debt-simplification (minimum settlement transactions).
 4. Support all eight EU non-EUR currencies alongside EUR, with daily ECB rates sourced from the Frankfurter API.
 5. Integrate seamlessly with the existing Spring Modulith architecture, module access system, and SSE notification pipeline.
+6. Allow CHILD members controlled, scoped access — they see only groups configured as `allowChildren=true` and can view (but not freely edit) expenses.
 
 ---
 
@@ -45,9 +46,9 @@ The module reuses the family role model defined by the auth module.
 
 | Role | Default behaviour | Expense module access |
 |------|-------------------|-----------------------|
-| **ADMIN** | Full automatic access to all modules | Full CRUD on all expenses and groups; can configure splits |
-| **PARENT** | Requires explicit grant from ADMIN | With `ACCESS` grant: add/edit/delete own expenses, view all. With `MANAGE` grant: also manage groups and override any expense |
-| **CHILD** | Requires explicit grant from ADMIN | With `ACCESS` grant: read-only view of expenses and balances |
+| **ADMIN** | Full automatic access to all modules | Full CRUD on all expenses and groups; can configure splits; sees `canEdit=true` on all expenses; sees Manage Groups tab |
+| **PARENT** | Requires explicit grant from ADMIN | With `ACCESS` grant: add/edit/delete own expenses, view all groups. With `MANAGE` grant: also manage groups and override any expense. Sees `canEdit=true` on own expenses; `canEdit=false` on others' (unless MANAGE). |
+| **CHILD** | Requires explicit grant from ADMIN | With `ACCESS` grant: view expenses and balances; can add expenses to `allowChildren=true` groups only; can edit/delete own expenses only (`canEdit=true` on own, `false` on others). Edit/delete buttons are always rendered but disabled when `canEdit=false`. |
 
 Module access is controlled via the auth module's existing grant system using `moduleName = "expenses"` and `permission = ACCESS | MANAGE`.
 
@@ -69,7 +70,7 @@ All EU member state currencies (eurozone members contribute EUR):
 | BGN | Bulgarian lev | Bulgaria |
 | HRK | Croatian kuna | Croatia *(legacy — Croatia joined EUR 2023; retained for historical records)* |
 
-Exchange rates are sourced from the **Frankfurter API** (`api.frankfurter.dev`, ECB reference rates). All rates are cached server-side and refreshed once daily via a scheduled Spring `@Scheduled` job. The raw token is never called per-request.
+Exchange rates are sourced from the **Frankfurter API** (`api.frankfurter.dev`, ECB reference rates). All rates are cached server-side and refreshed once daily via a scheduled Spring `@Scheduled` job. The raw API is never called per-request.
 
 ---
 
@@ -77,15 +78,19 @@ Exchange rates are sourced from the **Frankfurter API** (`api.frankfurter.dev`, 
 
 ### 6.1 Expense Group
 
-A named container scoping a set of related expenses within a family (e.g. "General", "Skiing Trip Jan 2026", "Sea Vacation Aug 2026"). Groups have an optional start/end date. A default "General" group is created automatically for every family and cannot be archived.
+A named container scoping a set of related expenses within a family (e.g. "General", "Skiing Trip Jan 2026", "Sea Vacation Aug 2026"). Groups have an optional start/end date. A default "General" group is created automatically for every family and cannot be archived or deleted.
+
+Each group has an `allowChildren` boolean (default `true` for new groups). When `allowChildren=false`, CHILD members cannot see expenses in that group or add expenses to it. The "General" default group is always `allowChildren=false` and this cannot be overridden. Group management (create, edit, archive, delete) is accessible from the **Manage Groups** tab inside `ExpensesPage` — there is no separate `/expenses/groups` route.
 
 ### 6.2 Expense
 
 A single cost entry with a description, amount, currency, date, payer, and group. Each expense has an associated split defining each member's percentage share and their CZK-denominated obligation. The split defaults to the group's configured percentages but can be overridden per expense.
 
+Each `ExpenseResponse` includes a `canEdit` boolean computed server-side: `true` if the requesting user created the expense or has MANAGE/ADMIN access. The UI always renders edit/delete buttons, disabling them when `canEdit=false`.
+
 ### 6.3 Family Split Configuration
 
-Per-group, each ADMIN can assign a percentage to each PARENT member (CHILD members may also be assigned a share). Percentages across all included members must sum to 100 %. This becomes the default split for new expenses in that group and can be overridden.
+Per-group, an ADMIN can assign a percentage to each member. Percentages across all included members must sum to 100 %. This becomes the default split for new expenses in that group and can be overridden per expense.
 
 ### 6.4 Balance
 
@@ -102,9 +107,10 @@ An aggregated view for a selected calendar month showing total spend, spend per 
 ### ADMIN
 
 - As an ADMIN, I want the expense module to be automatically accessible to me without needing a grant, so that I can manage family finances from day one.
-- As an ADMIN, I want to create and configure expense groups with optional date ranges, so that trip-specific or period-specific costs are clearly separated.
+- As an ADMIN, I want to create and configure expense groups (with optional date ranges and `allowChildren` flag) so that trip-specific costs are clearly separated and CHILD visibility is controlled.
 - As an ADMIN, I want to set per-member split percentages per group so that recurring ratios (e.g. 60 %/40 %) are applied to new expenses without manual entry.
 - As an ADMIN, I want to grant or revoke `ACCESS` and `MANAGE` permissions on the expenses module to PARENT and CHILD members, so that I control who can see or modify financial records.
+- As an ADMIN, I want to manage groups from a tab within the Expenses page, so I don't need to navigate to a separate admin page.
 
 ### PARENT (with `ACCESS` or `MANAGE` grant)
 
@@ -116,7 +122,10 @@ An aggregated view for a selected calendar month showing total spend, spend per 
 
 ### CHILD (with `ACCESS` grant)
 
-- As a CHILD, I want to view the expense list and my personal balance, so that I understand the family's shared spending without being able to modify records.
+- As a CHILD, I want to view expenses in groups that allow children's access, so that I can follow the family's shared spending.
+- As a CHILD, I want to add expenses to groups where children are allowed, so that I can record my own purchases.
+- As a CHILD, I want to edit or delete my own expenses (and only mine), so that I can correct my mistakes.
+- As a CHILD, I want to see edit/delete buttons in the list so I know the feature exists, but they should be greyed out on expenses I didn't create.
 
 ---
 
@@ -136,17 +145,21 @@ An aggregated view for a selected calendar month showing total spend, spend per 
 
 #### Expense Groups
 
-- **GRP-01** An ADMIN can create a group with: name (required), description (optional), start date (optional), end date (optional).
+- **GRP-01** An ADMIN (or MANAGE-granted member) can create a group with: name (required), description (optional), start date (optional), end date (optional), `allowChildren` (optional, defaults to `true`).
   - *AC:* Group name is unique within a family (case-insensitive).
-- **GRP-02** Each family starts with a "General" group that cannot be archived or deleted.
+- **GRP-02** Each family starts with a "General" group that cannot be archived or deleted. The "General" group always has `allowChildren=false`; this cannot be overridden via update.
 - **GRP-03** An ADMIN can archive a group; archived groups accept no new expenses but remain visible in historical summaries.
 - **GRP-04** Deleting a group is only permitted when it has zero expenses (ADMIN only).
 - **GRP-05** ADMIN can configure per-member split percentages per group.
   - *AC:* Percentages across all included members must sum to 100 %; system rejects any save where sum ≠ 100 % with a validation error.
+- **GRP-06** Group management (create, edit, archive, delete) is accessible from the **Manage Groups** tab inside `ExpensesPage`. The tab is only visible to ADMIN and PARENT users. No separate `/expenses/groups` route exists.
+- **GRP-07** CHILD members with `ACCESS` only see groups where `allowChildren=true` (filtered server-side). They cannot add expenses to groups with `allowChildren=false`.
+  - *AC:* `GET /api/expenses/groups` returns only `allowChildren=true` groups for CHILD role.
+  - *AC:* `POST /api/expenses` to a group with `allowChildren=false` returns HTTP 403 for CHILD users.
 
 #### Expense CRUD
 
-- **EXP-01** A PARENT (with `ACCESS` or `MANAGE`) or ADMIN can create an expense with the following fields:
+- **EXP-01** A member with `ACCESS` (or `MANAGE`) grant or ADMIN can create an expense with the following fields:
 
   | Field | Type | Constraint |
   |-------|------|-----------|
@@ -158,21 +171,24 @@ An aggregated view for a selected calendar month showing total spend, spend per 
   | `groupId` | Long | Required, must belong to the family and not be archived |
   | `splits` | List | Optional override; if absent, group defaults apply |
 
+  - *AC:* CHILD users cannot create expenses in groups with `allowChildren=false`.
+
 - **EXP-02** On save, if `currency ≠ CZK`, the system fetches the cached rate and stores:
   - `original_amount`, `original_currency`
   - `czk_amount` (converted)
   - `exchange_rate` (rate used)
   - `rate_fetched_at` (timestamp of the cached rate)
-  - *AC:* If the cached rate is older than 26 hours (ECB updates ~16:00 CET), a warning badge is shown on the expense and a background rate refresh is triggered.
 
 - **EXP-03** Split override: a member can supply per-user percentage splits for a single expense.
   - *AC:* Split percentages must sum to 100 %; system rejects if not.
   - *AC:* If no override is supplied, group default splits are used and snapshotted at save time.
 
-- **EXP-04** Edit: the expense creator or any member with `MANAGE` permission can edit all fields except `paidByUserId` (to prevent retroactive payment attribution confusion; a delete + re-add is required for payer changes).
+- **EXP-04** Edit: the expense creator or any member with `MANAGE` permission can edit all fields.
   - *AC:* An edit audit trail record is written: `(expense_id, edited_by_user_id, changed_fields_json, edited_at)`.
+  - *AC:* `ExpenseResponse` includes `canEdit: boolean` — `true` if the requesting user created the expense or has MANAGE/ADMIN access.
+  - *AC:* Edit and delete buttons in the UI are always rendered but `disabled` when `canEdit=false`.
 
-- **EXP-05** Delete: soft-delete only. An ADMIN or `MANAGE` member (or creator) can delete.
+- **EXP-05** Delete: soft-delete only. The expense creator or any member with `MANAGE`/ADMIN can delete.
   - *AC:* Deleted expenses are excluded from all balance calculations and summaries.
   - *AC:* An ADMIN can restore a soft-deleted expense within 90 days.
 
@@ -180,12 +196,11 @@ An aggregated view for a selected calendar month showing total spend, spend per 
 
 - **CUR-01** A Spring `@Scheduled` job runs daily at 17:00 CET, fetching updated rates for all 8 non-CZK currencies from `https://api.frankfurter.dev/v1/latest?base=CZK` and storing them in an `exchange_rates` table.
 - **CUR-02** Rates are never called synchronously on expense save; the application always reads from the local cache.
-- **CUR-03** If the scheduler fails to update for >26 hours, an application log `WARN` is emitted and the staleness badge appears on all non-CZK expenses saved during the outage.
 
 #### Balances
 
 - **BAL-01** The API exposes a `GET /api/expenses/balances` endpoint returning each family member's net balance in CZK (total paid − total owed, across all non-deleted expenses).
-- **BAL-02** Balances update within the same request-response cycle after any expense create/edit/delete (no async jobs needed for correctness).
+- **BAL-02** Balances update within the same request-response cycle after any expense create/edit/delete.
 - **BAL-03** The frontend displays a balance chip per member on the main expenses page (green = positive, red = negative, neutral grey = zero).
 
 #### Monthly Summary
@@ -203,7 +218,7 @@ An aggregated view for a selected calendar month showing total spend, spend per 
 - **NOT-01** When a new expense is added, the expense module publishes an `ExpenseAddedEvent` via `ApplicationEventPublisher`. The notification module listener creates an in-app notification for all family members except the creator.
   - Notification title: `"New expense added"`
   - Notification message: `"{creatorName} added "{description}" — {amount} {currency} ({czkAmount} CZK)"`
-- **NOT-02** When an expense is deleted, an `ExpenseDeletedEvent` is published. Notification recipients: same as EXP-NOT-01.
+- **NOT-02** When an expense is deleted, an `ExpenseDeletedEvent` is published. Notification recipients: same as NOT-01.
   - Notification title: `"Expense removed"`
   - Notification message: `"{deletedByName} removed "{description}" ({czkAmount} CZK)"`
 
@@ -213,9 +228,9 @@ An aggregated view for a selected calendar month showing total spend, spend per 
 
 - **EXP-P1-01** Recurring expenses — a flag on expense creation that auto-generates the same expense on the same day each month until cancelled.
 - **GRP-P1-01** Per-group budget target (CZK); a progress bar on the group card showing spend vs. target.
-- **SUM-P1-01** Export monthly summary as PDF or Excel via the existing `pdf` / `xlsx` skills.
+- **SUM-P1-01** Export monthly summary as PDF or Excel.
 - **CUR-P1-01** Manual rate override — ADMIN can enter a custom rate for a specific expense (useful for travel card fixed rates).
-- **EXP-P1-02** Expense comment thread (same pattern as Splitwise) so members can attach context or receipts.
+- **EXP-P1-02** Expense comment thread so members can attach context or receipts.
 
 ---
 
@@ -237,20 +252,37 @@ All endpoints require a valid JWT `Authorization: Bearer <token>` header. All en
 
 | Method | Path | Min Permission | Description |
 |--------|------|---------------|-------------|
-| GET | `/api/expenses/groups` | `ACCESS` | List all groups for the family |
+| GET | `/api/expenses/groups` | `ACCESS` | List groups (CHILD: only `allowChildren=true` groups) |
 | POST | `/api/expenses/groups` | `MANAGE` or ADMIN | Create a group |
-| PUT | `/api/expenses/groups/{id}` | `MANAGE` or ADMIN | Update group name/dates |
+| PUT | `/api/expenses/groups/{id}` | `MANAGE` or ADMIN | Update group fields (incl. allowChildren) |
 | POST | `/api/expenses/groups/{id}/archive` | ADMIN | Archive a group |
 | DELETE | `/api/expenses/groups/{id}` | ADMIN | Delete (only if no expenses) |
 | PUT | `/api/expenses/groups/{id}/splits` | `MANAGE` or ADMIN | Set default split config |
 
-**Create group — `POST /api/expenses/groups`**
+**`ExpenseGroupRequest`**
 ```json
-// Request
-{ "name": "Skiing Trip Jan 2026", "description": "Val Thorens family trip", "startDate": "2026-01-15", "endDate": "2026-01-22" }
+{
+  "name": "Skiing Trip Jan 2026",
+  "description": "Val Thorens family trip",
+  "startDate": "2026-01-15",
+  "endDate": "2026-01-22",
+  "allowChildren": true
+}
+```
 
-// Response
-{ "id": 3, "name": "Skiing Trip Jan 2026", "description": "Val Thorens family trip", "startDate": "2026-01-15", "endDate": "2026-01-22", "archived": false, "splits": [] }
+**`ExpenseGroupResponse`**
+```json
+{
+  "id": 3,
+  "name": "Skiing Trip Jan 2026",
+  "description": "Val Thorens family trip",
+  "startDate": "2026-01-15",
+  "endDate": "2026-01-22",
+  "archived": false,
+  "isDefault": false,
+  "allowChildren": true,
+  "splits": []
+}
 ```
 
 **Set splits — `PUT /api/expenses/groups/{id}/splits`**
@@ -268,8 +300,8 @@ All endpoints require a valid JWT `Authorization: Bearer <token>` header. All en
 
 | Method | Path | Min Permission | Description |
 |--------|------|---------------|-------------|
-| GET | `/api/expenses` | `ACCESS` | List expenses (paginated, filterable by group, month) |
-| POST | `/api/expenses` | `ACCESS` | Add an expense |
+| GET | `/api/expenses` | `ACCESS` | List expenses (CHILD: filtered to `allowChildren=true` groups) |
+| POST | `/api/expenses` | `ACCESS` | Add an expense (CHILD: restricted to `allowChildren=true` groups) |
 | PUT | `/api/expenses/{id}` | `ACCESS` (own) / `MANAGE` (any) | Edit an expense |
 | DELETE | `/api/expenses/{id}` | `ACCESS` (own) / `MANAGE` (any) | Soft-delete |
 | POST | `/api/expenses/{id}/restore` | ADMIN | Restore soft-deleted expense |
@@ -308,12 +340,15 @@ All endpoints require a valid JWT `Authorization: Bearer <token>` header. All en
     { "userId": 2, "displayName": "Bob", "sharePct": 40, "czkAmount": 1807.20 }
   ],
   "createdBy": 1,
-  "createdAt": "2026-01-16T19:22:00Z"
+  "createdAt": "2026-01-16T19:22:00Z",
+  "deletedAt": null,
+  "canEdit": true
 }
 ```
 
 **List expenses — `GET /api/expenses?groupId=3&year=2026&month=1&page=0&size=25`**
-Returns a paginated list in descending date order. All query params are optional; without filters returns all non-deleted family expenses.
+
+Returns a paginated wrapper `{ content, totalElements, page, size }`. All query params optional. CHILD users automatically see only expenses belonging to `allowChildren=true` groups (server-enforced, regardless of `groupId` param).
 
 ---
 
@@ -369,10 +404,10 @@ Published via `ApplicationEventPublisher` within `@Transactional` boundaries, pe
 | Event | Published When | Key Fields |
 |-------|---------------|------------|
 | `ExpenseAddedEvent` | Expense created | `familyId`, `expenseId`, `description`, `originalAmount`, `originalCurrency`, `czkAmount`, `paidByUserId`, `createdByUserId` |
-| `ExpenseEditedEvent` | Expense updated | `familyId`, `expenseId`, `description`, `editedByUserId`, `changedFields` |
+| `ExpenseEditedEvent` | Expense updated | `familyId`, `expenseId`, `description`, `editedByUserId` |
 | `ExpenseDeletedEvent` | Expense soft-deleted | `familyId`, `expenseId`, `description`, `czkAmount`, `deletedByUserId` |
 
-The notification module handles these events by adding `EXPENSE_ADDED` and `EXPENSE_DELETED` to its `NotificationType` enum and `NotificationEventListener`.
+The notification module handles these events via `NotificationEventListener` using `EXPENSE_ADDED` and `EXPENSE_DELETED` notification types.
 
 ---
 
@@ -397,6 +432,7 @@ expense_groups
 ├── end_date (DATE, nullable)
 ├── archived (BOOLEAN, default FALSE)
 ├── is_default (BOOLEAN, default FALSE)      -- TRUE for the auto-created "General" group
+├── allow_children (BOOLEAN, default TRUE)   -- FALSE for default group; controls CHILD visibility
 ├── created_at (TIMESTAMPTZ)
 ├── updated_at (TIMESTAMPTZ)
 └── UNIQUE(family_id, name)
@@ -447,6 +483,10 @@ Indexes:
 ├── idx_expense_splits_user (user_id)
 ```
 
+Flyway migrations:
+- `V3__Create_expense_tables.sql` — initial schema
+- `V4__Add_allow_children_to_expense_groups.sql` — adds `allow_children` column, sets `FALSE` for existing default groups
+
 ---
 
 ## 12. Module Structure (Spring Modulith)
@@ -469,62 +509,75 @@ expenses/
       ExpenseSummaryController.java
       ExchangeRateController.java
     dto/
-      ExpenseGroupRequest.java / Response.java
-      ExpenseRequest.java / Response.java
+      ExpenseGroupRequest.java          -- name, description, startDate, endDate, allowChildren
+      ExpenseGroupResponse.java         -- id, name, description, dates, archived, isDefault, allowChildren, splits
+      ExpenseRequest.java / Response.java  -- Response includes canEdit
       SplitConfigRequest.java / Response.java
       BalanceResponse.java
       MonthlySummaryResponse.java
       ExchangeRateResponse.java
     repository/
-      ExpenseGroupRepository.java
-      ExpenseRepository.java
+      ExpenseGroupRepository.java       -- findAllowedGroupIds(familyId) for CHILD filtering
+      ExpenseRepository.java            -- findByFamily/countByFamily accept allowedGroupIds
       ExpenseSplitRepository.java
       ExchangeRateRepository.java
       ExpenseEditHistoryRepository.java
     service/
-      ExpenseGroupService.java
-      ExpenseService.java
+      ExpenseGroupService.java          -- listGroups(AuthUser) for role-aware filtering
+      ExpenseService.java               -- listExpenses(AuthUser, ...) for canEdit + CHILD group filter
       BalanceService.java
       SummaryService.java
       ExchangeRateService.java          # Scheduled refresh + cache reads
-      ExpenseNotificationListener.java  # Consumes own domain events if self-notification needed
+      ExpenseModuleStartup.java         # Creates default group on family registration
 ```
 
 ---
 
 ## 13. Frontend Integration
 
-The expense module lives at `web/src/modules/expenses/` following the same structure as the auth module.
+The expense module lives at `web/src/modules/expenses/`.
 
 ### 13.1 Route Registration
 
 ```typescript
-// web/src/router.tsx — add inside the AppShell ProtectedRoute children:
-{ path: "/expenses",          element: <ExpensesPage /> }
-{ path: "/expenses/summary",  element: <ExpenseSummaryPage /> }
-{ path: "/expenses/groups",   element: <ExpenseGroupsPage /> }  // MANAGE/ADMIN only
+// web/src/router.tsx
+{ path: "/expenses",         element: <ExpensesPage /> }
+{ path: "/expenses/summary", element: <ExpenseSummaryPage /> }
+// Note: /expenses/groups route removed — group management is a tab within ExpensesPage
 ```
 
 ### 13.2 Key Components
 
 | Component | Description |
 |-----------|-------------|
-| `ExpensesPage` | Main page: balance chips row, group filter tabs, expense list |
-| `ExpenseForm` | Add/edit expense dialog (MUI Dialog). Currency selector, amount, date picker, payer autocomplete, split override accordion |
+| `ExpensesPage` | Main page with two tabs: **Expenses** (balance chips, group filter tabs, expense list) and **Manage Groups** (group table with edit/archive/delete, `allowChildren` chip; tab visible to ADMIN/PARENT only) |
+| `ExpenseForm` | Add/edit expense dialog. Currency selector, amount, date picker, payer autocomplete, split override accordion |
 | `BalanceChip` | Per-member chip: green (owed), red (owes), grey (settled) |
 | `ExpenseSummaryPage` | Month picker + summary cards; settlement plan list |
-| `ExpenseGroupsPage` | Group management table + split config form (ADMIN/MANAGE only) |
-| `ExpenseGroupForm` | Create/edit group dialog |
-| `SplitConfigForm` | Slider-based percentage allocation (validates sum to 100 %) |
-| `CurrencyAmountDisplay` | Shows `4 518 CZK` with `€180 @ 25.10` tooltip |
+| `ExpenseGroupForm` | Create/edit group dialog with `allowChildren` Switch (hidden for default group) |
+| `CurrencyAmountDisplay` | Shows primary amount with CZK conversion tooltip |
 
-### 13.3 State Management
+### 13.3 Edit/Delete Button Behaviour
 
-- `expenseStore` — Zustand store holding current expenses list, filters, and balance state (persisted: no — always fetched fresh)
-- All data fetching via orval-generated TanStack Query hooks from the OpenAPI spec
-- Notifications arrive via the existing `notificationStore` / SSE pipeline — no additional store needed
+Edit and delete buttons are rendered for every expense row regardless of role. They are enabled/disabled based on the server-provided `canEdit` field:
 
-### 13.4 Theme Alignment
+```tsx
+<IconButton disabled={!expense.canEdit} onClick={() => setEditExpense(expense)}>
+  <EditIcon />
+</IconButton>
+```
+
+No client-side role check is needed — the server computes `canEdit` per-expense.
+
+### 13.4 API Code Generation
+
+All API types and hooks are generated via Orval from the backend's OpenAPI spec:
+- `common/src/api/generated/` — framework-agnostic fetch functions and TypeScript types
+- `web/src/api/generated/` — TanStack Query v5 hooks
+
+Run `pnpm generate-api` from the project root to regenerate after backend changes.
+
+### 13.5 Theme Alignment
 
 Uses the existing MUI v6 theme palette (primary `#FF6B35`, secondary `#7B2D8E`, dark background `#1A1A2E`). No new theme tokens required.
 
@@ -532,16 +585,14 @@ Uses the existing MUI v6 theme palette (primary `#FF6B35`, secondary `#7B2D8E`, 
 
 ## 14. Notification Module Extension
 
-Add the following to the notification module to support expense events:
+The notification module has been extended to handle expense events:
 
 ```java
-// NotificationType.java — add:
+// NotificationType.java
 EXPENSE_ADDED,
 EXPENSE_DELETED
-```
 
-```java
-// NotificationEventListener.java — add listeners:
+// NotificationEventListener.java
 @ApplicationModuleListener
 void on(ExpenseAddedEvent event) { ... }
 
@@ -577,27 +628,12 @@ Recipient rule for both events: all family members with `ACCESS` or `MANAGE` gra
 
 ## 16. Open Questions
 
-| # | Question | Owner | Priority |
-|---|----------|-------|----------|
-| OQ-1 | Should PARENT members (not just ADMIN) be allowed to create and name expense groups? Currently spec'd as `MANAGE` or ADMIN only. | Product | High |
-| OQ-2 | What happens to a member's split configuration and outstanding balances when they are removed from the family? Options: (a) freeze their balance and show as "Former member", (b) redistribute their share to remaining members pro-rata. | Product / Engineering | High |
-| OQ-3 | Should soft-deleted expenses be permanently purged after 90 days, or retained indefinitely for GDPR audit purposes? | Legal | High |
-| OQ-4 | Should HRK (Croatian kuna) be retained for historical entry support, or dropped entirely given Croatia joined EUR in 2023? | Product | Medium |
-| OQ-5 | Should the monthly summary "lock" at month-end to prevent retroactive edits, or remain always editable? A locked summary improves auditability; always-editable improves flexibility. | Product | Medium |
-| OQ-6 | Should CHILD members be allowed a non-zero split percentage (i.e. can they "owe" money), or should their share always be 0 % by convention? | Product | Medium |
-| OQ-7 | Should `ExpenseEditedEvent` also trigger a notification, or only add/delete events? Edits may be noisy for small corrections. | Product | Low |
-
----
-
-## 17. Timeline Considerations
-
-Follows the phased approach consistent with other modules.
-
-| Phase | Scope | Suggested Duration |
-|-------|-------|--------------------|
-| **Alpha** | Expense CRUD (CZK only), groups, balances, basic list view | 2 weeks |
-| **Beta** | Multi-currency + ECB rate scheduler, monthly summary, split override, SSE notifications | 2 weeks |
-| **v1.0 Launch** | All P0 requirements, full frontend, module access guard | 1 week polish + QA |
-| **v1.1** | P1 features: recurring expenses, PDF/Excel export, per-group budgets | Next sprint |
-
-No hard external deadline identified. Total estimated time to v1.0: **5–6 weeks** from engineering kick-off.
+| # | Question | Owner | Priority | Status |
+|---|----------|-------|----------|--------|
+| OQ-1 | Should PARENT members (not just ADMIN) be allowed to create and name expense groups? | Product | High | **Resolved:** MANAGE-granted members (including PARENT with MANAGE) can create/edit groups. |
+| OQ-2 | What happens to a member's split configuration and outstanding balances when they are removed from the family? | Product / Engineering | High | Open |
+| OQ-3 | Should soft-deleted expenses be permanently purged after 90 days, or retained indefinitely for GDPR audit purposes? | Legal | High | Open |
+| OQ-4 | Should HRK (Croatian kuna) be retained for historical entry support, or dropped entirely given Croatia joined EUR in 2023? | Product | Medium | Open |
+| OQ-5 | Should the monthly summary "lock" at month-end to prevent retroactive edits, or remain always editable? | Product | Medium | Open |
+| OQ-6 | Should CHILD members be allowed a non-zero split percentage (i.e. can they "owe" money)? | Product | Medium | **Resolved:** CHILD members can have split percentages and are listed as owing money. The `allowChildren` flag on the group controls whether they can interact with it at all. |
+| OQ-7 | Should `ExpenseEditedEvent` also trigger a notification, or only add/delete events? | Product | Low | Open |

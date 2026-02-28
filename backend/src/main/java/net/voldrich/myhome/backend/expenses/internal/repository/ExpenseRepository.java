@@ -23,10 +23,12 @@ public class ExpenseRepository {
         this.dsl = dsl;
     }
 
-    public List<ExpensesRecord> findByFamily(Long familyId, Long groupId, Integer year, Integer month, int offset, int size) {
+    public List<ExpensesRecord> findByFamily(Long familyId, Long groupId, List<Long> allowedGroupIds, Integer year, Integer month, int offset, int size) {
         Condition condition = EXP.FAMILY_ID.eq(familyId).and(EXP.DELETED_AT.isNull());
         if (groupId != null) {
             condition = condition.and(EXP.GROUP_ID.eq(groupId));
+        } else if (allowedGroupIds != null) {
+            condition = condition.and(EXP.GROUP_ID.in(allowedGroupIds));
         }
         if (year != null && month != null) {
             LocalDate start = LocalDate.of(year, month, 1);
@@ -45,10 +47,12 @@ public class ExpenseRepository {
                 .fetch();
     }
 
-    public int countByFamily(Long familyId, Long groupId, Integer year, Integer month) {
+    public int countByFamily(Long familyId, Long groupId, List<Long> allowedGroupIds, Integer year, Integer month) {
         Condition condition = EXP.FAMILY_ID.eq(familyId).and(EXP.DELETED_AT.isNull());
         if (groupId != null) {
             condition = condition.and(EXP.GROUP_ID.eq(groupId));
+        } else if (allowedGroupIds != null) {
+            condition = condition.and(EXP.GROUP_ID.in(allowedGroupIds));
         }
         if (year != null && month != null) {
             LocalDate start = LocalDate.of(year, month, 1);

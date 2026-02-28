@@ -6,6 +6,8 @@ import DialogContent from '@mui/material/DialogContent';
 import DialogActions from '@mui/material/DialogActions';
 import Box from '@mui/material/Box';
 import Alert from '@mui/material/Alert';
+import FormControlLabel from '@mui/material/FormControlLabel';
+import Switch from '@mui/material/Switch';
 import { FormField } from '../../../components/forms/FormField';
 import type { ExpenseGroupResponse } from '../../../../../common/src/api/generated/model';
 
@@ -13,7 +15,7 @@ interface Props {
   open: boolean;
   onClose: () => void;
   onSuccess: () => void;
-  onSubmit: (data: { name: string; description: string }) => Promise<void>;
+  onSubmit: (data: { name: string; description: string; allowChildren: boolean }) => Promise<void>;
   initial?: ExpenseGroupResponse;
   title: string;
 }
@@ -21,6 +23,7 @@ interface Props {
 export function ExpenseGroupForm({ open, onClose, onSuccess, onSubmit, initial, title }: Props) {
   const [name, setName] = useState(initial?.name ?? '');
   const [description, setDescription] = useState(initial?.description ?? '');
+  const [allowChildren, setAllowChildren] = useState(initial?.allowChildren ?? true);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -29,7 +32,7 @@ export function ExpenseGroupForm({ open, onClose, onSuccess, onSubmit, initial, 
     setError('');
     setLoading(true);
     try {
-      await onSubmit({ name, description });
+      await onSubmit({ name, description, allowChildren });
       onSuccess();
       onClose();
     } catch (err: unknown) {
@@ -48,6 +51,18 @@ export function ExpenseGroupForm({ open, onClose, onSuccess, onSubmit, initial, 
           {error && <Alert severity="error" data-testid="expense-group-error">{error}</Alert>}
           <FormField label="Name" testId="expense-group-name-input" value={name} onChange={(e) => setName(e.target.value)} required />
           <FormField label="Description" testId="expense-group-desc-input" value={description} onChange={(e) => setDescription(e.target.value)} />
+          {!initial?.isDefault && (
+            <FormControlLabel
+              control={
+                <Switch
+                  checked={allowChildren}
+                  onChange={(e) => setAllowChildren(e.target.checked)}
+                  data-testid="expense-group-allow-children-switch"
+                />
+              }
+              label="Allow access by children"
+            />
+          )}
         </DialogContent>
         <DialogActions>
           <Button onClick={onClose}>Cancel</Button>

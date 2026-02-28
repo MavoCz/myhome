@@ -35,7 +35,7 @@ public class ExpenseGroupRepository {
                 .fetchOptional();
     }
 
-    public ExpenseGroupsRecord create(Long familyId, String name, String description, LocalDate startDate, LocalDate endDate, boolean isDefault) {
+    public ExpenseGroupsRecord create(Long familyId, String name, String description, LocalDate startDate, LocalDate endDate, boolean isDefault, boolean allowChildren) {
         return dsl.insertInto(EG)
                 .set(EG.FAMILY_ID, familyId)
                 .set(EG.NAME, name)
@@ -43,6 +43,7 @@ public class ExpenseGroupRepository {
                 .set(EG.START_DATE, startDate)
                 .set(EG.END_DATE, endDate)
                 .set(EG.IS_DEFAULT, isDefault)
+                .set(EG.ALLOW_CHILDREN, allowChildren)
                 .set(EG.ARCHIVED, false)
                 .set(EG.CREATED_AT, OffsetDateTime.now())
                 .set(EG.UPDATED_AT, OffsetDateTime.now())
@@ -50,12 +51,13 @@ public class ExpenseGroupRepository {
                 .fetchOne();
     }
 
-    public Optional<ExpenseGroupsRecord> update(Long id, Long familyId, String name, String description, LocalDate startDate, LocalDate endDate) {
+    public Optional<ExpenseGroupsRecord> update(Long id, Long familyId, String name, String description, LocalDate startDate, LocalDate endDate, boolean allowChildren) {
         int updated = dsl.update(EG)
                 .set(EG.NAME, name)
                 .set(EG.DESCRIPTION, description)
                 .set(EG.START_DATE, startDate)
                 .set(EG.END_DATE, endDate)
+                .set(EG.ALLOW_CHILDREN, allowChildren)
                 .set(EG.UPDATED_AT, OffsetDateTime.now())
                 .where(EG.ID.eq(id).and(EG.FAMILY_ID.eq(familyId)))
                 .execute();
@@ -99,5 +101,11 @@ public class ExpenseGroupRepository {
                 dsl.selectFrom(EXP)
                         .where(EXP.GROUP_ID.eq(groupId))
         );
+    }
+
+    public List<Long> findAllowedGroupIds(Long familyId) {
+        return dsl.select(EG.ID).from(EG)
+                .where(EG.FAMILY_ID.eq(familyId).and(EG.ALLOW_CHILDREN.isTrue()))
+                .fetch(EG.ID);
     }
 }

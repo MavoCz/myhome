@@ -41,7 +41,7 @@ public class ExpenseController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "25") int size) {
         var user = requireCurrentUser();
-        var result = expenseService.listExpenses(user.familyId(), groupId, year, month, page, size);
+        var result = expenseService.listExpenses(user, groupId, year, month, page, size);
         return ResponseEntity.ok(Map.of(
                 "content", result.content(),
                 "totalElements", result.totalElements(),
@@ -75,7 +75,7 @@ public class ExpenseController {
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ExpenseResponse> restoreExpense(@PathVariable Long id) {
         var user = requireCurrentUser();
-        return ResponseEntity.ok(expenseService.restoreExpense(user.familyId(), id));
+        return ResponseEntity.ok(expenseService.restoreExpense(user, id));
     }
 
     @GetMapping("/{id}/history")

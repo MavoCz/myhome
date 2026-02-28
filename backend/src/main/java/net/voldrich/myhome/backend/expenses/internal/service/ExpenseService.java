@@ -60,12 +60,18 @@ public class ExpenseService {
 
     public record PageResult<T>(List<T> content, int totalElements, int page, int size) {}
 
-    public PageResult<ExpenseResponse> listExpenses(Long familyId, Long groupId, Integer year, Integer month, int page, int size) {
+    public PageResult<ExpenseResponse> listExpenses(AuthUser user, Long groupId, Integer year, Integer month, int page, int size) {
         int offset = page * size;
-        var records = expenseRepository.findByFamily(familyId, groupId, year, month, offset, size);
-        int total = expenseRepository.countByFamily(familyId, groupId, year, month);
-        var members = getMemberMap(familyId);
-        var content = records.stream().map(e -> toResponse(e, members)).toList();
+        boolean hasManage = user.familyRole() == FamilyRole.ADMIN ||
+                authModuleApi.hasModuleAccess(user.id(), user.familyId(), "expenses", ModulePermission.MANAGE);
+        List<Long> allowedGroupIds = null;
+        if (user.familyRole() == FamilyRole.CHILD) {
+            allowedGroupIds = groupRepository.findAllowedGroupIds(user.familyId());
+        }
+        var records = expenseRepository.findByFamily(user.familyId(), groupId, allowedGroupIds, year, month, offset, size);
+        int total = expenseRepository.countByFamily(user.familyId(), groupId, allowedGroupIds, year, month);
+        var members = getMemberMap(user.familyId());
+        var content = records.stream().map(e -> toResponse(e, members, hasManage, user.id())).toList();
         return new PageResult<>(content, total, page, size);
     }
 
@@ -78,6 +84,9 @@ public class ExpenseService {
         }
         if (group.getArchived()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Cannot add expense to an archived group");
+        }
+        if (user.familyRole() == FamilyRole.CHILD && !group.getAllowChildren()) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Children cannot add expenses to this group");
         }
 
         var members = getMemberMap(user.familyId());
@@ -107,7 +116,9 @@ public class ExpenseService {
                 user.id(), createdByName
         ));
 
-        return toResponse(expense, members);
+        boolean hasManage = user.familyRole() == FamilyRole.ADMIN ||
+                authModuleApi.hasModuleAccess(user.id(), user.familyId(), "expenses", ModulePermission.MANAGE);
+        return toResponse(expense, members, hasManage, user.id());
     }
 
     @Transactional
@@ -158,7 +169,7 @@ public class ExpenseService {
                 user.familyId(), expenseId, updated.getDescription(), user.id(), editedByName
         ));
 
-        return toResponse(updated, members);
+        return toResponse(updated, members, hasManage, user.id());
     }
 
     @Transactional
@@ -190,10 +201,10 @@ public class ExpenseService {
     }
 
     @Transactional
-    public ExpenseResponse restoreExpense(Long familyId, Long expenseId) {
+    public ExpenseResponse restoreExpense(AuthUser user, Long expenseId) {
         var expense = expenseRepository.findById(expenseId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Expense not found"));
-        if (!expense.getFamilyId().equals(familyId)) {
+        if (!expense.getFamilyId().equals(user.familyId())) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Expense not found");
         }
         if (expense.getDeletedAt() == null) {
@@ -203,10 +214,12 @@ public class ExpenseService {
             throw new ResponseStatusException(HttpStatus.GONE, "Expense can only be restored within 90 days of deletion");
         }
 
-        expenseRepository.restore(expenseId, familyId);
+        expenseRepository.restore(expenseId, user.familyId());
         var restored = expenseRepository.findById(expenseId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Expense not found"));
-        return toResponse(restored, getMemberMap(familyId));
+        boolean hasManage = user.familyRole() == FamilyRole.ADMIN ||
+                authModuleApi.hasModuleAccess(user.id(), user.familyId(), "expenses", ModulePermission.MANAGE);
+        return toResponse(restored, getMemberMap(user.familyId()), hasManage, user.id());
     }
 
     public List<EditHistoryResponse> getHistory(Long familyId, Long expenseId) {
@@ -250,7 +263,7 @@ public class ExpenseService {
         }
     }
 
-    private ExpenseResponse toResponse(ExpensesRecord e, Map<Long, String> members) {
+    private ExpenseResponse toResponse(ExpensesRecord e, Map<Long, String> members, boolean hasManage, Long requestingUserId) {
         var splits = splitRepository.findByExpenseId(e.getId()).stream()
                 .map(s -> new ExpenseSplitResponse(
                         s.getUserId(),
@@ -261,6 +274,7 @@ public class ExpenseService {
                 .toList();
 
         var group = groupRepository.findById(e.getGroupId()).orElse(null);
+        boolean canEdit = e.getCreatedByUserId().equals(requestingUserId) || hasManage;
 
         return new ExpenseResponse(
                 e.getId(),
@@ -276,7 +290,8 @@ public class ExpenseService {
                 splits,
                 e.getCreatedByUserId(),
                 e.getCreatedAt(),
-                e.getDeletedAt()
+                e.getDeletedAt(),
+                canEdit
         );
     }
 

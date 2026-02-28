@@ -12,4 +12,3 @@ export const expensesModule: ModuleDefinition = {
 
 export { ExpensesPage } from './pages/ExpensesPage';
 export { ExpenseSummaryPage } from './pages/ExpenseSummaryPage';
-export { ExpenseGroupsPage } from './pages/ExpenseGroupsPage';

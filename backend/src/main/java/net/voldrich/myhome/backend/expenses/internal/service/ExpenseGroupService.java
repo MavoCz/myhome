@@ -1,6 +1,8 @@
 package net.voldrich.myhome.backend.expenses.internal.service;
 
 import net.voldrich.myhome.backend.auth.AuthModuleApi;
+import net.voldrich.myhome.backend.auth.AuthUser;
+import net.voldrich.myhome.backend.auth.FamilyRole;
 import net.voldrich.myhome.backend.expenses.internal.dto.*;
 import net.voldrich.myhome.backend.expenses.internal.repository.ExpenseGroupRepository;
 import net.voldrich.myhome.backend.expenses.internal.repository.ExpenseGroupSplitRepository;
@@ -29,12 +31,14 @@ public class ExpenseGroupService {
     }
 
     @Transactional
-    public List<ExpenseGroupResponse> listGroups(Long familyId) {
-        var groups = groupRepository.findByFamilyId(familyId);
+    public List<ExpenseGroupResponse> listGroups(AuthUser user) {
+        var groups = groupRepository.findByFamilyId(user.familyId());
         if (groups.isEmpty()) {
-            // Auto-create default "General" group on first access
-            groupRepository.create(familyId, "General", "Default expense group", null, null, true);
-            groups = groupRepository.findByFamilyId(familyId);
+            groupRepository.create(user.familyId(), "General", "Default expense group", null, null, true, false);
+            groups = groupRepository.findByFamilyId(user.familyId());
+        }
+        if (user.familyRole() == FamilyRole.CHILD) {
+            return groups.stream().filter(ExpenseGroupsRecord::getAllowChildren).map(this::toResponse).toList();
         }
         return groups.stream().map(this::toResponse).toList();
     }
@@ -44,8 +48,9 @@ public class ExpenseGroupService {
         if (groupRepository.existsByFamilyIdAndName(familyId, request.name())) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Group name already exists in this family");
         }
+        boolean allowChildren = request.allowChildren() != null ? request.allowChildren() : true;
         var record = groupRepository.create(familyId, request.name(), request.description(),
-                request.startDate(), request.endDate(), false);
+                request.startDate(), request.endDate(), false, allowChildren);
         return toResponse(record);
     }
 
@@ -60,8 +65,10 @@ public class ExpenseGroupService {
                 groupRepository.existsByFamilyIdAndNameExcluding(familyId, request.name(), groupId)) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Group name already exists in this family");
         }
+        boolean allowChildren = existing.getIsDefault() ? false
+                : (request.allowChildren() != null ? request.allowChildren() : existing.getAllowChildren());
         return groupRepository.update(groupId, familyId, request.name(), request.description(),
-                        request.startDate(), request.endDate())
+                        request.startDate(), request.endDate(), allowChildren)
                 .map(this::toResponse)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Group not found"));
     }
@@ -128,7 +135,7 @@ public class ExpenseGroupService {
                 .toList();
         return new ExpenseGroupResponse(
                 g.getId(), g.getName(), g.getDescription(),
-                g.getStartDate(), g.getEndDate(), g.getArchived(), g.getIsDefault(), splits
+                g.getStartDate(), g.getEndDate(), g.getArchived(), g.getIsDefault(), g.getAllowChildren(), splits
         );
     }
 
@@ -136,7 +143,7 @@ public class ExpenseGroupService {
     public void createDefaultGroupForFamily(Long familyId) {
         if (!groupRepository.existsByFamilyIdAndName(familyId, "General")) {
             groupRepository.create(familyId, "General", "Default expense group",
-                    null, null, true);
+                    null, null, true, false);
         }
     }
 }

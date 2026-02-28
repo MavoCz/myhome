@@ -770,3 +770,205 @@ test.describe('Expense permission checks', () => {
     expect(createGroupRes.ok()).toBeTruthy();
   });
 });
+
+// ===========================================================================
+// allowChildren field on expense groups
+// ===========================================================================
+
+test.describe('allowChildren on expense groups', () => {
+  test('default group has allowChildren=false', async ({ api, authResponse }) => {
+    const token = authResponse.accessToken!;
+    const res = await api.get('/api/expenses/groups', { headers: bearer(token) });
+    const groups: ExpenseGroupResponse[] = await res.json();
+    const defaultGroup = groups.find((g) => g.isDefault);
+    expect(defaultGroup).toBeDefined();
+    expect(defaultGroup!.allowChildren).toBe(false);
+  });
+
+  test('new groups default to allowChildren=true', async ({ api, authResponse }) => {
+    const token = authResponse.accessToken!;
+    const res = await api.post('/api/expenses/groups', {
+      headers: bearer(token),
+      data: { name: `AllowChildrenDefault-${Date.now()}` },
+    });
+    expect(res.ok()).toBeTruthy();
+    const group: ExpenseGroupResponse = await res.json();
+    expect(group.allowChildren).toBe(true);
+  });
+
+  test('PUT /api/expenses/groups/:id with allowChildren=false persists', async ({ api, authResponse }) => {
+    const token = authResponse.accessToken!;
+    const createRes = await api.post('/api/expenses/groups', {
+      headers: bearer(token),
+      data: { name: `ACFalse-${Date.now()}`, allowChildren: true },
+    });
+    const created: ExpenseGroupResponse = await createRes.json();
+
+    const updateRes = await api.put(`/api/expenses/groups/${created.id}`, {
+      headers: bearer(token),
+      data: { name: created.name, allowChildren: false },
+    });
+    expect(updateRes.ok()).toBeTruthy();
+    const updated: ExpenseGroupResponse = await updateRes.json();
+    expect(updated.allowChildren).toBe(false);
+  });
+
+  test("default group's allowChildren cannot be changed to true via update", async ({ api, authResponse }) => {
+    const token = authResponse.accessToken!;
+    const listRes = await api.get('/api/expenses/groups', { headers: bearer(token) });
+    const groups: ExpenseGroupResponse[] = await listRes.json();
+    const defaultGroup = groups.find((g) => g.isDefault)!;
+
+    const updateRes = await api.put(`/api/expenses/groups/${defaultGroup.id}`, {
+      headers: bearer(token),
+      data: { name: defaultGroup.name, allowChildren: true },
+    });
+    expect(updateRes.ok()).toBeTruthy();
+    const updated: ExpenseGroupResponse = await updateRes.json();
+    // Default group always forces allowChildren=false
+    expect(updated.allowChildren).toBe(false);
+  });
+
+  test('CHILD with ACCESS only sees groups where allowChildren=true', async ({ api, authResponse }) => {
+    const adminToken = authResponse.accessToken!;
+    const adminFamilyId = authResponse.user!.familyId!;
+
+    // Create a group with allowChildren=false
+    const restrictedGroupRes = await api.post('/api/expenses/groups', {
+      headers: bearer(adminToken),
+      data: { name: `Restricted-${Date.now()}`, allowChildren: false },
+    });
+    const restrictedGroup: ExpenseGroupResponse = await restrictedGroupRes.json();
+    expect(restrictedGroup.allowChildren).toBe(false);
+
+    // Create a CHILD with ACCESS
+    const tag = `child-ac-filter-${Date.now()}`;
+    const addRes = await api.post('/api/family/members', {
+      headers: bearer(adminToken),
+      data: { email: `${tag}@example.com`, password: 'Password123!', displayName: `Child ${tag}`, role: 'CHILD' },
+    });
+    const member = await addRes.json();
+    await grantExpensesAccess(api, adminToken, member.userId, adminFamilyId, 'ACCESS');
+
+    const loginRes = await api.post('/api/auth/login', { data: { email: `${tag}@example.com`, password: 'Password123!' } });
+    const childToken = (await loginRes.json()).accessToken;
+
+    const childGroupsRes = await api.get('/api/expenses/groups', { headers: bearer(childToken) });
+    const childGroups: ExpenseGroupResponse[] = await childGroupsRes.json();
+    // Child should not see the restricted group
+    expect(childGroups.find((g) => g.id === restrictedGroup.id)).toBeUndefined();
+    // All returned groups must have allowChildren=true
+    for (const g of childGroups) {
+      expect(g.allowChildren).toBe(true);
+    }
+  });
+
+  test('CHILD cannot add expense to group with allowChildren=false', async ({ api, authResponse }) => {
+    const adminToken = authResponse.accessToken!;
+    const adminFamilyId = authResponse.user!.familyId!;
+    const adminUserId = authResponse.user!.id!;
+
+    // Get default group (allowChildren=false)
+    const listRes = await api.get('/api/expenses/groups', { headers: bearer(adminToken) });
+    const groups: ExpenseGroupResponse[] = await listRes.json();
+    const defaultGroup = groups.find((g) => g.isDefault)!;
+
+    const tag = `child-no-add-${Date.now()}`;
+    const addRes = await api.post('/api/family/members', {
+      headers: bearer(adminToken),
+      data: { email: `${tag}@example.com`, password: 'Password123!', displayName: `Child ${tag}`, role: 'CHILD' },
+    });
+    const member = await addRes.json();
+    await grantExpensesAccess(api, adminToken, member.userId, adminFamilyId, 'ACCESS');
+
+    const loginRes = await api.post('/api/auth/login', { data: { email: `${tag}@example.com`, password: 'Password123!' } });
+    const childToken = (await loginRes.json()).accessToken;
+
+    const expenseRes = await api.post('/api/expenses', {
+      headers: bearer(childToken),
+      data: { description: 'Forbidden', amount: 100, currency: 'CZK', date: '2026-02-01', paidByUserId: member.userId, groupId: defaultGroup.id },
+    });
+    expect(expenseRes.status()).toBe(403);
+  });
+});
+
+// ===========================================================================
+// canEdit field on expenses
+// ===========================================================================
+
+test.describe('canEdit on expenses', () => {
+  test('creator sees canEdit=true on own expense', async ({ api, authResponse }) => {
+    const token = authResponse.accessToken!;
+    const userId = authResponse.user!.id!;
+    const groupId = await ensureDefaultGroup(api, token);
+
+    const res = await api.post('/api/expenses', {
+      headers: bearer(token),
+      data: { description: 'My expense', amount: 100, currency: 'CZK', date: '2026-02-01', paidByUserId: userId, groupId },
+    });
+    const expense: ExpenseResponse = await res.json();
+    expect(expense.canEdit).toBe(true);
+  });
+
+  test('ADMIN sees canEdit=true on all expenses', async ({ api, authResponse }) => {
+    const adminToken = authResponse.accessToken!;
+    const adminUserId = authResponse.user!.id!;
+    const adminFamilyId = authResponse.user!.familyId!;
+
+    // Add a second member and they create an expense
+    const tag = `admin-canedit-${Date.now()}`;
+    const addRes = await api.post('/api/family/members', {
+      headers: bearer(adminToken),
+      data: { email: `${tag}@example.com`, password: 'Password123!', displayName: `Member ${tag}`, role: 'PARENT' },
+    });
+    const member = await addRes.json();
+
+    const memberLoginRes = await api.post('/api/auth/login', { data: { email: `${tag}@example.com`, password: 'Password123!' } });
+    const memberToken = (await memberLoginRes.json()).accessToken;
+    const groupId = await ensureDefaultGroup(api, adminToken);
+
+    await api.post('/api/expenses', {
+      headers: bearer(memberToken),
+      data: { description: 'Other expense', amount: 50, currency: 'CZK', date: '2026-02-01', paidByUserId: member.userId, groupId },
+    });
+
+    // Admin lists expenses and should see canEdit=true for all
+    const listRes = await api.get('/api/expenses?page=0&size=100', { headers: bearer(adminToken) });
+    const body = await listRes.json();
+    const expensesByOther = (body.content as ExpenseResponse[]).filter((e) => e.createdBy !== adminUserId);
+    for (const e of expensesByOther) {
+      expect(e.canEdit).toBe(true);
+    }
+  });
+
+  test('non-creator PARENT without MANAGE sees canEdit=false on others expenses', async ({ api, authResponse }) => {
+    const adminToken = authResponse.accessToken!;
+    const adminUserId = authResponse.user!.id!;
+
+    // Create a PARENT member (no MANAGE grant needed, PARENT gets ACCESS automatically)
+    const tag = `parent-canedit-${Date.now()}`;
+    const addRes = await api.post('/api/family/members', {
+      headers: bearer(adminToken),
+      data: { email: `${tag}@example.com`, password: 'Password123!', displayName: `Parent ${tag}`, role: 'PARENT' },
+    });
+    const member = await addRes.json();
+
+    const loginRes = await api.post('/api/auth/login', { data: { email: `${tag}@example.com`, password: 'Password123!' } });
+    const parentToken = (await loginRes.json()).accessToken;
+
+    const groupId = await ensureDefaultGroup(api, adminToken);
+    // Admin creates an expense
+    await api.post('/api/expenses', {
+      headers: bearer(adminToken),
+      data: { description: 'Admin expense', amount: 200, currency: 'CZK', date: '2026-02-01', paidByUserId: adminUserId, groupId },
+    });
+
+    // Parent (not the creator, not ADMIN) lists and sees canEdit=false for admin's expense
+    const listRes = await api.get('/api/expenses?page=0&size=100', { headers: bearer(parentToken) });
+    const body = await listRes.json();
+    const adminExpenses = (body.content as ExpenseResponse[]).filter((e) => e.createdBy === adminUserId);
+    for (const e of adminExpenses) {
+      expect(e.canEdit).toBe(false);
+    }
+  });
+});

@@ -19,7 +19,8 @@ public record ExpenseResponse(
         List<ExpenseSplitResponse> splits,
         Long createdBy,
         OffsetDateTime createdAt,
-        OffsetDateTime deletedAt
+        OffsetDateTime deletedAt,
+        boolean canEdit
 ) {
     public record UserRef(Long userId, String displayName) {}
     public record GroupRef(Long id, String name) {}

@@ -14,5 +14,6 @@ export interface ExpenseGroupResponse {
   endDate?: string;
   archived?: boolean;
   isDefault?: boolean;
+  allowChildren?: boolean;
   splits?: GroupSplitResponse[];
 }

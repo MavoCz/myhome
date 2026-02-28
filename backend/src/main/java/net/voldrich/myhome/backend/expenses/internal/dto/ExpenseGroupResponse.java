@@ -11,5 +11,6 @@ public record ExpenseGroupResponse(
         LocalDate endDate,
         boolean archived,
         boolean isDefault,
+        boolean allowChildren,
         List<GroupSplitResponse> splits
 ) {}

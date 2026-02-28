@@ -34,7 +34,7 @@ public class ExpenseGroupController {
     @GetMapping
     public ResponseEntity<List<ExpenseGroupResponse>> listGroups() {
         var user = requireCurrentUser();
-        return ResponseEntity.ok(groupService.listGroups(user.familyId()));
+        return ResponseEntity.ok(groupService.listGroups(user));
     }
 
     @PostMapping

@@ -18,4 +18,5 @@ export interface ExpenseGroupRequest {
   description?: string;
   startDate?: string;
   endDate?: string;
+  allowChildren?: boolean;
 }

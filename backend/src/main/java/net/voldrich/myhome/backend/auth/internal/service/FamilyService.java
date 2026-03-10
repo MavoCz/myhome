@@ -45,7 +45,7 @@ public class FamilyService {
         eventPublisher.publishEvent(new FamilyMemberAddedEvent(
                 currentUser.familyId(), user.getId(), user.getDisplayName(), request.role()));
 
-        return new FamilyMemberResponse(user.getId(), user.getEmail(), user.getDisplayName(), request.role());
+        return new FamilyMemberResponse(user.getId(), user.getEmail(), user.getDisplayName(), request.role(), null);
     }
 
     @Transactional
@@ -62,7 +62,7 @@ public class FamilyService {
         eventPublisher.publishEvent(new FamilyMemberAddedEvent(
                 currentUser.familyId(), user.getId(), user.getDisplayName(), request.role()));
 
-        return new FamilyMemberResponse(user.getId(), user.getEmail(), user.getDisplayName(), request.role());
+        return new FamilyMemberResponse(user.getId(), user.getEmail(), user.getDisplayName(), request.role(), null);
     }
 
     public List<FamilyMemberResponse> listMembers(Long familyId) {
@@ -71,8 +71,16 @@ public class FamilyService {
                 r.value1(),
                 r.value2(),
                 r.value3(),
-                FamilyRole.valueOf(r.value4())
+                FamilyRole.valueOf(r.value4()),
+                r.value6()
         ));
+    }
+
+    @Transactional
+    public void updateColor(Long familyId, Long userId, String color) {
+        familyMemberRepository.findByFamilyAndUser(familyId, userId)
+                .orElseThrow(() -> new IllegalArgumentException("Family member not found"));
+        familyMemberRepository.updateColor(familyId, userId, color);
     }
 
     @Transactional

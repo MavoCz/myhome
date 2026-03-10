@@ -6,6 +6,11 @@ import { router } from './router';
 // Import authStore to ensure token storage is wired up
 import './stores/authStore';
 
+// Register modules
+import { modules } from './modules/registry';
+import { expensesModule } from './modules/expenses';
+modules.push(expensesModule);
+
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {

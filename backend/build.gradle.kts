@@ -26,6 +26,7 @@ val jwtVersion = "0.12.6"
 dependencies {
 	implementation("org.springframework.boot:spring-boot-starter-actuator")
 	implementation("org.springframework.boot:spring-boot-starter-flyway")
+	implementation("org.apache.commons:commons-csv:1.13.0")
 	implementation("org.springframework.boot:spring-boot-starter-jdbc")
 	implementation("org.springframework.boot:spring-boot-starter-jooq")
 	implementation("org.springframework.boot:spring-boot-starter-security")
@@ -121,3 +122,4 @@ openApi {
 		args.set(listOf("--spring.docker.compose.file=${projectDir}/compose.yml"))
 	}
 }
+

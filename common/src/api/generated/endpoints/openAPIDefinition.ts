@@ -7,16 +7,33 @@
 import type {
   AddFamilyMemberRequest,
   AuthResponse,
+  BalanceResponse,
+  EditHistoryResponse,
+  ExchangeRateResponse,
+  ExpenseGroupRequest,
+  ExpenseGroupResponse,
+  ExpenseRequest,
+  ExpenseResponse,
   FamilyMemberResponse,
+  GetMonthlySummaryParams,
   GrantModuleAccessRequest,
+  ImportExpensesBody,
+  ImportExpensesParams,
+  ImportResultResponse,
   InviteFamilyMemberRequest,
   ListAccessParams,
+  ListExpenses200,
+  ListExpensesParams,
   LoginRequest,
   ModuleAccessResponse,
+  MonthlySummaryResponse,
   NotificationResponse,
   RegisterRequest,
+  SplitConfigRequest,
+  SplitConfigResponse,
   SseEmitter,
   TokenRefreshRequest,
+  UpdateColorRequest,
   UpdateModuleAccessRequest,
   UpdateRoleRequest
 } from '../model';
@@ -120,6 +137,212 @@ export const updateRole = async (userId: number,
     headers: { 'Content-Type': 'application/json', ...options?.headers },
     body: JSON.stringify(
       updateRoleRequest,)
+  }
+);}
+
+
+
+export type updateColorResponse200 = {
+  data: void
+  status: 200
+}
+    
+export type updateColorResponseSuccess = (updateColorResponse200) & {
+  headers: Headers;
+};
+;
+
+export type updateColorResponse = (updateColorResponseSuccess)
+
+export const getUpdateColorUrl = (userId: number,) => {
+
+
+  
+
+  return `/api/family/members/${userId}/color`
+}
+
+export const updateColor = async (userId: number,
+    updateColorRequest: UpdateColorRequest, options?: RequestInit): Promise<updateColorResponse> => {
+  
+  return customFetch<updateColorResponse>(getUpdateColorUrl(userId),
+  {      
+    ...options,
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      updateColorRequest,)
+  }
+);}
+
+
+
+export type updateExpenseResponse200 = {
+  data: ExpenseResponse
+  status: 200
+}
+    
+export type updateExpenseResponseSuccess = (updateExpenseResponse200) & {
+  headers: Headers;
+};
+;
+
+export type updateExpenseResponse = (updateExpenseResponseSuccess)
+
+export const getUpdateExpenseUrl = (id: number,) => {
+
+
+  
+
+  return `/api/expenses/${id}`
+}
+
+export const updateExpense = async (id: number,
+    expenseRequest: ExpenseRequest, options?: RequestInit): Promise<updateExpenseResponse> => {
+  
+  return customFetch<updateExpenseResponse>(getUpdateExpenseUrl(id),
+  {      
+    ...options,
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      expenseRequest,)
+  }
+);}
+
+
+
+export type deleteExpenseResponse200 = {
+  data: void
+  status: 200
+}
+    
+export type deleteExpenseResponseSuccess = (deleteExpenseResponse200) & {
+  headers: Headers;
+};
+;
+
+export type deleteExpenseResponse = (deleteExpenseResponseSuccess)
+
+export const getDeleteExpenseUrl = (id: number,) => {
+
+
+  
+
+  return `/api/expenses/${id}`
+}
+
+export const deleteExpense = async (id: number, options?: RequestInit): Promise<deleteExpenseResponse> => {
+  
+  return customFetch<deleteExpenseResponse>(getDeleteExpenseUrl(id),
+  {      
+    ...options,
+    method: 'DELETE'
+    
+    
+  }
+);}
+
+
+
+export type updateGroupResponse200 = {
+  data: ExpenseGroupResponse
+  status: 200
+}
+    
+export type updateGroupResponseSuccess = (updateGroupResponse200) & {
+  headers: Headers;
+};
+;
+
+export type updateGroupResponse = (updateGroupResponseSuccess)
+
+export const getUpdateGroupUrl = (id: number,) => {
+
+
+  
+
+  return `/api/expenses/groups/${id}`
+}
+
+export const updateGroup = async (id: number,
+    expenseGroupRequest: ExpenseGroupRequest, options?: RequestInit): Promise<updateGroupResponse> => {
+  
+  return customFetch<updateGroupResponse>(getUpdateGroupUrl(id),
+  {      
+    ...options,
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      expenseGroupRequest,)
+  }
+);}
+
+
+
+export type deleteGroupResponse200 = {
+  data: void
+  status: 200
+}
+    
+export type deleteGroupResponseSuccess = (deleteGroupResponse200) & {
+  headers: Headers;
+};
+;
+
+export type deleteGroupResponse = (deleteGroupResponseSuccess)
+
+export const getDeleteGroupUrl = (id: number,) => {
+
+
+  
+
+  return `/api/expenses/groups/${id}`
+}
+
+export const deleteGroup = async (id: number, options?: RequestInit): Promise<deleteGroupResponse> => {
+  
+  return customFetch<deleteGroupResponse>(getDeleteGroupUrl(id),
+  {      
+    ...options,
+    method: 'DELETE'
+    
+    
+  }
+);}
+
+
+
+export type setSplitsResponse200 = {
+  data: SplitConfigResponse
+  status: 200
+}
+    
+export type setSplitsResponseSuccess = (setSplitsResponse200) & {
+  headers: Headers;
+};
+;
+
+export type setSplitsResponse = (setSplitsResponseSuccess)
+
+export const getSetSplitsUrl = (id: number,) => {
+
+
+  
+
+  return `/api/expenses/groups/${id}/splits`
+}
+
+export const setSplits = async (id: number,
+    splitConfigRequest: SplitConfigRequest, options?: RequestInit): Promise<setSplitsResponse> => {
+  
+  return customFetch<setSplitsResponse>(getSetSplitsUrl(id),
+  {      
+    ...options,
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      splitConfigRequest,)
   }
 );}
 
@@ -366,6 +589,257 @@ export const inviteMember = async (inviteFamilyMemberRequest: InviteFamilyMember
 
 
 
+export type listExpensesResponse200 = {
+  data: ListExpenses200
+  status: 200
+}
+    
+export type listExpensesResponseSuccess = (listExpensesResponse200) & {
+  headers: Headers;
+};
+;
+
+export type listExpensesResponse = (listExpensesResponseSuccess)
+
+export const getListExpensesUrl = (params?: ListExpensesParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : value.toString())
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/expenses?${stringifiedParams}` : `/api/expenses`
+}
+
+export const listExpenses = async (params?: ListExpensesParams, options?: RequestInit): Promise<listExpensesResponse> => {
+  
+  return customFetch<listExpensesResponse>(getListExpensesUrl(params),
+  {      
+    ...options,
+    method: 'GET'
+    
+    
+  }
+);}
+
+
+
+export type createExpenseResponse200 = {
+  data: ExpenseResponse
+  status: 200
+}
+    
+export type createExpenseResponseSuccess = (createExpenseResponse200) & {
+  headers: Headers;
+};
+;
+
+export type createExpenseResponse = (createExpenseResponseSuccess)
+
+export const getCreateExpenseUrl = () => {
+
+
+  
+
+  return `/api/expenses`
+}
+
+export const createExpense = async (expenseRequest: ExpenseRequest, options?: RequestInit): Promise<createExpenseResponse> => {
+  
+  return customFetch<createExpenseResponse>(getCreateExpenseUrl(),
+  {      
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      expenseRequest,)
+  }
+);}
+
+
+
+export type restoreExpenseResponse200 = {
+  data: ExpenseResponse
+  status: 200
+}
+    
+export type restoreExpenseResponseSuccess = (restoreExpenseResponse200) & {
+  headers: Headers;
+};
+;
+
+export type restoreExpenseResponse = (restoreExpenseResponseSuccess)
+
+export const getRestoreExpenseUrl = (id: number,) => {
+
+
+  
+
+  return `/api/expenses/${id}/restore`
+}
+
+export const restoreExpense = async (id: number, options?: RequestInit): Promise<restoreExpenseResponse> => {
+  
+  return customFetch<restoreExpenseResponse>(getRestoreExpenseUrl(id),
+  {      
+    ...options,
+    method: 'POST'
+    
+    
+  }
+);}
+
+
+
+export type importExpensesResponse200 = {
+  data: ImportResultResponse
+  status: 200
+}
+    
+export type importExpensesResponseSuccess = (importExpensesResponse200) & {
+  headers: Headers;
+};
+;
+
+export type importExpensesResponse = (importExpensesResponseSuccess)
+
+export const getImportExpensesUrl = (params?: ImportExpensesParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : value.toString())
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/expenses/import?${stringifiedParams}` : `/api/expenses/import`
+}
+
+export const importExpenses = async (importExpensesBody: ImportExpensesBody,
+    params?: ImportExpensesParams, options?: RequestInit): Promise<importExpensesResponse> => {
+    const formData = new FormData();
+formData.append(`file`, importExpensesBody.file)
+
+  return customFetch<importExpensesResponse>(getImportExpensesUrl(params),
+  {      
+    ...options,
+    method: 'POST'
+    ,
+    body: 
+      formData,
+  }
+);}
+
+
+
+export type listGroupsResponse200 = {
+  data: ExpenseGroupResponse[]
+  status: 200
+}
+    
+export type listGroupsResponseSuccess = (listGroupsResponse200) & {
+  headers: Headers;
+};
+;
+
+export type listGroupsResponse = (listGroupsResponseSuccess)
+
+export const getListGroupsUrl = () => {
+
+
+  
+
+  return `/api/expenses/groups`
+}
+
+export const listGroups = async ( options?: RequestInit): Promise<listGroupsResponse> => {
+  
+  return customFetch<listGroupsResponse>(getListGroupsUrl(),
+  {      
+    ...options,
+    method: 'GET'
+    
+    
+  }
+);}
+
+
+
+export type createGroupResponse200 = {
+  data: ExpenseGroupResponse
+  status: 200
+}
+    
+export type createGroupResponseSuccess = (createGroupResponse200) & {
+  headers: Headers;
+};
+;
+
+export type createGroupResponse = (createGroupResponseSuccess)
+
+export const getCreateGroupUrl = () => {
+
+
+  
+
+  return `/api/expenses/groups`
+}
+
+export const createGroup = async (expenseGroupRequest: ExpenseGroupRequest, options?: RequestInit): Promise<createGroupResponse> => {
+  
+  return customFetch<createGroupResponse>(getCreateGroupUrl(),
+  {      
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      expenseGroupRequest,)
+  }
+);}
+
+
+
+export type archiveGroupResponse200 = {
+  data: void
+  status: 200
+}
+    
+export type archiveGroupResponseSuccess = (archiveGroupResponse200) & {
+  headers: Headers;
+};
+;
+
+export type archiveGroupResponse = (archiveGroupResponseSuccess)
+
+export const getArchiveGroupUrl = (id: number,) => {
+
+
+  
+
+  return `/api/expenses/groups/${id}/archive`
+}
+
+export const archiveGroup = async (id: number, options?: RequestInit): Promise<archiveGroupResponse> => {
+  
+  return customFetch<archiveGroupResponse>(getArchiveGroupUrl(id),
+  {      
+    ...options,
+    method: 'POST'
+    
+    
+  }
+);}
+
+
+
 export type registerResponse200 = {
   data: AuthResponse
   status: 200
@@ -558,6 +1032,145 @@ export const getStreamUrl = () => {
 export const stream = async ( options?: RequestInit): Promise<streamResponse> => {
   
   return customFetch<streamResponse>(getStreamUrl(),
+  {      
+    ...options,
+    method: 'GET'
+    
+    
+  }
+);}
+
+
+
+export type getHistoryResponse200 = {
+  data: EditHistoryResponse[]
+  status: 200
+}
+    
+export type getHistoryResponseSuccess = (getHistoryResponse200) & {
+  headers: Headers;
+};
+;
+
+export type getHistoryResponse = (getHistoryResponseSuccess)
+
+export const getGetHistoryUrl = (id: number,) => {
+
+
+  
+
+  return `/api/expenses/${id}/history`
+}
+
+export const getHistory = async (id: number, options?: RequestInit): Promise<getHistoryResponse> => {
+  
+  return customFetch<getHistoryResponse>(getGetHistoryUrl(id),
+  {      
+    ...options,
+    method: 'GET'
+    
+    
+  }
+);}
+
+
+
+export type getMonthlySummaryResponse200 = {
+  data: MonthlySummaryResponse
+  status: 200
+}
+    
+export type getMonthlySummaryResponseSuccess = (getMonthlySummaryResponse200) & {
+  headers: Headers;
+};
+;
+
+export type getMonthlySummaryResponse = (getMonthlySummaryResponseSuccess)
+
+export const getGetMonthlySummaryUrl = (params?: GetMonthlySummaryParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : value.toString())
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/expenses/summary?${stringifiedParams}` : `/api/expenses/summary`
+}
+
+export const getMonthlySummary = async (params?: GetMonthlySummaryParams, options?: RequestInit): Promise<getMonthlySummaryResponse> => {
+  
+  return customFetch<getMonthlySummaryResponse>(getGetMonthlySummaryUrl(params),
+  {      
+    ...options,
+    method: 'GET'
+    
+    
+  }
+);}
+
+
+
+export type getRatesResponse200 = {
+  data: ExchangeRateResponse[]
+  status: 200
+}
+    
+export type getRatesResponseSuccess = (getRatesResponse200) & {
+  headers: Headers;
+};
+;
+
+export type getRatesResponse = (getRatesResponseSuccess)
+
+export const getGetRatesUrl = () => {
+
+
+  
+
+  return `/api/expenses/rates`
+}
+
+export const getRates = async ( options?: RequestInit): Promise<getRatesResponse> => {
+  
+  return customFetch<getRatesResponse>(getGetRatesUrl(),
+  {      
+    ...options,
+    method: 'GET'
+    
+    
+  }
+);}
+
+
+
+export type getBalancesResponse200 = {
+  data: BalanceResponse[]
+  status: 200
+}
+    
+export type getBalancesResponseSuccess = (getBalancesResponse200) & {
+  headers: Headers;
+};
+;
+
+export type getBalancesResponse = (getBalancesResponseSuccess)
+
+export const getGetBalancesUrl = () => {
+
+
+  
+
+  return `/api/expenses/balances`
+}
+
+export const getBalances = async ( options?: RequestInit): Promise<getBalancesResponse> => {
+  
+  return customFetch<getBalancesResponse>(getGetBalancesUrl(),
   {      
     ...options,
     method: 'GET'

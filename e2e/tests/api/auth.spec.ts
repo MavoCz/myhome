@@ -1,6 +1,6 @@
 import { test, expect } from '../../fixtures/api.fixture';
 import { registerUser, loginAs, createTestUser } from '../../helpers/auth';
-import type { RegisterRequest } from 'myhome-common/api/generated/model';
+import type { FamilyMemberResponse, RegisterRequest } from 'myhome-common/api/generated/model';
 
 test.describe('Auth API', () => {
   test('register returns access + refresh tokens', async ({ api }) => {
@@ -91,5 +91,52 @@ test.describe('Auth API', () => {
       data: { refreshToken: auth.refreshToken },
     });
     expect(refreshRes.status()).toBe(401);
+  });
+});
+
+test.describe('Member Color API', () => {
+  test('GET /api/family/members returns memberColor field', async ({ authApi }) => {
+    const res = await authApi.get('/api/family/members');
+    expect(res.ok()).toBeTruthy();
+    const members: FamilyMemberResponse[] = await res.json();
+    expect(members.length).toBeGreaterThanOrEqual(1);
+    // memberColor starts as null
+    expect(members[0]).toHaveProperty('memberColor');
+  });
+
+  test('PUT /api/family/members/{userId}/color updates member color', async ({ authApi }) => {
+    // Get own userId from the members list
+    const listRes = await authApi.get('/api/family/members');
+    const members: FamilyMemberResponse[] = await listRes.json();
+    const userId = members[0].userId!;
+
+    const res = await authApi.put(`/api/family/members/${userId}/color`, {
+      data: { color: '#E15759' },
+    });
+    expect(res.ok()).toBeTruthy();
+
+    // Verify the color was saved
+    const membersRes = await authApi.get('/api/family/members');
+    const updated: FamilyMemberResponse[] = await membersRes.json();
+    const self = updated.find((m) => m.userId === userId);
+    expect(self?.memberColor).toBe('#E15759');
+  });
+
+  test('PUT /api/family/members/{userId}/color rejects invalid color', async ({ authApi }) => {
+    const listRes = await authApi.get('/api/family/members');
+    const members: FamilyMemberResponse[] = await listRes.json();
+    const userId = members[0].userId!;
+
+    const res = await authApi.put(`/api/family/members/${userId}/color`, {
+      data: { color: 'not-a-color' },
+    });
+    expect(res.ok()).toBeFalsy();
+  });
+
+  test('PUT /api/family/members/{userId}/color requires auth', async ({ api }) => {
+    const res = await api.put('/api/family/members/1/color', {
+      data: { color: '#4E79A7' },
+    });
+    expect(res.status()).toBe(401);
   });
 });

@@ -14,6 +14,6 @@ public record ExpenseRequest(
         @NotNull ExpenseCurrency currency,
         @NotNull LocalDate date,
         @NotNull Long paidByUserId,
-        @NotNull Long groupId,
+        Long groupId,
         @Valid List<SplitEntry> splits
 ) {}

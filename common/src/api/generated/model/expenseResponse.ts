@@ -24,4 +24,5 @@ export interface ExpenseResponse {
   createdAt?: string;
   deletedAt?: string;
   canEdit?: boolean;
+  importSource?: string;
 }

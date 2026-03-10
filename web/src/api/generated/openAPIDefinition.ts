@@ -31,6 +31,9 @@ import type {
   FamilyMemberResponse,
   GetMonthlySummaryParams,
   GrantModuleAccessRequest,
+  ImportExpensesBody,
+  ImportExpensesParams,
+  ImportResultResponse,
   InviteFamilyMemberRequest,
   ListAccessParams,
   ListExpenses200,
@@ -44,6 +47,7 @@ import type {
   SplitConfigResponse,
   SseEmitter,
   TokenRefreshRequest,
+  UpdateColorRequest,
   UpdateModuleAccessRequest,
   UpdateRoleRequest
 } from '../../../../common/src/api/generated/model';
@@ -228,6 +232,65 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       > => {
 
       const mutationOptions = getUpdateRoleMutationOptions(options);
+
+      return useMutation(mutationOptions);
+    }
+    
+export const updateColor = (
+    userId: number,
+    updateColorRequest: UpdateColorRequest,
+ options?: SecondParameter<typeof customFetch>,) => {
+      
+      
+      return customFetch<void>(
+      {url: `/api/family/members/${userId}/color`, method: 'PUT',
+      headers: {'Content-Type': 'application/json', },
+      data: updateColorRequest
+    },
+      options);
+    }
+  
+
+
+export const getUpdateColorMutationOptions = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateColor>>, TError,{userId: number;data: UpdateColorRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateColor>>, TError,{userId: number;data: UpdateColorRequest}, TContext> => {
+
+const mutationKey = ['updateColor'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateColor>>, {userId: number;data: UpdateColorRequest}> = (props) => {
+          const {userId,data} = props ?? {};
+
+          return  updateColor(userId,data,requestOptions)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdateColorMutationResult = NonNullable<Awaited<ReturnType<typeof updateColor>>>
+    export type UpdateColorMutationBody = UpdateColorRequest
+    export type UpdateColorMutationError = unknown
+
+    export const useUpdateColor = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateColor>>, TError,{userId: number;data: UpdateColorRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof updateColor>>,
+        TError,
+        {userId: number;data: UpdateColorRequest},
+        TContext
+      > => {
+
+      const mutationOptions = getUpdateColorMutationOptions(options);
 
       return useMutation(mutationOptions);
     }
@@ -1115,6 +1178,69 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       > => {
 
       const mutationOptions = getRestoreExpenseMutationOptions(options);
+
+      return useMutation(mutationOptions);
+    }
+    
+export const importExpenses = (
+    importExpensesBody: ImportExpensesBody,
+    params?: ImportExpensesParams,
+ options?: SecondParameter<typeof customFetch>,signal?: AbortSignal
+) => {
+      
+      const formData = new FormData();
+formData.append(`file`, importExpensesBody.file)
+
+      return customFetch<ImportResultResponse>(
+      {url: `/api/expenses/import`, method: 'POST',
+      headers: {'Content-Type': 'multipart/form-data', },
+       data: formData,
+        params, signal
+    },
+      options);
+    }
+  
+
+
+export const getImportExpensesMutationOptions = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof importExpenses>>, TError,{data: ImportExpensesBody;params?: ImportExpensesParams}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof importExpenses>>, TError,{data: ImportExpensesBody;params?: ImportExpensesParams}, TContext> => {
+
+const mutationKey = ['importExpenses'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof importExpenses>>, {data: ImportExpensesBody;params?: ImportExpensesParams}> = (props) => {
+          const {data,params} = props ?? {};
+
+          return  importExpenses(data,params,requestOptions)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ImportExpensesMutationResult = NonNullable<Awaited<ReturnType<typeof importExpenses>>>
+    export type ImportExpensesMutationBody = ImportExpensesBody
+    export type ImportExpensesMutationError = unknown
+
+    export const useImportExpenses = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof importExpenses>>, TError,{data: ImportExpensesBody;params?: ImportExpensesParams}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof importExpenses>>,
+        TError,
+        {data: ImportExpensesBody;params?: ImportExpensesParams},
+        TContext
+      > => {
+
+      const mutationOptions = getImportExpensesMutationOptions(options);
 
       return useMutation(mutationOptions);
     }

@@ -8,6 +8,7 @@ import type {
   ExchangeRateResponse,
   EditHistoryResponse,
   SplitConfigResponse,
+  ImportResultResponse,
 } from 'myhome-common/api/generated/model';
 
 const BACKEND_PORT = process.env.TEST_BACKEND_PORT ?? '8081';
@@ -583,6 +584,16 @@ test.describe('Monthly Summary API', () => {
     expect(Number(summary.totalCzk)).toBeGreaterThanOrEqual(2500);
     expect(summary.memberTotals).toBeDefined();
     expect(summary.memberTotals!.length).toBeGreaterThanOrEqual(1);
+
+    // byGroup should include memberPaid breakdown
+    expect(summary.byGroup).toBeDefined();
+    expect(summary.byGroup!.length).toBeGreaterThanOrEqual(1);
+    const group = summary.byGroup![0];
+    expect(group.memberPaid).toBeDefined();
+    expect(group.memberPaid!.length).toBeGreaterThanOrEqual(1);
+    const memberEntry = group.memberPaid!.find((m) => m.userId === userId);
+    expect(memberEntry).toBeDefined();
+    expect(memberEntry!.paidCzk).toBeGreaterThanOrEqual(2500);
   });
 
   test('summary has settlement plan when balances are uneven', async ({ api, authResponse }) => {
@@ -970,5 +981,263 @@ test.describe('canEdit on expenses', () => {
     for (const e of adminExpenses) {
       expect(e.canEdit).toBe(false);
     }
+  });
+});
+
+// ===========================================================================
+// CSV Import
+// ===========================================================================
+
+/**
+ * Full Raiffeisen column set with BOM prefix (EF BB BF) — mirrors real bank exports.
+ * Contains 2 outgoing + 1 incoming transaction, fabricated data.
+ */
+const RAIFFEISEN_FULL_COLUMNS_HEADER =
+  'Datum provedení;Datum zaúčtování;Číslo účtu;Název účtu;Kategorie transakce;Číslo protiúčtu;Název protiúčtu;Typ transakce;Zpráva;Poznámka;VS;KS;SS;Zaúčtovaná částka;Měna účtu;Původní částka;Původní měna;Poplatky;Id transakce;Vlastní poznámka;Název obchodníka;Město';
+
+const RAIFFEISEN_BOM_CSV = (() => {
+  const rows = [
+    RAIFFEISEN_FULL_COLUMNS_HEADER,
+    // outgoing: supermarket purchase
+    '05.03.2026;05.03.2026;CZ0000000011111111;Osobní účet;Platba kartou;;;Potraviny s.r.o.;Karetní transakce;nákup potravin;;;;;;-320,50;CZK;-320,50;CZK;0,00;BOM-TXN-001;;Billa;Praha',
+    // outgoing: online purchase
+    '10.03.2026;10.03.2026;CZ0000000011111111;Osobní účet;Odchozí platba;CZ1234567890123456;E-shop Czech s.r.o.;Odchozí platba;objednavka 12345;;12345;;;-1500,00;CZK;-1500,00;CZK;0,00;BOM-TXN-002;;;Brno',
+    // incoming: salary — should be skipped
+    '01.03.2026;01.03.2026;CZ0000000011111111;Osobní účet;Příchozí platba;CZ9876543210987654;Zaměstnavatel a.s.;Příchozí platba;Výplata Březen 2026;;;;;;;55000,00;CZK;55000,00;CZK;0,00;BOM-TXN-003;;;',
+  ];
+  const content = rows.join('\n');
+  // Prepend UTF-8 BOM (EF BB BF)
+  const bom = Buffer.from([0xef, 0xbb, 0xbf]);
+  return Buffer.concat([bom, Buffer.from(content, 'utf-8')]);
+})();
+
+/** Minimal Raiffeisen CSV: 2 outgoing transactions + 1 incoming (should be skipped). */
+const RAIFFEISEN_CSV = [
+  'Datum provedení;Zaúčtovaná částka;Měna účtu;Id transakce;Název obchodníka;Název protiúčtu;Zpráva',
+  '01.03.2026;-500,00;CZK;E2E-TXN-A1;Albert supermarket;;',
+  '15.03.2026;-250,00;CZK;E2E-TXN-A2;;Prodejna ABC;nakup obleceni',
+  '20.03.2026;700,00;CZK;E2E-TXN-A3;;;prevod penez',
+].join('\n');
+
+function csvMultipart(content: string) {
+  return {
+    file: {
+      name: 'raiffeisen-test.csv',
+      mimeType: 'text/csv',
+      buffer: Buffer.from(content, 'utf-8'),
+    },
+  };
+}
+
+test.describe('CSV Import API', () => {
+  test('POST /api/expenses/import imports outgoing and skips incoming transactions', async ({ api, authResponse }) => {
+    const token = authResponse.accessToken!;
+    const res = await api.post('/api/expenses/import', {
+      headers: bearer(token),
+      multipart: csvMultipart(RAIFFEISEN_CSV),
+    });
+    expect(res.ok()).toBeTruthy();
+    const body: ImportResultResponse = await res.json();
+    expect(body.imported).toBe(2); // 2 outgoing transactions
+    expect(body.skipped).toBe(1);  // 1 incoming (+700 CZK)
+    expect(body.failed).toBe(0);
+  });
+
+  test('POST /api/expenses/import requires auth', async ({ api }) => {
+    const res = await api.post('/api/expenses/import', {
+      multipart: csvMultipart(RAIFFEISEN_CSV),
+    });
+    expect(res.status()).toBe(401);
+  });
+
+  test('POST /api/expenses/import detects duplicates on second upload', async ({ api, authResponse }) => {
+    const token = authResponse.accessToken!;
+
+    // First upload
+    const firstRes = await api.post('/api/expenses/import', {
+      headers: bearer(token),
+      multipart: csvMultipart(RAIFFEISEN_CSV),
+    });
+    expect(firstRes.ok()).toBeTruthy();
+    const first: ImportResultResponse = await firstRes.json();
+    expect(first.imported).toBe(2);
+
+    // Second upload with same file — both outgoing rows are duplicates, incoming is still skipped
+    const secondRes = await api.post('/api/expenses/import', {
+      headers: bearer(token),
+      multipart: csvMultipart(RAIFFEISEN_CSV),
+    });
+    expect(secondRes.ok()).toBeTruthy();
+    const second: ImportResultResponse = await secondRes.json();
+    expect(second.imported).toBe(0);
+    expect(second.skipped).toBe(3); // 2 deduplicated + 1 incoming
+  });
+
+  test('GET /api/expenses?unassigned=true returns only own unassigned imported expenses', async ({
+    api,
+    authResponse,
+  }) => {
+    const token = authResponse.accessToken!;
+
+    // Import first so there are unassigned expenses
+    await api.post('/api/expenses/import', {
+      headers: bearer(token),
+      multipart: csvMultipart(RAIFFEISEN_CSV),
+    });
+
+    const res = await api.get('/api/expenses?unassigned=true&page=0&size=50', {
+      headers: bearer(token),
+    });
+    expect(res.ok()).toBeTruthy();
+    const body = await res.json();
+    expect(Array.isArray(body.content)).toBeTruthy();
+    expect(body.content.length).toBe(2);
+
+    for (const expense of body.content as ExpenseResponse[]) {
+      expect(expense.group).toBeNull();
+      expect(expense.importSource).toBe('RAIFFEISEN');
+    }
+  });
+
+  test('GET /api/expenses?unassigned=true requires auth', async ({ api }) => {
+    const res = await api.get('/api/expenses?unassigned=true');
+    expect(res.status()).toBe(401);
+  });
+
+  test('assigning a group to an imported expense removes it from the unassigned list', async ({
+    api,
+    authResponse,
+  }) => {
+    const token = authResponse.accessToken!;
+    const userId = authResponse.user!.id!;
+    const groupId = await ensureDefaultGroup(api, token);
+
+    // Import
+    await api.post('/api/expenses/import', {
+      headers: bearer(token),
+      multipart: csvMultipart(RAIFFEISEN_CSV),
+    });
+
+    // Get unassigned list
+    const unassignedRes = await api.get('/api/expenses?unassigned=true&page=0&size=50', {
+      headers: bearer(token),
+    });
+    const before = await unassignedRes.json();
+    const target: ExpenseResponse = before.content[0];
+    expect(target.group).toBeNull();
+
+    // Assign to a group via PUT
+    const updateRes = await api.put(`/api/expenses/${target.id}`, {
+      headers: bearer(token),
+      data: {
+        description: target.description,
+        amount: Number(target.originalAmount),
+        currency: target.originalCurrency as ExpenseResponse['originalCurrency'],
+        date: target.date,
+        paidByUserId: userId,
+        groupId,
+      },
+    });
+    expect(updateRes.ok()).toBeTruthy();
+    const updated: ExpenseResponse = await updateRes.json();
+    expect(updated.group?.id).toBe(groupId);
+
+    // Should no longer appear in the unassigned list
+    const afterRes = await api.get('/api/expenses?unassigned=true&page=0&size=50', {
+      headers: bearer(token),
+    });
+    const after = await afterRes.json();
+    const ids = (after.content as ExpenseResponse[]).map((e) => e.id);
+    expect(ids).not.toContain(target.id);
+
+    // Should appear in the assigned group list
+    const groupListRes = await api.get(`/api/expenses?groupId=${groupId}&page=0&size=100`, {
+      headers: bearer(token),
+    });
+    const groupList = await groupListRes.json();
+    const groupIds = (groupList.content as ExpenseResponse[]).map((e) => e.id);
+    expect(groupIds).toContain(target.id);
+  });
+
+  test('imported expenses are not visible in another family member unassigned list', async ({
+    api,
+    authResponse,
+  }) => {
+    const adminToken = authResponse.accessToken!;
+    const adminFamilyId = authResponse.user!.familyId!;
+
+    // Admin imports CSV
+    await api.post('/api/expenses/import', {
+      headers: bearer(adminToken),
+      multipart: csvMultipart(RAIFFEISEN_CSV),
+    });
+
+    // Add a second PARENT family member
+    const tag = `import-privacy-${Date.now()}`;
+    const addRes = await api.post('/api/family/members', {
+      headers: bearer(adminToken),
+      data: {
+        email: `${tag}@example.com`,
+        password: 'Password123!',
+        displayName: `Parent ${tag}`,
+        role: 'PARENT',
+      },
+    });
+    expect(addRes.ok()).toBeTruthy();
+    const member = await addRes.json();
+
+    await grantExpensesAccess(api, adminToken, member.userId, adminFamilyId, 'ACCESS');
+
+    const loginRes = await api.post('/api/auth/login', {
+      data: { email: `${tag}@example.com`, password: 'Password123!' },
+    });
+    const memberToken = (await loginRes.json()).accessToken;
+
+    // Member's own unassigned list should be empty (admin's private imports are not visible)
+    const res = await api.get('/api/expenses?unassigned=true&page=0&size=50', {
+      headers: bearer(memberToken),
+    });
+    const body = await res.json();
+    expect(body.content).toHaveLength(0);
+  });
+
+  test('POST /api/expenses/import handles UTF-8 BOM prefix in CSV file', async ({ api, authResponse }) => {
+    const token = authResponse.accessToken!;
+    const res = await api.post('/api/expenses/import', {
+      headers: bearer(token),
+      multipart: {
+        file: {
+          name: 'raiffeisen-bom.csv',
+          mimeType: 'text/csv',
+          buffer: RAIFFEISEN_BOM_CSV,
+        },
+      },
+    });
+    expect(res.ok()).toBeTruthy();
+    const body: ImportResultResponse = await res.json();
+    expect(body.imported).toBe(2);  // 2 outgoing transactions
+    expect(body.skipped).toBe(1);   // 1 incoming salary skipped
+    expect(body.failed).toBe(0);
+    expect(body.errors).toHaveLength(0);
+  });
+
+  test('unassigned expenses are excluded from monthly summary', async ({ api, authResponse }) => {
+    const token = authResponse.accessToken!;
+
+    // Import (creates unassigned expenses)
+    await api.post('/api/expenses/import', {
+      headers: bearer(token),
+      multipart: csvMultipart(RAIFFEISEN_CSV),
+    });
+
+    // Summary should not include unassigned expense amounts
+    const now = new Date();
+    const summaryRes = await api.get(
+      `/api/expenses/summary?year=${now.getFullYear()}&month=${now.getMonth() + 1}`,
+      { headers: bearer(token) },
+    );
+    const summary = await summaryRes.json();
+    // totalCzk should be 0 because imported expenses are unassigned (excluded from summaries)
+    expect(Number(summary.totalCzk ?? 0)).toBe(0);
   });
 });

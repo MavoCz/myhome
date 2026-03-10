@@ -56,10 +56,11 @@ export const customFetch = async <T>(
       }
       url += `?${searchParams.toString()}`;
     }
+    const isFormData = data instanceof FormData;
     fetchOptions = {
       method,
-      headers: configHeaders,
-      body: data != null ? JSON.stringify(data) : undefined,
+      headers: isFormData ? undefined : configHeaders,
+      body: data != null ? (isFormData ? data : JSON.stringify(data)) : undefined,
       signal,
       ...options,
     };
@@ -68,7 +69,8 @@ export const customFetch = async <T>(
   const storage = getTokenStorage();
 
   const headers = new Headers(fetchOptions.headers);
-  if (!headers.has('Content-Type') && fetchOptions.body) {
+  // Do NOT set Content-Type for FormData — the browser sets it automatically with the boundary
+  if (!headers.has('Content-Type') && fetchOptions.body && !(fetchOptions.body instanceof FormData)) {
     headers.set('Content-Type', 'application/json');
   }
 

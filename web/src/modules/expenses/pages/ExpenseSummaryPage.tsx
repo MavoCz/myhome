@@ -1,20 +1,15 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import Typography from '@mui/material/Typography';
 import Box from '@mui/material/Box';
 import Paper from '@mui/material/Paper';
-import Table from '@mui/material/Table';
-import TableBody from '@mui/material/TableBody';
-import TableCell from '@mui/material/TableCell';
-import TableContainer from '@mui/material/TableContainer';
-import TableHead from '@mui/material/TableHead';
-import TableRow from '@mui/material/TableRow';
 import TextField from '@mui/material/TextField';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import List from '@mui/material/List';
 import ListItem from '@mui/material/ListItem';
 import ListItemText from '@mui/material/ListItemText';
-import Chip from '@mui/material/Chip';
-import { useGetMonthlySummary } from '../../../api/generated/openAPIDefinition';
+import { useGetMonthlySummary, useListMembers } from '../../../api/generated/openAPIDefinition';
+import { GroupPieChart } from '../components/GroupPieChart';
+import { buildMemberColorMap } from '../utils/memberColors';
 
 export function ExpenseSummaryPage() {
   const now = new Date();
@@ -22,8 +17,11 @@ export function ExpenseSummaryPage() {
   const [month, setMonth] = useState(now.getMonth() + 1);
 
   const { data: summary, isLoading } = useGetMonthlySummary({ year, month });
+  const { data: members = [] } = useListMembers();
 
   const monthLabel = new Date(year, month - 1, 1).toLocaleString('default', { month: 'long', year: 'numeric' });
+
+  const colorMap = useMemo(() => buildMemberColorMap(members), [members]);
 
   return (
     <Box>
@@ -66,65 +64,22 @@ export function ExpenseSummaryPage() {
             </Typography>
           </Paper>
 
-          {/* By group */}
+          {/* Pie charts per group */}
           {summary.byGroup && summary.byGroup.length > 0 && (
             <Box>
-              <Typography variant="h6" sx={{ mb: 1 }}>By Group</Typography>
-              <TableContainer component={Paper} variant="outlined" data-testid="summary-by-group-table">
-                <Table size="small">
-                  <TableHead>
-                    <TableRow>
-                      <TableCell>Group</TableCell>
-                      <TableCell align="right">Total (CZK)</TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {summary.byGroup.map((g) => (
-                      <TableRow key={g.groupId} data-testid={`summary-group-row-${g.groupId}`}>
-                        <TableCell>{g.groupName}</TableCell>
-                        <TableCell align="right">
-                          {Number(g.totalCzk ?? 0).toLocaleString('cs-CZ', { minimumFractionDigits: 0 })}
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </TableContainer>
-            </Box>
-          )}
-
-          {/* Member totals */}
-          {summary.memberTotals && summary.memberTotals.length > 0 && (
-            <Box>
-              <Typography variant="h6" sx={{ mb: 1 }}>Member Totals</Typography>
-              <TableContainer component={Paper} variant="outlined" data-testid="summary-member-table">
-                <Table size="small">
-                  <TableHead>
-                    <TableRow>
-                      <TableCell>Member</TableCell>
-                      <TableCell align="right">Paid</TableCell>
-                      <TableCell align="right">Owed</TableCell>
-                      <TableCell align="right">Balance</TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {summary.memberTotals.map((m) => (
-                      <TableRow key={m.userId} data-testid={`summary-member-row-${m.userId}`}>
-                        <TableCell>{m.displayName}</TableCell>
-                        <TableCell align="right">{Number(m.paidCzk ?? 0).toLocaleString('cs-CZ', { minimumFractionDigits: 0 })}</TableCell>
-                        <TableCell align="right">{Number(m.owedCzk ?? 0).toLocaleString('cs-CZ', { minimumFractionDigits: 0 })}</TableCell>
-                        <TableCell align="right">
-                          <Chip
-                            size="small"
-                            label={`${(m.netCzk ?? 0) > 0 ? '+' : ''}${Number(m.netCzk ?? 0).toLocaleString('cs-CZ', { minimumFractionDigits: 0 })} CZK`}
-                            color={(m.netCzk ?? 0) > 0 ? 'success' : (m.netCzk ?? 0) < 0 ? 'error' : 'default'}
-                          />
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </TableContainer>
+              <Typography variant="h6" sx={{ mb: 2 }}>Spending by Group</Typography>
+              <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: 3 }}>
+                {summary.byGroup.map((g) => (
+                  <GroupPieChart
+                    key={g.groupId}
+                    groupId={g.groupId ?? 0}
+                    groupName={g.groupName ?? 'Unknown'}
+                    totalCzk={g.totalCzk ?? 0}
+                    memberPaid={g.memberPaid ?? []}
+                    colorMap={colorMap}
+                  />
+                ))}
+              </Box>
             </Box>
           )}
 
@@ -156,7 +111,7 @@ export function ExpenseSummaryPage() {
           )}
 
           {summary.settlementPlan?.length === 0 && (
-            <Typography color="success.main">✓ All balances are settled for this month</Typography>
+            <Typography color="success.main">All balances are settled for this month</Typography>
           )}
         </Box>
       )}

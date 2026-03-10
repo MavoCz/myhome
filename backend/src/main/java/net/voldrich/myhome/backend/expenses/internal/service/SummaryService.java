@@ -43,16 +43,26 @@ public class SummaryService {
                 .map(ExpensesRecord::getCzkAmount)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-        // By group
-        Map<Long, BigDecimal> byGroupTotal = new LinkedHashMap<>();
+        // By group with per-member breakdown
+        Map<Long, Map<Long, BigDecimal>> byGroupByMember = new LinkedHashMap<>();
         for (var e : expenses) {
-            byGroupTotal.merge(e.getGroupId(), e.getCzkAmount(), BigDecimal::add);
+            byGroupByMember
+                    .computeIfAbsent(e.getGroupId(), k -> new HashMap<>())
+                    .merge(e.getPaidByUserId(), e.getCzkAmount(), BigDecimal::add);
         }
-        var byGroup = byGroupTotal.entrySet().stream()
+        var byGroup = byGroupByMember.entrySet().stream()
                 .map(entry -> {
-                    var grp = groupRepository.findById(entry.getKey()).orElse(null);
+                    Long groupId = entry.getKey();
+                    var grp = groupRepository.findById(groupId).orElse(null);
                     String name = grp != null ? grp.getName() : "Unknown";
-                    return new MonthlySummaryResponse.GroupSummary(entry.getKey(), name, entry.getValue());
+                    BigDecimal groupTotal = entry.getValue().values().stream()
+                            .reduce(BigDecimal.ZERO, BigDecimal::add);
+                    List<MonthlySummaryResponse.GroupMemberPaid> memberPaid = entry.getValue().entrySet().stream()
+                            .map(me -> new MonthlySummaryResponse.GroupMemberPaid(
+                                    me.getKey(), nameMap.getOrDefault(me.getKey(), "Unknown"), me.getValue()))
+                            .sorted(Comparator.comparing(MonthlySummaryResponse.GroupMemberPaid::paidCzk).reversed())
+                            .toList();
+                    return new MonthlySummaryResponse.GroupSummary(groupId, name, groupTotal, memberPaid);
                 })
                 .sorted(Comparator.comparing(MonthlySummaryResponse.GroupSummary::totalCzk).reversed())
                 .toList();

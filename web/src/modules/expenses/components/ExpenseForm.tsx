@@ -37,7 +37,7 @@ export function ExpenseForm({ open, onClose, onSuccess, onSubmit, initial, famil
   const [currency, setCurrency] = useState<string>('CZK');
   const [date, setDate] = useState(today);
   const [paidByUserId, setPaidByUserId] = useState<number | ''>(user?.id ?? '');
-  const [groupId, setGroupId] = useState<number | ''>('');
+  const [groupId, setGroupId] = useState<number | null | ''>('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -50,7 +50,7 @@ export function ExpenseForm({ open, onClose, onSuccess, onSubmit, initial, famil
       setCurrency(initial.originalCurrency ?? 'CZK');
       setDate(initial.date ?? today);
       setPaidByUserId(initial.paidBy?.userId ?? '');
-      setGroupId(initial.group?.id ?? '');
+      setGroupId(initial.group?.id ?? null);
     } else {
       setDescription('');
       setAmount('');
@@ -62,17 +62,17 @@ export function ExpenseForm({ open, onClose, onSuccess, onSubmit, initial, famil
     setError('');
   }, [initial, open, today, user]);
 
-  // Auto-select first non-archived group
+  // Auto-select default group only when creating a new expense
   useEffect(() => {
-    if (!groupId && groups.length > 0) {
+    if (!initial && !groupId && groups.length > 0) {
       const defaultGroup = groups.find((g: ExpenseGroupResponse) => g.isDefault) ?? groups[0];
       if (defaultGroup?.id) setGroupId(defaultGroup.id);
     }
-  }, [groups, groupId]);
+  }, [groups, groupId, initial]);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    if (!paidByUserId || !groupId) return;
+    if (!paidByUserId) return;
     setError('');
     setLoading(true);
     try {
@@ -82,7 +82,7 @@ export function ExpenseForm({ open, onClose, onSuccess, onSubmit, initial, famil
         currency: currency as ExpenseRequest['currency'],
         date,
         paidByUserId: paidByUserId as number,
-        groupId: groupId as number,
+        groupId: groupId || undefined,
       });
       onSuccess();
       onClose();
@@ -143,10 +143,11 @@ export function ExpenseForm({ open, onClose, onSuccess, onSubmit, initial, famil
 
           <FormControl fullWidth data-testid="expense-group-select">
             <InputLabel>Group</InputLabel>
-            <Select value={groupId} label="Group"
-              onChange={(e) => setGroupId(e.target.value as number)}>
-              {(groups as ExpenseGroupResponse[]).filter((g) => !g.archived).map((g) => (
-                <MenuItem key={g.id} value={g.id}>{g.name}</MenuItem>
+            <Select value={groupId ?? ''} label="Group"
+              onChange={(e) => setGroupId(e.target.value === '' ? null : e.target.value as number)}>
+              <MenuItem value=""><em>None (unassigned)</em></MenuItem>
+              {(groups as ExpenseGroupResponse[]).map((g) => (
+                <MenuItem key={g.id} value={g.id}>{g.name}{g.archived ? ' (archived)' : ''}</MenuItem>
               ))}
             </Select>
           </FormControl>

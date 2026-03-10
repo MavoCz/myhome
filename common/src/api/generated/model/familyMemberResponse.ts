@@ -11,4 +11,5 @@ export interface FamilyMemberResponse {
   email?: string;
   displayName?: string;
   role?: FamilyMemberResponseRole;
+  memberColor?: string;
 }

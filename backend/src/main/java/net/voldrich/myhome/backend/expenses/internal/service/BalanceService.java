@@ -36,10 +36,12 @@ public class BalanceService {
         Map<Long, String> nameMap = members.stream()
                 .collect(Collectors.toMap(AuthUser::id, AuthUser::displayName));
 
-        // Total paid per user (as payer)
+        // Total paid per user (as payer) — only grouped expenses (exclude unassigned)
         var paid = dsl.select(EXP.PAID_BY_USER_ID, DSL.sum(EXP.CZK_AMOUNT).as("total_paid"))
                 .from(EXP)
-                .where(EXP.FAMILY_ID.eq(familyId).and(EXP.DELETED_AT.isNull()))
+                .where(EXP.FAMILY_ID.eq(familyId)
+                        .and(EXP.DELETED_AT.isNull())
+                        .and(EXP.GROUP_ID.isNotNull()))
                 .groupBy(EXP.PAID_BY_USER_ID)
                 .fetch()
                 .stream()
@@ -48,11 +50,13 @@ public class BalanceService {
                         r -> r.get("total_paid", BigDecimal.class)
                 ));
 
-        // Total owed per user (from splits)
+        // Total owed per user (from splits) — only grouped expenses
         var owed = dsl.select(ES.USER_ID, DSL.sum(ES.CZK_AMOUNT).as("total_owed"))
                 .from(ES)
                 .join(EXP).on(ES.EXPENSE_ID.eq(EXP.ID))
-                .where(EXP.FAMILY_ID.eq(familyId).and(EXP.DELETED_AT.isNull()))
+                .where(EXP.FAMILY_ID.eq(familyId)
+                        .and(EXP.DELETED_AT.isNull())
+                        .and(EXP.GROUP_ID.isNotNull()))
                 .groupBy(ES.USER_ID)
                 .fetch()
                 .stream()

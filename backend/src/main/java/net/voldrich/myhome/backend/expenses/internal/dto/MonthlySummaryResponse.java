@@ -11,7 +11,9 @@ public record MonthlySummaryResponse(
         List<MemberTotals> memberTotals,
         List<SettlementEntry> settlementPlan
 ) {
-    public record GroupSummary(Long groupId, String groupName, BigDecimal totalCzk) {}
+    public record GroupSummary(Long groupId, String groupName, BigDecimal totalCzk, List<GroupMemberPaid> memberPaid) {}
+
+    public record GroupMemberPaid(Long userId, String displayName, BigDecimal paidCzk) {}
 
     public record MemberTotals(Long userId, String displayName, BigDecimal paidCzk, BigDecimal owedCzk, BigDecimal netCzk) {}
 

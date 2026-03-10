@@ -4,6 +4,7 @@ import jakarta.validation.Valid;
 import net.voldrich.myhome.backend.auth.internal.dto.AddFamilyMemberRequest;
 import net.voldrich.myhome.backend.auth.internal.dto.FamilyMemberResponse;
 import net.voldrich.myhome.backend.auth.internal.dto.InviteFamilyMemberRequest;
+import net.voldrich.myhome.backend.auth.internal.dto.UpdateColorRequest;
 import net.voldrich.myhome.backend.auth.internal.dto.UpdateRoleRequest;
 import net.voldrich.myhome.backend.auth.internal.security.AuthUserDetails;
 import net.voldrich.myhome.backend.auth.internal.service.FamilyService;
@@ -61,6 +62,15 @@ public class FamilyController {
             @PathVariable Long userId,
             @Valid @RequestBody UpdateRoleRequest request) {
         familyService.updateRole(currentUser.familyId(), userId, request.role(), currentUser.userId());
+        return ResponseEntity.ok().build();
+    }
+
+    @PutMapping("/members/{userId}/color")
+    public ResponseEntity<Void> updateColor(
+            @AuthenticationPrincipal AuthUserDetails currentUser,
+            @PathVariable Long userId,
+            @Valid @RequestBody UpdateColorRequest request) {
+        familyService.updateColor(currentUser.familyId(), userId, request.color());
         return ResponseEntity.ok().build();
     }
 }

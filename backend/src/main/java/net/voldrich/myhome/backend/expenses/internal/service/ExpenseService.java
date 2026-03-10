@@ -60,7 +60,7 @@ public class ExpenseService {
 
     public record PageResult<T>(List<T> content, int totalElements, int page, int size) {}
 
-    public PageResult<ExpenseResponse> listExpenses(AuthUser user, Long groupId, Integer year, Integer month, int page, int size) {
+    public PageResult<ExpenseResponse> listExpenses(AuthUser user, Long groupId, boolean unassigned, Integer year, Integer month, int page, int size) {
         int offset = page * size;
         boolean hasManage = user.familyRole() == FamilyRole.ADMIN ||
                 authModuleApi.hasModuleAccess(user.id(), user.familyId(), "expenses", ModulePermission.MANAGE);
@@ -68,8 +68,8 @@ public class ExpenseService {
         if (user.familyRole() == FamilyRole.CHILD) {
             allowedGroupIds = groupRepository.findAllowedGroupIds(user.familyId());
         }
-        var records = expenseRepository.findByFamily(user.familyId(), groupId, allowedGroupIds, year, month, offset, size);
-        int total = expenseRepository.countByFamily(user.familyId(), groupId, allowedGroupIds, year, month);
+        var records = expenseRepository.findByFamily(user.familyId(), user.id(), groupId, allowedGroupIds, unassigned, year, month, offset, size);
+        int total = expenseRepository.countByFamily(user.familyId(), user.id(), groupId, allowedGroupIds, unassigned, year, month);
         var members = getMemberMap(user.familyId());
         var content = records.stream().map(e -> toResponse(e, members, hasManage, user.id())).toList();
         return new PageResult<>(content, total, page, size);
@@ -77,6 +77,9 @@ public class ExpenseService {
 
     @Transactional
     public ExpenseResponse createExpense(AuthUser user, ExpenseRequest request) {
+        if (request.groupId() == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Group is required when creating an expense manually");
+        }
         var group = groupRepository.findById(request.groupId())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Expense group not found"));
         if (!group.getFamilyId().equals(user.familyId())) {
@@ -102,7 +105,7 @@ public class ExpenseService {
                 user.familyId(), request.groupId(), request.description(),
                 request.amount(), request.currency().name(),
                 czkAmount, exchangeRate, rateFetchedAt, request.date(),
-                request.paidByUserId(), user.id()
+                request.paidByUserId(), user.id(), null, null
         );
 
         saveSplits(expense.getId(), expense.getCzkAmount(), request.splits(), request.groupId(), members);
@@ -139,10 +142,14 @@ public class ExpenseService {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You can only edit your own expenses");
         }
 
-        var group = groupRepository.findById(request.groupId())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Expense group not found"));
-        if (!group.getFamilyId().equals(user.familyId())) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Expense group not found");
+        // Resolve target group: use request groupId if provided, otherwise keep existing
+        Long targetGroupId = request.groupId() != null ? request.groupId() : expense.getGroupId();
+        if (request.groupId() != null) {
+            var group = groupRepository.findById(request.groupId())
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Expense group not found"));
+            if (!group.getFamilyId().equals(user.familyId())) {
+                throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Expense group not found");
+            }
         }
 
         var members = getMemberMap(user.familyId());
@@ -150,19 +157,19 @@ public class ExpenseService {
         BigDecimal exchangeRate = request.currency() == ExpenseCurrency.CZK ? null : exchangeRateService.getRate(request.currency());
         OffsetDateTime rateFetchedAt = request.currency() == ExpenseCurrency.CZK ? null : exchangeRateService.getRateFetchedAt(request.currency());
 
-        Map<String, List<String>> changedFields = buildChangedFields(expense, request, czkAmount);
+        Map<String, List<String>> changedFields = buildChangedFields(expense, request, targetGroupId, czkAmount);
         if (!changedFields.isEmpty()) {
             historyRepository.create(expenseId, user.id(), toJson(changedFields));
         }
 
         var updated = expenseRepository.update(
-                expenseId, user.familyId(), request.groupId(), request.description(),
+                expenseId, user.familyId(), targetGroupId, request.description(),
                 request.amount(), request.currency().name(),
                 czkAmount, exchangeRate, rateFetchedAt, request.date()
         ).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Expense not found"));
 
         splitRepository.deleteByExpenseId(expenseId);
-        saveSplits(expenseId, updated.getCzkAmount(), request.splits(), request.groupId(), members);
+        saveSplits(expenseId, updated.getCzkAmount(), request.splits(), targetGroupId, members);
 
         String editedByName = members.getOrDefault(user.id(), "Unknown");
         eventPublisher.publishEvent(new ExpenseEditedEvent(
@@ -241,6 +248,9 @@ public class ExpenseService {
 
     private void saveSplits(Long expenseId, BigDecimal czkAmount, List<SplitEntry> requestSplits,
                             Long groupId, Map<Long, String> members) {
+        if (groupId == null) {
+            return; // Private (unassigned) expenses have no splits
+        }
         List<SplitEntry> splits;
         if (requestSplits != null && !requestSplits.isEmpty()) {
             BigDecimal total = requestSplits.stream().map(SplitEntry::sharePct).reduce(BigDecimal.ZERO, BigDecimal::add);
@@ -273,7 +283,7 @@ public class ExpenseService {
                 ))
                 .toList();
 
-        var group = groupRepository.findById(e.getGroupId()).orElse(null);
+        var group = e.getGroupId() != null ? groupRepository.findById(e.getGroupId()).orElse(null) : null;
         boolean canEdit = e.getCreatedByUserId().equals(requestingUserId) || hasManage;
 
         return new ExpenseResponse(
@@ -291,7 +301,8 @@ public class ExpenseService {
                 e.getCreatedByUserId(),
                 e.getCreatedAt(),
                 e.getDeletedAt(),
-                canEdit
+                canEdit,
+                e.getImportSource()
         );
     }
 
@@ -300,7 +311,8 @@ public class ExpenseService {
                 .collect(Collectors.toMap(AuthUser::id, AuthUser::displayName));
     }
 
-    private Map<String, List<String>> buildChangedFields(ExpensesRecord existing, ExpenseRequest request, BigDecimal newCzkAmount) {
+    private Map<String, List<String>> buildChangedFields(ExpensesRecord existing, ExpenseRequest request,
+                                                         Long targetGroupId, BigDecimal newCzkAmount) {
         Map<String, List<String>> changes = new LinkedHashMap<>();
         if (!existing.getDescription().equals(request.description())) {
             changes.put("description", List.of(existing.getDescription(), request.description()));
@@ -314,8 +326,10 @@ public class ExpenseService {
         if (!existing.getExpenseDate().equals(request.date())) {
             changes.put("date", List.of(existing.getExpenseDate().toString(), request.date().toString()));
         }
-        if (!existing.getGroupId().equals(request.groupId())) {
-            changes.put("groupId", List.of(existing.getGroupId().toString(), request.groupId().toString()));
+        if (!Objects.equals(existing.getGroupId(), targetGroupId)) {
+            String oldGroup = existing.getGroupId() != null ? existing.getGroupId().toString() : "none";
+            String newGroup = targetGroupId != null ? targetGroupId.toString() : "none";
+            changes.put("groupId", List.of(oldGroup, newGroup));
         }
         return changes;
     }

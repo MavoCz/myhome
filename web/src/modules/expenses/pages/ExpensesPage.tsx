@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import Typography from '@mui/material/Typography';
 import Box from '@mui/material/Box';
 import Tabs from '@mui/material/Tabs';
@@ -14,6 +14,7 @@ import Paper from '@mui/material/Paper';
 import Button from '@mui/material/Button';
 import Chip from '@mui/material/Chip';
 import AddIcon from '@mui/icons-material/Add';
+import UploadFileIcon from '@mui/icons-material/UploadFile';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import ArchiveIcon from '@mui/icons-material/Archive';
@@ -40,14 +41,18 @@ import { BalanceChip } from '../components/BalanceChip';
 import { CurrencyAmountDisplay } from '../components/CurrencyAmountDisplay';
 import { ExpenseForm } from '../components/ExpenseForm';
 import { ExpenseGroupForm } from '../components/ExpenseGroupForm';
+import { ImportExpensesDialog } from '../ImportExpensesDialog';
+import { GroupPieChart } from '../components/GroupPieChart';
+import { buildMemberColorMap } from '../utils/memberColors';
 import { useListMembers } from '../../../api/generated/openAPIDefinition';
 
 export function ExpensesPage() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [pageTab, setPageTab] = useState<'expenses' | 'manage-groups'>('expenses');
-  const [selectedGroupId, setSelectedGroupId] = useState<number | null>(null);
+  const [selectedGroupId, setSelectedGroupId] = useState<number | 'unassigned' | null>(null);
   const [addOpen, setAddOpen] = useState(false);
+  const [importOpen, setImportOpen] = useState(false);
   const [editExpense, setEditExpense] = useState<ExpenseResponse | null>(null);
   const [createGroupOpen, setCreateGroupOpen] = useState(false);
   const [editGroup, setEditGroup] = useState<ExpenseGroupResponse | null>(null);
@@ -56,8 +61,10 @@ export function ExpensesPage() {
   const { data: balances = [] } = useGetBalances();
   const { data: members = [] } = useListMembers();
 
+  const isUnassigned = selectedGroupId === 'unassigned';
   const { data: expensesData } = useListExpenses({
-    groupId: selectedGroupId ?? undefined,
+    groupId: !isUnassigned && selectedGroupId !== null ? (selectedGroupId as number) : undefined,
+    unassigned: isUnassigned || undefined,
     page: 0,
     size: 50,
   });
@@ -115,6 +122,34 @@ export function ExpensesPage() {
     },
   });
 
+  // Compute per-member paid totals from loaded expenses for the pie chart
+  const groupPieData = useMemo(() => {
+    if (selectedGroupId === null || isUnassigned) return null;
+    const paidByMember = new Map<number, { displayName: string; paidCzk: number }>();
+    for (const e of expenses) {
+      const uid = e.paidBy?.userId;
+      if (uid == null) continue;
+      const existing = paidByMember.get(uid);
+      const amount = Number(e.czkAmount ?? 0);
+      if (existing) {
+        existing.paidCzk += amount;
+      } else {
+        paidByMember.set(uid, { displayName: e.paidBy?.displayName ?? 'Unknown', paidCzk: amount });
+      }
+    }
+    if (paidByMember.size <= 1) return null;
+    const memberPaid = Array.from(paidByMember.entries()).map(([userId, v]) => ({
+      userId,
+      displayName: v.displayName,
+      paidCzk: v.paidCzk,
+    }));
+    const total = memberPaid.reduce((sum, m) => sum + m.paidCzk, 0);
+    const groupName = (groups as ExpenseGroupResponse[]).find((g) => g.id === selectedGroupId)?.name ?? 'Unknown';
+    return { groupId: selectedGroupId as number, groupName, totalCzk: total, memberPaid };
+  }, [expenses, selectedGroupId, isUnassigned, groups]);
+
+  const colorMap = useMemo(() => buildMemberColorMap(members ?? []), [members]);
+
   const isAdminOrParent = user?.familyRole === 'ADMIN' || user?.familyRole === 'PARENT';
 
   const handleCreate = async (data: ExpenseRequest) => {
@@ -132,13 +167,25 @@ export function ExpensesPage() {
     <Box>
       <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
         <Typography variant="h4">Expenses</Typography>
-        <Button variant="outlined" href="/expenses/summary">Monthly Summary</Button>
+        <Box sx={{ display: 'flex', gap: 1 }}>
+          {isAdminOrParent && (
+            <Button
+              variant="outlined"
+              startIcon={<UploadFileIcon />}
+              onClick={() => setImportOpen(true)}
+              data-testid="import-expenses-btn"
+            >
+              Import
+            </Button>
+          )}
+          <Button variant="outlined" href="/expenses/summary">Monthly Summary</Button>
+        </Box>
       </Box>
 
       {/* Balance chips */}
       <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', mb: 2 }} data-testid="expenses-balances-row">
-        {balances.map((b) => (
-          <BalanceChip key={b.userId} balance={b} />
+        {balances.filter((b) => (b.totalPaidCzk ?? 0) !== 0 || (b.totalOwedCzk ?? 0) !== 0).map((b) => (
+          <BalanceChip key={b.userId} balance={b} memberColor={b.userId != null ? colorMap.get(b.userId) : undefined} />
         ))}
       </Box>
 
@@ -161,7 +208,7 @@ export function ExpensesPage() {
           {/* Group filter tabs */}
           <Tabs
             value={selectedGroupId ?? 'all'}
-            onChange={(_, v) => setSelectedGroupId(v === 'all' ? null : (v as number))}
+            onChange={(_, v) => setSelectedGroupId(v === 'all' ? null : v === 'unassigned' ? 'unassigned' : (v as number))}
             sx={{ mb: 2 }}
             data-testid="expenses-group-tabs"
           >
@@ -169,7 +216,21 @@ export function ExpensesPage() {
             {(groups as ExpenseGroupResponse[]).map((g) => (
               <Tab key={g.id} label={g.name} value={g.id} data-testid={`expenses-tab-${g.id}`} />
             ))}
+            <Tab label="Unassigned" value="unassigned" data-testid="expenses-tab-unassigned" />
           </Tabs>
+
+          {/* Pie chart for selected group */}
+          {groupPieData && (
+            <Box sx={{ mb: 2, maxWidth: 400 }} data-testid="expenses-group-pie">
+              <GroupPieChart
+                groupId={groupPieData.groupId}
+                groupName={groupPieData.groupName}
+                totalCzk={groupPieData.totalCzk}
+                memberPaid={groupPieData.memberPaid}
+                colorMap={colorMap}
+              />
+            </Box>
+          )}
 
           {/* Expense table */}
           <TableContainer component={Paper} variant="outlined" data-testid="expenses-table">
@@ -199,7 +260,9 @@ export function ExpensesPage() {
                       <TableCell><CurrencyAmountDisplay expense={expense} /></TableCell>
                       <TableCell>{expense.paidBy?.displayName}</TableCell>
                       <TableCell>
-                        <Chip label={expense.group?.name} size="small" />
+                        {expense.group
+                          ? <Chip label={expense.group.name} size="small" />
+                          : <Chip label="Unassigned" size="small" color="warning" variant="outlined" />}
                       </TableCell>
                       <TableCell align="right">
                         <IconButton
@@ -372,6 +435,14 @@ export function ExpensesPage() {
           familyMembers={members}
         />
       )}
+
+      <ImportExpensesDialog
+        open={importOpen}
+        onClose={() => setImportOpen(false)}
+        onSuccess={() => {
+          queryClient.invalidateQueries({ queryKey: getListExpensesQueryKey() });
+        }}
+      />
     </Box>
   );
 }

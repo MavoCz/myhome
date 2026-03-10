@@ -17,6 +17,9 @@ import type {
   FamilyMemberResponse,
   GetMonthlySummaryParams,
   GrantModuleAccessRequest,
+  ImportExpensesBody,
+  ImportExpensesParams,
+  ImportResultResponse,
   InviteFamilyMemberRequest,
   ListAccessParams,
   ListExpenses200,
@@ -30,6 +33,7 @@ import type {
   SplitConfigResponse,
   SseEmitter,
   TokenRefreshRequest,
+  UpdateColorRequest,
   UpdateModuleAccessRequest,
   UpdateRoleRequest
 } from '../model';
@@ -133,6 +137,41 @@ export const updateRole = async (userId: number,
     headers: { 'Content-Type': 'application/json', ...options?.headers },
     body: JSON.stringify(
       updateRoleRequest,)
+  }
+);}
+
+
+
+export type updateColorResponse200 = {
+  data: void
+  status: 200
+}
+    
+export type updateColorResponseSuccess = (updateColorResponse200) & {
+  headers: Headers;
+};
+;
+
+export type updateColorResponse = (updateColorResponseSuccess)
+
+export const getUpdateColorUrl = (userId: number,) => {
+
+
+  
+
+  return `/api/family/members/${userId}/color`
+}
+
+export const updateColor = async (userId: number,
+    updateColorRequest: UpdateColorRequest, options?: RequestInit): Promise<updateColorResponse> => {
+  
+  return customFetch<updateColorResponse>(getUpdateColorUrl(userId),
+  {      
+    ...options,
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      updateColorRequest,)
   }
 );}
 
@@ -652,6 +691,50 @@ export const restoreExpense = async (id: number, options?: RequestInit): Promise
     method: 'POST'
     
     
+  }
+);}
+
+
+
+export type importExpensesResponse200 = {
+  data: ImportResultResponse
+  status: 200
+}
+    
+export type importExpensesResponseSuccess = (importExpensesResponse200) & {
+  headers: Headers;
+};
+;
+
+export type importExpensesResponse = (importExpensesResponseSuccess)
+
+export const getImportExpensesUrl = (params?: ImportExpensesParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : value.toString())
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/expenses/import?${stringifiedParams}` : `/api/expenses/import`
+}
+
+export const importExpenses = async (importExpensesBody: ImportExpensesBody,
+    params?: ImportExpensesParams, options?: RequestInit): Promise<importExpensesResponse> => {
+    const formData = new FormData();
+formData.append(`file`, importExpensesBody.file)
+
+  return customFetch<importExpensesResponse>(getImportExpensesUrl(params),
+  {      
+    ...options,
+    method: 'POST'
+    ,
+    body: 
+      formData,
   }
 );}
 

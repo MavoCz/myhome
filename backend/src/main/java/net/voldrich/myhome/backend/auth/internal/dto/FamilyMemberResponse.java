@@ -6,5 +6,6 @@ public record FamilyMemberResponse(
         Long userId,
         String email,
         String displayName,
-        FamilyRole role
+        FamilyRole role,
+        String memberColor
 ) {}

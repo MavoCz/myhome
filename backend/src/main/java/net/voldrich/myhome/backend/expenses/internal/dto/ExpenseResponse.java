@@ -20,7 +20,8 @@ public record ExpenseResponse(
         Long createdBy,
         OffsetDateTime createdAt,
         OffsetDateTime deletedAt,
-        boolean canEdit
+        boolean canEdit,
+        String importSource
 ) {
     public record UserRef(Long userId, String displayName) {}
     public record GroupRef(Long id, String name) {}

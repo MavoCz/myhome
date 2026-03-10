@@ -4,7 +4,6 @@ import net.voldrich.myhome.backend.jooq.tables.Expenses;
 import net.voldrich.myhome.backend.jooq.tables.records.ExpensesRecord;
 import org.jooq.Condition;
 import org.jooq.DSLContext;
-import org.jooq.impl.DSL;
 import org.springframework.stereotype.Repository;
 
 import java.math.BigDecimal;
@@ -23,12 +22,20 @@ public class ExpenseRepository {
         this.dsl = dsl;
     }
 
-    public List<ExpensesRecord> findByFamily(Long familyId, Long groupId, List<Long> allowedGroupIds, Integer year, Integer month, int offset, int size) {
+    public List<ExpensesRecord> findByFamily(Long familyId, Long userId, Long groupId, List<Long> allowedGroupIds,
+                                             boolean unassigned, Integer year, Integer month, int offset, int size) {
         Condition condition = EXP.FAMILY_ID.eq(familyId).and(EXP.DELETED_AT.isNull());
-        if (groupId != null) {
+        if (unassigned) {
+            condition = condition.and(EXP.GROUP_ID.isNull()).and(EXP.CREATED_BY_USER_ID.eq(userId));
+        } else if (groupId != null) {
             condition = condition.and(EXP.GROUP_ID.eq(groupId));
-        } else if (allowedGroupIds != null) {
-            condition = condition.and(EXP.GROUP_ID.in(allowedGroupIds));
+        } else {
+            // Privacy filter: show only assigned expenses OR own unassigned expenses
+            Condition privacy = EXP.GROUP_ID.isNotNull().or(EXP.CREATED_BY_USER_ID.eq(userId));
+            if (allowedGroupIds != null) {
+                privacy = EXP.GROUP_ID.in(allowedGroupIds).or(EXP.CREATED_BY_USER_ID.eq(userId).and(EXP.GROUP_ID.isNull()));
+            }
+            condition = condition.and(privacy);
         }
         if (year != null && month != null) {
             LocalDate start = LocalDate.of(year, month, 1);
@@ -47,12 +54,19 @@ public class ExpenseRepository {
                 .fetch();
     }
 
-    public int countByFamily(Long familyId, Long groupId, List<Long> allowedGroupIds, Integer year, Integer month) {
+    public int countByFamily(Long familyId, Long userId, Long groupId, List<Long> allowedGroupIds,
+                             boolean unassigned, Integer year, Integer month) {
         Condition condition = EXP.FAMILY_ID.eq(familyId).and(EXP.DELETED_AT.isNull());
-        if (groupId != null) {
+        if (unassigned) {
+            condition = condition.and(EXP.GROUP_ID.isNull()).and(EXP.CREATED_BY_USER_ID.eq(userId));
+        } else if (groupId != null) {
             condition = condition.and(EXP.GROUP_ID.eq(groupId));
-        } else if (allowedGroupIds != null) {
-            condition = condition.and(EXP.GROUP_ID.in(allowedGroupIds));
+        } else {
+            Condition privacy = EXP.GROUP_ID.isNotNull().or(EXP.CREATED_BY_USER_ID.eq(userId));
+            if (allowedGroupIds != null) {
+                privacy = EXP.GROUP_ID.in(allowedGroupIds).or(EXP.CREATED_BY_USER_ID.eq(userId).and(EXP.GROUP_ID.isNull()));
+            }
+            condition = condition.and(privacy);
         }
         if (year != null && month != null) {
             LocalDate start = LocalDate.of(year, month, 1);
@@ -70,7 +84,8 @@ public class ExpenseRepository {
                                  BigDecimal originalAmount, String originalCurrency,
                                  BigDecimal czkAmount, BigDecimal exchangeRate,
                                  OffsetDateTime rateFetchedAt, LocalDate date,
-                                 Long paidByUserId, Long createdByUserId) {
+                                 Long paidByUserId, Long createdByUserId,
+                                 String importSource, String externalTransactionId) {
         return dsl.insertInto(EXP)
                 .set(EXP.FAMILY_ID, familyId)
                 .set(EXP.GROUP_ID, groupId)
@@ -83,10 +98,18 @@ public class ExpenseRepository {
                 .set(EXP.EXPENSE_DATE, date)
                 .set(EXP.PAID_BY_USER_ID, paidByUserId)
                 .set(EXP.CREATED_BY_USER_ID, createdByUserId)
+                .set(EXP.IMPORT_SOURCE, importSource)
+                .set(EXP.EXTERNAL_TRANSACTION_ID, externalTransactionId)
                 .set(EXP.CREATED_AT, OffsetDateTime.now())
                 .set(EXP.UPDATED_AT, OffsetDateTime.now())
                 .returning()
                 .fetchOne();
+    }
+
+    public boolean existsByExternalTransactionId(Long userId, String externalTransactionId) {
+        return dsl.fetchCount(dsl.selectFrom(EXP)
+                .where(EXP.CREATED_BY_USER_ID.eq(userId)
+                        .and(EXP.EXTERNAL_TRANSACTION_ID.eq(externalTransactionId)))) > 0;
     }
 
     public Optional<ExpensesRecord> update(Long id, Long familyId, Long groupId, String description,
@@ -131,6 +154,7 @@ public class ExpenseRepository {
         return dsl.selectFrom(EXP)
                 .where(EXP.FAMILY_ID.eq(familyId)
                         .and(EXP.DELETED_AT.isNull())
+                        .and(EXP.GROUP_ID.isNotNull())
                         .and(EXP.EXPENSE_DATE.ge(start))
                         .and(EXP.EXPENSE_DATE.lt(end)))
                 .orderBy(EXP.EXPENSE_DATE.desc())

@@ -31,12 +31,14 @@ import {
   useInviteMember,
   useRemoveMember,
   useUpdateRole,
+  useUpdateColor,
   getListMembersQueryKey,
 } from '../../../api/generated/openAPIDefinition';
 type FamilyRole = 'ADMIN' | 'PARENT' | 'CHILD';
 import { useAuth } from '../../../hooks/useAuth';
 import { FormField } from '../../../components/forms/FormField';
 import { PasswordField } from '../../../components/forms/PasswordField';
+import { MEMBER_COLORS, buildMemberColorMap } from '../../expenses/utils/memberColors';
 
 const ROLES: FamilyRole[] = ['ADMIN', 'PARENT', 'CHILD'];
 
@@ -71,6 +73,16 @@ export function FamilyPage() {
     },
   });
 
+  const updateColorMutation = useUpdateColor({
+    mutation: {
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: getListMembersQueryKey() });
+      },
+    },
+  });
+
+  const colorMap = buildMemberColorMap(members);
+
   return (
     <Box>
       <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 3 }}>
@@ -92,6 +104,7 @@ export function FamilyPage() {
                 <TableCell>Name</TableCell>
                 <TableCell>Email</TableCell>
                 <TableCell>Role</TableCell>
+                <TableCell>Color</TableCell>
                 {isAdmin && <TableCell align="right">Actions</TableCell>}
               </TableRow>
             </TableHead>
@@ -122,6 +135,35 @@ export function FamilyPage() {
                       ) : (
                         <Chip label={member.role} color={roleColor(member.role ?? '')} size="small" />
                       )}
+                    </TableCell>
+                    <TableCell>
+                      <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap', alignItems: 'center' }}>
+                        {MEMBER_COLORS.map((c) => {
+                          const currentColor = member.userId != null ? colorMap.get(member.userId) : undefined;
+                          const isSelected = currentColor === c;
+                          return (
+                            <Box
+                              key={c}
+                              onClick={() => {
+                                if (member.userId != null) {
+                                  updateColorMutation.mutate({ userId: member.userId, data: { color: c } });
+                                }
+                              }}
+                              data-testid={`family-color-${member.userId}-${c.replace('#', '')}`}
+                              sx={{
+                                width: 24,
+                                height: 24,
+                                borderRadius: '50%',
+                                backgroundColor: c,
+                                cursor: 'pointer',
+                                border: isSelected ? '3px solid' : '2px solid transparent',
+                                borderColor: isSelected ? 'text.primary' : 'transparent',
+                                '&:hover': { opacity: 0.8 },
+                              }}
+                            />
+                          );
+                        })}
+                      </Box>
                     </TableCell>
                     {isAdmin && (
                       <TableCell align="right">

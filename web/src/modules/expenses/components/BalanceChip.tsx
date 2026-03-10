@@ -3,19 +3,22 @@ import type { BalanceResponse } from '../../../../../common/src/api/generated/mo
 
 interface BalanceChipProps {
   balance: BalanceResponse;
+  memberColor?: string;
 }
 
-export function BalanceChip({ balance }: BalanceChipProps) {
+export function BalanceChip({ balance, memberColor }: BalanceChipProps) {
   const net = balance.netBalanceCzk ?? 0;
   const label = `${balance.displayName}: ${net > 0 ? '+' : ''}${Number(net).toLocaleString('cs-CZ', { minimumFractionDigits: 0, maximumFractionDigits: 0 })} CZK`;
-  const color = net > 0 ? 'success' : net < 0 ? 'error' : 'default';
 
   return (
     <Chip
       label={label}
-      color={color as 'success' | 'error' | 'default'}
       size="medium"
-      variant="outlined"
+      sx={memberColor ? {
+        backgroundColor: memberColor,
+        color: '#fff',
+        fontWeight: 500,
+      } : undefined}
       data-testid={`expenses-balance-chip-${balance.userId}`}
     />
   );

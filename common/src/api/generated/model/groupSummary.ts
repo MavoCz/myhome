@@ -4,9 +4,11 @@
  * OpenAPI definition
  * OpenAPI spec version: v0
  */
+import type { GroupMemberPaid } from './groupMemberPaid';
 
 export interface GroupSummary {
   groupId?: number;
   groupName?: string;
   totalCzk?: number;
+  memberPaid?: GroupMemberPaid[];
 }

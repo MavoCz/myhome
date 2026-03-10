@@ -5,7 +5,7 @@
 **Author:** Matous Voldrich
 **Status:** Implemented
 **Date:** 2026-02-28
-**Version:** 3.0
+**Version:** 4.0
 **Dependencies:** auth-module, notification-module
 
 ---
@@ -207,10 +207,10 @@ An aggregated view for a selected calendar month showing total spend, spend per 
 
 - **SUM-01** `GET /api/expenses/summary?year={y}&month={m}` returns:
   - Total family spend for the month (CZK)
-  - Spend per group (CZK)
+  - Spend per group (CZK) with per-member paid breakdown (`memberPaid` array per group: `userId`, `displayName`, `paidCzk`)
   - Per-member totals: `paid`, `owed`, `balance`
   - Debt simplification: minimum list of `{ from, to, amount }` transactions to settle all balances in the month
-- **SUM-02** The frontend renders a summary dashboard accessible via `/expenses/summary` with a month picker (defaults to current month).
+- **SUM-02** The frontend renders a summary dashboard accessible via `/expenses/summary` with a month picker (defaults to current month). Each expense group is visualized as a **pie chart** where slices represent each family member's total paid amount in that group. Family members are assigned consistent colors (Tableau 10 palette) used throughout the system.
 - **SUM-03** Summary data is available for any past month with no time limit.
 
 #### Notifications (integration with notification module)
@@ -224,7 +224,59 @@ An aggregated view for a selected calendar month showing total spend, spend per 
 
 ---
 
-### 8.2 P1 — Nice to Have
+### 8.2 CSV Import (Implemented)
+
+#### Privacy Model
+
+Imported expenses start as **private** (unassigned — `group_id IS NULL`). They are visible only to the importer until assigned to an expense group, at which point they become shared and appear in family summaries.
+
+- **Unassigned expenses** are excluded from balance calculations and monthly summaries.
+- **Unassigned expenses** appear only in the importing user's "Unassigned" tab — other family members cannot see them.
+- Once a group is assigned (via edit), the expense becomes shared and is counted in balances and summaries.
+
+#### IMP-01 — Upload CSV (ADMIN/PARENT)
+
+A member with ADMIN or PARENT role can upload a bank CSV file via `POST /api/expenses/import`.
+
+- *AC:* Only outgoing transactions (negative `Zaúčtovaná částka`) are imported; incoming transfers are silently skipped and counted as `skipped`.
+- *AC:* Transactions already imported by this user (`created_by_user_id` + `external_transaction_id` unique) are detected and counted as `skipped` (no duplicate created).
+- *AC:* Response: `{ imported, skipped, failed, errors }`.
+- *AC:* Each imported expense has `import_source = "RAIFFEISEN"` and `external_transaction_id` from the `Id transakce` column.
+- *AC:* Description is resolved by priority: `Název obchodníka` → `Název protiúčtu` → first segment of `Zpráva`.
+- *AC:* `paid_by_user_id` is set to the importing user.
+
+#### IMP-02 — View Unassigned Expenses
+
+- `GET /api/expenses?unassigned=true` returns only the requesting user's unassigned expenses (`group_id IS NULL AND created_by_user_id = :userId`).
+- The frontend shows an **Unassigned** tab in the group filter tabs.
+- Unassigned expenses show an "Unassigned" chip (warning color) instead of a group chip.
+
+#### IMP-03 — Assign to Group
+
+- Editing an unassigned expense and selecting a group assigns it: `PUT /api/expenses/{id}` with `groupId` set.
+- Once assigned, the expense appears in the group view and is counted in balances and summaries.
+
+#### IMP-04 — Supported Banks
+
+| Bank | import_source value | CSV format |
+|------|---------------------|-----------|
+| Raiffeisen CZ | `RAIFFEISEN` | Semicolon-delimited, UTF-8, date `dd.MM.yyyy`, comma decimal |
+
+The import is extensible: additional banks can be added by implementing the same CSV column mapping pattern and passing a different `source` parameter.
+
+#### CSV Column Mapping (Raiffeisen)
+
+| CSV column | DB field | Notes |
+|---|---|---|
+| `Datum provedení` | `expense_date` | Format `dd.MM.yyyy` |
+| `Zaúčtovaná částka` | `original_amount` | Comma decimal, abs value stored |
+| `Měna účtu` | `original_currency` | Direct |
+| `Id transakce` | `external_transaction_id` | Deduplication |
+| `Název obchodníka` / `Název protiúčtu` / `Zpráva` | `description` | Priority fallback |
+
+---
+
+### 8.3 P1 — Nice to Have
 
 - **EXP-P1-01** Recurring expenses — a flag on expense creation that auto-generates the same expense on the same day each month until cancelled.
 - **GRP-P1-01** Per-group budget target (CZK); a progress bar on the group card showing spend vs. target.
@@ -300,9 +352,10 @@ All endpoints require a valid JWT `Authorization: Bearer <token>` header. All en
 
 | Method | Path | Min Permission | Description |
 |--------|------|---------------|-------------|
-| GET | `/api/expenses` | `ACCESS` | List expenses (CHILD: filtered to `allowChildren=true` groups) |
-| POST | `/api/expenses` | `ACCESS` | Add an expense (CHILD: restricted to `allowChildren=true` groups) |
-| PUT | `/api/expenses/{id}` | `ACCESS` (own) / `MANAGE` (any) | Edit an expense |
+| GET | `/api/expenses` | `ACCESS` | List expenses; `?unassigned=true` returns only the user's unassigned expenses |
+| POST | `/api/expenses` | `ACCESS` | Add an expense (groupId required for manual creation) |
+| POST | `/api/expenses/import` | ADMIN/PARENT | Import CSV from bank (multipart/form-data, `file` field) |
+| PUT | `/api/expenses/{id}` | `ACCESS` (own) / `MANAGE` (any) | Edit an expense; if `groupId` is null, keeps existing group |
 | DELETE | `/api/expenses/{id}` | `ACCESS` (own) / `MANAGE` (any) | Soft-delete |
 | POST | `/api/expenses/{id}/restore` | ADMIN | Restore soft-deleted expense |
 | GET | `/api/expenses/{id}/history` | `ACCESS` | View edit audit trail |
@@ -447,7 +500,7 @@ expense_group_splits
 expenses
 ├── id (PK, identity)
 ├── family_id → families(id) ON DELETE CASCADE
-├── group_id → expense_groups(id)            -- no cascade; group deletion guarded at app level
+├── group_id → expense_groups(id) NULLABLE   -- NULL = unassigned/private (CSV-imported, not yet assigned to a group)
 ├── description (VARCHAR 255)
 ├── original_amount (DECIMAL 12,2)
 ├── original_currency (VARCHAR 3)
@@ -457,6 +510,8 @@ expenses
 ├── expense_date (DATE)
 ├── paid_by_user_id → users(id)
 ├── created_by_user_id → users(id)
+├── import_source (VARCHAR 50, nullable)     -- e.g. 'RAIFFEISEN'; NULL for manually entered expenses
+├── external_transaction_id (VARCHAR 100, nullable) -- bank's transaction ID for deduplication
 ├── deleted_at (TIMESTAMPTZ, nullable)       -- NULL = active
 ├── created_at (TIMESTAMPTZ)
 └── updated_at (TIMESTAMPTZ)
@@ -486,6 +541,7 @@ Indexes:
 Flyway migrations:
 - `V3__Create_expense_tables.sql` — initial schema
 - `V4__Add_allow_children_to_expense_groups.sql` — adds `allow_children` column, sets `FALSE` for existing default groups
+- `V5__Add_csv_import_support.sql` — makes `group_id` nullable; adds `import_source`, `external_transaction_id`; adds unique index for deduplication
 
 ---
 

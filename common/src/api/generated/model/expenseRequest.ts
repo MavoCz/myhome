@@ -18,6 +18,6 @@ export interface ExpenseRequest {
   currency: ExpenseRequestCurrency;
   date: string;
   paidByUserId: number;
-  groupId: number;
+  groupId?: number;
   splits?: SplitEntry[];
 }

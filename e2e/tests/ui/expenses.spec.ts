@@ -33,7 +33,8 @@ test.describe('Expenses page', () => {
 
   test('shows balances row section', async ({ authenticatedPage }) => {
     await goToExpenses(authenticatedPage);
-    await expect(authenticatedPage.getByTestId('expenses-balances-row')).toBeVisible();
+    // The balances row container is always rendered; it may be empty if no member has expenses
+    await expect(authenticatedPage.getByTestId('expenses-balances-row')).toBeAttached();
   });
 
   test('shows "No expenses yet" when list is empty', async ({ authenticatedPage }) => {
@@ -202,7 +203,7 @@ test.describe('Monthly Summary page', () => {
     await expect(authenticatedPage.getByText(/2025/)).toBeVisible();
   });
 
-  test('shows total spend card when expenses exist', async ({ authenticatedPage }) => {
+  test('shows total spend card and pie charts when expenses exist', async ({ authenticatedPage }) => {
     // Create an expense first
     await authenticatedPage.goto('/expenses');
     await authenticatedPage.getByTestId('expenses-add-fab').click();
@@ -215,6 +216,11 @@ test.describe('Monthly Summary page', () => {
     await authenticatedPage.goto('/expenses/summary');
     await expect(authenticatedPage.getByTestId('summary-total-card')).toBeVisible();
     await expect(authenticatedPage.getByText(/total spend/i)).toBeVisible();
+    await expect(authenticatedPage.getByText(/spending by group/i)).toBeVisible();
+
+    // At least one pie chart should be visible (for the default group)
+    const pieCharts = authenticatedPage.locator('[data-testid^="summary-group-pie-"]');
+    await expect(pieCharts.first()).toBeVisible();
   });
 
   test('shows no-data message for empty month', async ({ authenticatedPage }) => {
@@ -351,5 +357,110 @@ test.describe('Manage Groups tab', () => {
     await authenticatedPage.goto('/expenses/groups');
     // Should redirect to /home since route no longer exists
     await expect(authenticatedPage).toHaveURL(/\/home/);
+  });
+});
+
+// ===========================================================================
+// CSV Import dialog
+// ===========================================================================
+
+/** Minimal Raiffeisen CSV: 2 outgoing + 1 incoming (incoming is skipped). */
+const CSV_CONTENT = [
+  'Datum provedení;Zaúčtovaná částka;Měna účtu;Id transakce;Název obchodníka;Název protiúčtu;Zpráva',
+  '01.03.2026;-500,00;CZK;UI-TXN-001;Albert supermarket;;',
+  '15.03.2026;-250,00;CZK;UI-TXN-002;;Prodejna ABC;',
+  '20.03.2026;700,00;CZK;UI-TXN-003;;;prevod',
+].join('\n');
+
+function csvFile() {
+  return {
+    name: 'raiffeisen.csv',
+    mimeType: 'text/csv',
+    buffer: Buffer.from(CSV_CONTENT, 'utf-8'),
+  };
+}
+
+test.describe('CSV Import UI', () => {
+  test('Import button is visible for ADMIN users on the expenses page', async ({ authenticatedPage }) => {
+    await authenticatedPage.goto('/expenses');
+    await expect(authenticatedPage.getByRole('heading', { name: /expenses/i })).toBeVisible();
+    await expect(authenticatedPage.getByTestId('import-expenses-btn')).toBeVisible();
+  });
+
+  test('clicking Import button opens the import dialog', async ({ authenticatedPage }) => {
+    await authenticatedPage.goto('/expenses');
+    await authenticatedPage.getByTestId('import-expenses-btn').click();
+    await expect(authenticatedPage.getByTestId('import-dialog')).toBeVisible();
+    await expect(
+      authenticatedPage.getByRole('heading', { name: /import expenses/i }),
+    ).toBeVisible();
+  });
+
+  test('import dialog closes when Close is clicked without importing', async ({ authenticatedPage }) => {
+    await authenticatedPage.goto('/expenses');
+    await authenticatedPage.getByTestId('import-expenses-btn').click();
+    await expect(authenticatedPage.getByTestId('import-dialog')).toBeVisible();
+    await authenticatedPage.getByRole('button', { name: /close/i }).click();
+    await expect(authenticatedPage.getByTestId('import-dialog')).not.toBeVisible();
+  });
+
+  test('uploading a valid CSV and clicking Import shows a success result', async ({ authenticatedPage }) => {
+    await authenticatedPage.goto('/expenses');
+    await authenticatedPage.getByTestId('import-expenses-btn').click();
+    await expect(authenticatedPage.getByTestId('import-dialog')).toBeVisible();
+
+    const fileInput = authenticatedPage.getByTestId('import-file-input');
+    await fileInput.setInputFiles(csvFile());
+
+    await authenticatedPage.getByTestId('import-submit-btn').click();
+
+    // Result alert with imported/skipped counts
+    await expect(authenticatedPage.getByText(/imported 2/i)).toBeVisible();
+    await expect(authenticatedPage.getByText(/skipped 1/i)).toBeVisible();
+  });
+
+  test('Unassigned tab is always visible in group filter tabs', async ({ authenticatedPage }) => {
+    await authenticatedPage.goto('/expenses');
+    await expect(authenticatedPage.getByRole('heading', { name: /expenses/i })).toBeVisible();
+    await expect(authenticatedPage.getByTestId('expenses-tab-unassigned')).toBeVisible();
+  });
+
+  test('clicking Unassigned tab after CSV import shows imported expenses with Unassigned chip', async ({
+    authenticatedPage,
+  }) => {
+    await authenticatedPage.goto('/expenses');
+
+    // Import the CSV via the UI dialog
+    await authenticatedPage.getByTestId('import-expenses-btn').click();
+    await expect(authenticatedPage.getByTestId('import-dialog')).toBeVisible();
+
+    await authenticatedPage.getByTestId('import-file-input').setInputFiles(csvFile());
+    await authenticatedPage.getByTestId('import-submit-btn').click();
+    await expect(authenticatedPage.getByText(/imported 2/i)).toBeVisible();
+
+    // Close the dialog
+    await authenticatedPage.getByRole('button', { name: /close/i }).click();
+    await expect(authenticatedPage.getByTestId('import-dialog')).not.toBeVisible();
+
+    // Switch to the Unassigned tab
+    await authenticatedPage.getByTestId('expenses-tab-unassigned').click();
+
+    // Expenses table should show the "Unassigned" chip (warning chip for null group)
+    const expensesTable = authenticatedPage.getByTestId('expenses-table');
+    await expect(expensesTable.getByText('Unassigned').first()).toBeVisible();
+  });
+
+  test('submitting import without selecting a file does not crash', async ({ authenticatedPage }) => {
+    await authenticatedPage.goto('/expenses');
+    await authenticatedPage.getByTestId('import-expenses-btn').click();
+    await expect(authenticatedPage.getByTestId('import-dialog')).toBeVisible();
+
+    // Click Import without selecting a file
+    await authenticatedPage.getByTestId('import-submit-btn').click();
+
+    // Should show an error message
+    await expect(authenticatedPage.getByText(/please select a csv file/i)).toBeVisible();
+    // Dialog should remain open
+    await expect(authenticatedPage.getByTestId('import-dialog')).toBeVisible();
   });
 });

@@ -7,6 +7,7 @@
 
 export type ListExpensesParams = {
 groupId?: number;
+unassigned?: boolean;
 year?: number;
 month?: number;
 page?: number;

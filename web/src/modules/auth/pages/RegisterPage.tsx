@@ -21,6 +21,7 @@ export function RegisterPage() {
   const [password, setPassword] = useState('');
   const [displayName, setDisplayName] = useState('');
   const [familyName, setFamilyName] = useState('');
+  const [registrationSecret, setRegistrationSecret] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -62,7 +63,7 @@ export function RegisterPage() {
         };
       }>('/api/auth/register', {
         method: 'POST',
-        body: JSON.stringify({ email, password, displayName, familyName }),
+        body: JSON.stringify({ email, password, displayName, familyName, ...(registrationSecret && { registrationSecret }) }),
       });
 
       setAuth(data.accessToken, data.refreshToken, data.user);
@@ -106,6 +107,13 @@ export function RegisterPage() {
               testId="register-family-name-input"
               value={familyName}
               onChange={(e) => setFamilyName(e.target.value)}
+            />
+            <FormField
+              label="Invitation Code"
+              testId="register-secret-input"
+              value={registrationSecret}
+              onChange={(e) => setRegistrationSecret(e.target.value)}
+              helperText="Leave empty if not required"
             />
             <FormField
               label="Email"

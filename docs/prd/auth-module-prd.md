@@ -50,10 +50,13 @@ Access tokens carry all claims needed for authorization (userId, familyId, famil
 
 ### 5.1 Registration
 
-1. User submits email, password, display name, and family name
-2. System creates a new family and a new user account
-3. User is added to the family as `ADMIN`
-4. Access and refresh tokens are returned
+1. User submits email, password, display name, family name, and optionally an invitation code (registration secret)
+2. If `app.registration.secret` is configured (non-empty), the system validates the provided invitation code matches — returns 403 Forbidden if it doesn't
+3. System creates a new family and a new user account
+4. User is added to the family as `ADMIN`
+5. Access and refresh tokens are returned
+
+**Registration secret:** The `app.registration.secret` config property controls open vs. restricted registration. When empty (default), anyone can register. When set, the client must include a matching `registrationSecret` field in the request body.
 
 ### 5.2 Login
 
@@ -128,7 +131,7 @@ public interface AuthModuleApi {
 **Register** — `POST /api/auth/register`
 ```json
 // Request
-{ "email": "parent@example.com", "password": "securepass", "displayName": "Alice", "familyName": "Smith Family" }
+{ "email": "parent@example.com", "password": "securepass", "displayName": "Alice", "familyName": "Smith Family", "registrationSecret": "optional-code" }
 
 // Response
 { "accessToken": "eyJ...", "refreshToken": "550e8400-...", "expiresIn": 900, "user": { "id": 1, "email": "parent@example.com", "displayName": "Alice", "familyId": 1, "familyRole": "ADMIN" } }

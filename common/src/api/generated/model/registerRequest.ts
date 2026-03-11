@@ -17,4 +17,5 @@ export interface RegisterRequest {
   displayName: string;
   /** @minLength 1 */
   familyName: string;
+  registrationSecret?: string;
 }

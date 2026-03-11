@@ -1,0 +1,6 @@
+package net.voldrich.myhome.backend.auth.internal.config;
+
+import org.springframework.boot.context.properties.ConfigurationProperties;
+
+@ConfigurationProperties(prefix = "app.registration")
+public record RegistrationProperties(String secret) {}

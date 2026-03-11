@@ -4,6 +4,7 @@ import net.voldrich.myhome.backend.auth.AuthUser;
 import net.voldrich.myhome.backend.auth.FamilyRole;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
+import net.voldrich.myhome.backend.auth.internal.config.RegistrationProperties;
 import net.voldrich.myhome.backend.auth.internal.dto.AuthResponse;
 import net.voldrich.myhome.backend.auth.internal.dto.LoginRequest;
 import net.voldrich.myhome.backend.auth.internal.dto.RegisterRequest;
@@ -33,11 +34,12 @@ public class AuthService {
     private final JwtTokenService jwtTokenService;
     private final PasswordEncoder passwordEncoder;
     private final AuthenticationManager authenticationManager;
+    private final RegistrationProperties registrationProperties;
 
     public AuthService(UserRepository userRepository, FamilyRepository familyRepository,
                        FamilyMemberRepository familyMemberRepository, RefreshTokenRepository refreshTokenRepository,
                        JwtTokenService jwtTokenService, PasswordEncoder passwordEncoder,
-                       AuthenticationManager authenticationManager) {
+                       AuthenticationManager authenticationManager, RegistrationProperties registrationProperties) {
         this.userRepository = userRepository;
         this.familyRepository = familyRepository;
         this.familyMemberRepository = familyMemberRepository;
@@ -45,10 +47,18 @@ public class AuthService {
         this.jwtTokenService = jwtTokenService;
         this.passwordEncoder = passwordEncoder;
         this.authenticationManager = authenticationManager;
+        this.registrationProperties = registrationProperties;
     }
 
     @Transactional
     public AuthResponse register(RegisterRequest request) {
+        String requiredSecret = registrationProperties.secret();
+        if (requiredSecret != null && !requiredSecret.isBlank()) {
+            if (!requiredSecret.equals(request.registrationSecret())) {
+                throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Invalid registration secret");
+            }
+        }
+
         if (userRepository.existsByEmail(request.email())) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Email already registered");
         }

@@ -2,7 +2,7 @@ plugins {
 	java
 	id("org.springframework.boot") version "4.0.3"
 	id("io.spring.dependency-management") version "1.1.7"
-	id("org.jooq.jooq-codegen-gradle") version "3.19.30"
+	id("org.jooq.jooq-codegen-gradle") version "3.20.11"
 	id("org.springdoc.openapi-gradle-plugin") version "1.9.0"
 }
 
@@ -37,6 +37,7 @@ dependencies {
 	implementation("io.jsonwebtoken:jjwt-api:$jwtVersion")
 	implementation("org.springframework.modulith:spring-modulith-starter-core")
 	implementation("org.springframework.modulith:spring-modulith-starter-jdbc")
+	implementation("org.jooq:jooq:3.20.11")
 
 	runtimeOnly("org.flywaydb:flyway-database-postgresql")
 	runtimeOnly("org.postgresql:postgresql")

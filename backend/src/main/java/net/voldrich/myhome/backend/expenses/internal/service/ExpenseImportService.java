@@ -43,7 +43,7 @@ public class ExpenseImportService {
                 .setSkipHeaderRecord(true)
                 .setQuote('"')
                 .setTrim(true)
-                .build();
+                .get();
 
         try {
             var content = new String(file.getBytes(), StandardCharsets.UTF_8);

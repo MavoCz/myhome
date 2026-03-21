@@ -8,6 +8,8 @@
       <module name="backend-spring.buildSrc.test" target="25" />
       <module name="backend-spring.main" target="25" />
       <module name="backend-spring.test" target="25" />
+      <module name="backend.aot" target="25" />
+      <module name="backend.aotTest" target="25" />
     </bytecodeTargetLevel>
   </component>
   <component name="JavacSettings">
@@ -16,6 +18,8 @@
       <module name="backend-spring" options="-parameters" />
       <module name="backend-spring.main" options="-parameters" />
       <module name="backend-spring.test" options="-parameters" />
+      <module name="backend.aot" options="-parameters" />
+      <module name="backend.aotTest" options="-parameters" />
       <module name="backend.main" options="-parameters" />
       <module name="backend.test" options="-parameters" />
     </option>

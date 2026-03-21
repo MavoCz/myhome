@@ -101,7 +101,7 @@ starter/
 **Actor:** Authenticated user
 
 **Flow:**
-1. User clicks logout button (in header bar or mobile drawer)
+1. User clicks logout button (desktop: header bar, mobile: overflow menu)
 2. Auth store is cleared (tokens + user)
 3. User is redirected to `/login`
 
@@ -138,15 +138,15 @@ starter/
 
 ## 7. Responsive Design
 
-| Breakpoint | Header | Auth Forms | Module Grid |
-|-----------|--------|------------|-------------|
-| Mobile (<600px) | Hamburger + drawer | Full-width card | 1 column |
-| Tablet (600–899px) | Hamburger + drawer | Constrained card | 2 columns |
-| Desktop (≥900px) | Full bar with user info, theme toggle, logout | Constrained card | 3 columns |
+| Breakpoint | Primary Nav | Header | Auth Forms | Module Grid |
+|-----------|-------------|--------|------------|-------------|
+| Mobile (<900px) | Bottom nav bar | Title + notification + overflow menu | Full-width card | 1 column |
+| Desktop (≥900px) | Header inline buttons | Full bar with nav, user chip, theme toggle, logout | Constrained card | 3 columns |
 
 - All interactive elements have a minimum touch target of 44px (WCAG compliance)
 - Content is constrained with `Container maxWidth="lg"` on desktop
 - Viewport meta tag ensures proper mobile scaling
+- See [Navigation PRD](navigation-prd.md) for full navigation design details
 
 ## 8. Theme
 
@@ -182,18 +182,22 @@ The `TokenStorage` interface allows platform-specific implementations:
 
 ## 10. Module System
 
-New backend modules are exposed on the dashboard by adding entries to `web/src/modules/registry.ts`:
+New backend modules are exposed on the dashboard and navigation by adding entries to `web/src/modules/registry.ts`:
 
 ```typescript
 export interface ModuleDefinition {
-  id: string;          // unique identifier
-  name: string;        // display name
-  description: string; // short description for tile
-  icon: ReactNode;     // MUI icon component
-  path: string;        // route path
-  color: string;       // accent color for tile
+  id: string;            // unique identifier
+  name: string;          // display name
+  description: string;   // short description for tile
+  icon: ReactNode;       // MUI icon component
+  path: string;          // route path
+  color: string;         // accent color for tile
+  mainTabLabel?: string; // label for root page tab (defaults to name)
+  menuItems?: ModuleMenuItem[]; // sub-page tabs
 }
 ```
+
+Registered modules automatically appear in the bottom nav (mobile), header inline nav (desktop), and home page tiles. Sub-pages defined in `menuItems` render as a tab strip below the header. See [Navigation PRD](navigation-prd.md) for full details.
 
 Each module's frontend code lives in `web/src/modules/<module-name>/` following the same pattern as `auth/`.
 

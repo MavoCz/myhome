@@ -6,11 +6,11 @@ test.describe('Header (desktop)', () => {
     await expect(authenticatedPage.getByText('Family App')).toBeVisible();
   });
 
-  test('shows user display name and family role chip', async ({ authenticatedPage, testAuth }) => {
+  test('shows user chip with display name and role', async ({ authenticatedPage, testAuth }) => {
     await authenticatedPage.goto('/home');
-    const familyInfo = authenticatedPage.getByTestId('header-family-info');
-    await expect(familyInfo).toContainText(testAuth.user!.displayName!);
-    await expect(familyInfo).toContainText(testAuth.user!.familyRole!);
+    const userChip = authenticatedPage.getByTestId('header-user-chip');
+    await expect(userChip).toContainText(testAuth.user!.displayName!);
+    await expect(userChip).toContainText(testAuth.user!.familyRole!);
   });
 
   test('home button navigates to /home', async ({ authenticatedPage }) => {
@@ -21,10 +21,16 @@ test.describe('Header (desktop)', () => {
     await expect(authenticatedPage).toHaveURL(/home/);
   });
 
-  test('family info area navigates to /family', async ({ authenticatedPage }) => {
+  test('inline nav shows module buttons', async ({ authenticatedPage }) => {
     await authenticatedPage.goto('/home');
-    await authenticatedPage.getByTestId('header-family-info').click();
-    await expect(authenticatedPage).toHaveURL(/family/);
+    await expect(authenticatedPage.getByTestId('header-nav-family')).toBeVisible();
+    await expect(authenticatedPage.getByTestId('header-nav-expenses')).toBeVisible();
+  });
+
+  test('module nav button navigates to module', async ({ authenticatedPage }) => {
+    await authenticatedPage.goto('/home');
+    await authenticatedPage.getByTestId('header-nav-expenses').click();
+    await expect(authenticatedPage).toHaveURL(/expenses/);
   });
 
   test('theme toggle button is clickable', async ({ authenticatedPage }) => {
@@ -59,34 +65,57 @@ test.describe('Header (desktop)', () => {
 test.describe('Header (mobile)', () => {
   test.use({ viewport: { width: 375, height: 812 } });
 
-  test('shows hamburger button and hides desktop controls', async ({ authenticatedPage }) => {
+  test('shows overflow button and hides desktop controls', async ({ authenticatedPage }) => {
     await authenticatedPage.goto('/home');
-    await expect(authenticatedPage.getByTestId('header-menu-btn')).toBeVisible();
+    await expect(authenticatedPage.getByTestId('header-overflow-btn')).toBeVisible();
     await expect(authenticatedPage.getByTestId('header-logout-btn')).not.toBeVisible();
     await expect(authenticatedPage.getByTestId('header-home-btn')).not.toBeVisible();
   });
 
-  test('hamburger opens drawer with navigation options', async ({ authenticatedPage }) => {
+  test('overflow menu shows theme and logout options', async ({ authenticatedPage }) => {
     await authenticatedPage.goto('/home');
-    await authenticatedPage.getByTestId('header-menu-btn').click();
+    await authenticatedPage.getByTestId('header-overflow-btn').click();
 
-    await expect(authenticatedPage.getByTestId('header-mobile-home-btn')).toBeVisible();
-    await expect(authenticatedPage.getByTestId('header-mobile-theme-btn')).toBeVisible();
-    await expect(authenticatedPage.getByTestId('header-mobile-logout-btn')).toBeVisible();
+    await expect(authenticatedPage.getByTestId('header-overflow-theme-btn')).toBeVisible();
+    await expect(authenticatedPage.getByTestId('header-overflow-logout-btn')).toBeVisible();
   });
 
   test('mobile logout clears auth and redirects to login', async ({ authenticatedPage }) => {
     await authenticatedPage.goto('/home');
-    await authenticatedPage.getByTestId('header-menu-btn').click();
-    await authenticatedPage.getByTestId('header-mobile-logout-btn').click();
+    await authenticatedPage.getByTestId('header-overflow-btn').click();
+    await authenticatedPage.getByTestId('header-overflow-logout-btn').click();
 
     await expect(authenticatedPage).toHaveURL(/login/);
   });
 
-  test('mobile home button navigates to /home', async ({ authenticatedPage }) => {
+  test('bottom nav is visible on mobile', async ({ authenticatedPage }) => {
+    await authenticatedPage.goto('/home');
+    await expect(authenticatedPage.getByTestId('bottom-nav')).toBeVisible();
+  });
+
+  test('bottom nav home navigates to /home', async ({ authenticatedPage }) => {
     await authenticatedPage.goto('/family');
-    await authenticatedPage.getByTestId('header-menu-btn').click();
-    await authenticatedPage.getByTestId('header-mobile-home-btn').click();
+    await authenticatedPage.getByTestId('bottom-nav-home').click();
     await expect(authenticatedPage).toHaveURL(/home/);
+  });
+});
+
+test.describe('Module tabs', () => {
+  test('shows tabs on expenses page', async ({ authenticatedPage }) => {
+    await authenticatedPage.goto('/expenses');
+    await expect(authenticatedPage.getByTestId('module-tabs')).toBeVisible();
+    await expect(authenticatedPage.getByTestId('module-tab-list')).toBeVisible();
+    await expect(authenticatedPage.getByTestId('module-tab-monthly-summary')).toBeVisible();
+  });
+
+  test('does not show tabs on home page', async ({ authenticatedPage }) => {
+    await authenticatedPage.goto('/home');
+    await expect(authenticatedPage.getByTestId('module-tabs')).not.toBeVisible();
+  });
+
+  test('tab navigation works', async ({ authenticatedPage }) => {
+    await authenticatedPage.goto('/expenses');
+    await authenticatedPage.getByTestId('module-tab-monthly-summary').click();
+    await expect(authenticatedPage).toHaveURL(/expenses\/summary/);
   });
 });

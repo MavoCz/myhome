@@ -142,10 +142,10 @@ public class ExpenseService {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You can only edit your own expenses");
         }
 
-        // Resolve target group: use request groupId if provided, otherwise keep existing
-        Long targetGroupId = request.groupId() != null ? request.groupId() : expense.getGroupId();
-        if (request.groupId() != null) {
-            var group = groupRepository.findById(request.groupId())
+        // Use request groupId directly (null = unassigned, PUT replaces the full resource)
+        Long targetGroupId = request.groupId();
+        if (targetGroupId != null) {
+            var group = groupRepository.findById(targetGroupId)
                     .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Expense group not found"));
             if (!group.getFamilyId().equals(user.familyId())) {
                 throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Expense group not found");

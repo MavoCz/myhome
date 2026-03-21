@@ -10,6 +10,7 @@ export const expensesModule: ModuleDefinition = {
   icon: <ReceiptLongIcon />,
   path: '/expenses',
   color: '#FF6B35',
+  mainTabLabel: 'List',
   menuItems: [
     { label: 'Monthly Summary', path: '/expenses/summary', icon: <SummarizeIcon /> },
     { label: 'Manage Groups', path: '/expenses/groups', icon: <SettingsIcon />, roles: ['ADMIN', 'PARENT'] },

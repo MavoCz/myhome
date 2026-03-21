@@ -9,6 +9,8 @@ import './stores/authStore';
 // Register modules
 import { modules } from './modules/registry';
 import { expensesModule } from './modules/expenses';
+import { familyModule } from './modules/family';
+modules.push(familyModule);
 modules.push(expensesModule);
 
 const queryClient = new QueryClient({

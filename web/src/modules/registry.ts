@@ -15,7 +15,9 @@ export interface ModuleDefinition {
   icon: ReactNode;
   path: string;
   color: string;
-  /** Additional navigation items shown in the hamburger menu when this module is active */
+  /** Label for the root page tab (defaults to module name if not set) */
+  mainTabLabel?: string;
+  /** Additional navigation items shown as tabs when this module is active */
   menuItems?: ModuleMenuItem[];
 }
 

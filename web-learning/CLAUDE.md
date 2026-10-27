@@ -1,6 +1,6 @@
 # CLAUDE.md
 
-Školní zoo: learning exercises for two girls (3rd grade) on a tablet. Solving exercises earns coins ("bodíky"); coins buy enclosures, animals and decorations in a walkable zoo. See README.md for the overview and file map.
+Školní zoo: learning exercises for two girls (3rd grade) on a tablet. Solving exercises earns coins ("bodíky"); coins buy enclosures, animals and decorations in a walkable zoo. See README.md for the overview and file map, and `docs/prd/learning-module-prd.md` in the repo root for the backend side.
 
 ## Docs and tasks
 
@@ -29,7 +29,16 @@ There is no test suite. Verify changes by building and driving the app in a brow
 
 ## Architecture in one paragraph
 
-React + TypeScript + Vite app (`src/`) with Zustand state persisted to `localStorage` (`skolni-zoo` key). The zoo is a Phaser 3 scene (`src/zoo/game/ZooScene.ts`) mounted inside the React `ZooScreen` and lazily loaded because Phaser is ~1.2 MB. Exercises are standalone HTML pages in `exercises/` (vanilla JS, inline scripts), shown in an iframe; they report finished work via `postMessage` and the app turns that into coins.
+React + TypeScript + Vite app (`src/`). Each child is a CHILD account in the myhome family; their zoo is a JSON document saved by the backend's `learning` module. The zoo is a Phaser 3 scene (`src/zoo/game/ZooScene.ts`) mounted inside the React `ZooScreen` and lazily loaded because Phaser is ~1.2 MB. Exercises are standalone HTML pages in `exercises/` (vanilla JS, inline scripts), shown in an iframe; they report finished work via `postMessage` and the app turns that into coins.
+
+## Accounts and sync
+
+- `src/api.ts` keeps every child signed in on the device (`learning-accounts` in `localStorage`, separate from the web app's `auth-storage`) and points `customFetch` (from `common`) at the active child's tokens. Login and logout use plain `fetch`: a wrong password must not trigger a refresh of the active child's token.
+- `src/state/ops.ts`: every change to a zoo is an `Op` applied by the pure `applyOp`. Ids and timestamps are fixed when the child acts, so ops replay deterministically.
+- `src/state/store.ts`: per-child cache `learning-zoo:<userId>` = last saved server copy (`base` + `version`) plus unsaved `pending` ops and an `outbox` of exercise results. The zoo shown is `pending.reduce(applyOp, base)`. Saves go out 1.5 s after a change (`PUT /api/learning/zoo` with the version); on 409 the app loads the server copy, replays `pending` on it and saves again. Offline it keeps working and retries.
+- Bonus coins from parents arrive as `pendingGrants`, become `grant` ops, and their ids are sent in the same save (`claimedGrantIds`), so the server marks them claimed in the same transaction.
+- Only the active child's own zoo changes. Siblings' zoos come from `GET /api/learning/zoos` and visits are read-only (`ctl.visiting` guards feed/water in the scene; store actions ignore other ids).
+- A 403 means the learning module is not allowed right now (a parent's schedule): `status: 'closed'` shows a friendly stop screen. Nothing is lost.
 
 ## Rules that are easy to break
 
@@ -41,6 +50,8 @@ React + TypeScript + Vite app (`src/`) with Zustand state persisted to `localSto
 - **Voice is off by default** in exercises (`voice: saved.voice === true`). The parent asked for this; only an explicit toggle turns it on.
 - **Speech must never block the exercise.** `speak()` skips when no voices exist and has a short length-based timeout, because some devices never fire `onend`.
 - **The scene's source of truth is the Zustand store.** The scene subscribes and rebuilds the changed parts in `sync()`; scene code changes data only through store actions (`build`, `addAnimal`, `feed`, `water`…), never by mutating views.
+- **A new kind of change needs an `Op`.** Add it to `Op` and `applyOp`, keep `applyOp` pure (no `Date.now()`, no random ids inside), and make it skip quietly when it no longer fits (it may be replayed on a newer copy).
+- **Bump `schema` in `ZooDoc`** when the stored shape changes incompatibly, and migrate old documents when loading them.
 - **`sync()` runs during `create()`**, before Phaser marks the scene active, so guard with the `stopped` flag, not `sys.isActive()` (that bug hid all objects once).
 
 ## Art and animation
@@ -77,7 +88,7 @@ Full pipeline, prompt template, asset log and findings: `docs/art-pipeline.md`. 
 
 - All UI text is Czech, written for an 8–9-year-old: short sentences, concrete instructions ("Klepni na výběh."), no jargon.
 - Mind Czech grammar: currency plural via `coinsWord(n)` (bodík / bodíky / bodíků); animal adjectives agree with gender (`FED_WORD` in `ZooScene.ts`: žirafa → najedená, tučňák → najedený).
-- Both profiles are girls, but keep generic UI wording gender-neutral where Czech allows it.
+- Both children are girls, but keep generic UI wording gender-neutral where Czech allows it. Avoid putting a name after a preposition that needs a case ending ("u Emy"); write "Návštěva v zoo: Ema" instead.
 
 ## Testing in a browser
 
@@ -86,5 +97,6 @@ Full pipeline, prompt template, asset log and findings: `docs/art-pipeline.md`. 
 - `playwright-cli eval` takes a **function expression** (`"() => …"` or `"async () => …"`), not an IIFE; an IIFE runs its side effects and then reports an error.
 - The canvas is driven with `playwright-cli mousemove x y` + `mousedown` + `mouseup` (a tap). Pinch zoom cannot be tested this way.
 - Exercises can be solved from the parent page via `document.querySelector('iframe').contentDocument` and dispatched `keydown` events (digits for sčítání, `i`/`y`/`Enter` for vyjmenovaná slova).
-- To test shopping, raise coins by editing `localStorage['skolni-zoo']` (`state.profiles[n].coins`) and reloading.
+- The app needs the backend: run it (`./gradlew bootRun` in `backend/`) and use `pnpm dev:learning`, or test the built app at `http://localhost:8080/learning/`. Create a family, add CHILD members and grant them the `learning` module (Family page or the API).
+- To test shopping, give the child coins with `POST /api/learning/grants` as a parent and reload.
 - Stop the preview server with TaskStop when done.

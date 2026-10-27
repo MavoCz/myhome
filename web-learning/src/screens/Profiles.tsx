@@ -1,35 +1,25 @@
-import { useRef, useState } from 'react';
-import { exportBackup, useZoo } from '../state/store';
-import { coinsWord } from '../state/economy';
-import { AvatarImage, Coin } from '../ui/bits';
+import { useState } from 'react';
+import { useAccounts } from '../api';
+import { forgetAccount, hasUnsaved, openAccount } from '../state/store';
+import { DEFAULT_AVATAR } from '../zoo/art/avatar';
+import { AvatarImage } from '../ui/bits';
 import type { Route } from '../App';
 
+/** The children signed in on this tablet. A parent adds a child once; after that a tap is enough. */
 export function Profiles({ go }: { go: (r: Route) => void }) {
-  const profiles = useZoo(s => s.profiles);
-  const setActive = useZoo(s => s.setActive);
-  const importBackup = useZoo(s => s.importBackup);
-  const fileRef = useRef<HTMLInputElement>(null);
+  const accounts = useAccounts(s => s.accounts);
+  const [removing, setRemoving] = useState<number | null>(null);
   const [note, setNote] = useState('');
 
-  const download = () => {
-    const blob = new Blob([exportBackup()], { type: 'application/json' });
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = `skolni-zoo-zaloha-${new Date().toISOString().slice(0, 10)}.json`;
-    a.click();
-    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
-    setNote('Záloha je stažená. Ulož si ji třeba do iCloudu.');
+  const pick = (userId: number) => {
+    void openAccount(userId);
+    go({ name: 'home' });
   };
 
-  const restore = async (file: File | undefined) => {
-    if (!file) return;
-    try {
-      const n = importBackup(await file.text());
-      setNote(n === 1 ? 'Obnoven 1 profil.' : `Obnoveno profilů: ${n}.`);
-    } catch (e) {
-      setNote(`Zálohu se nepodařilo načíst. ${e instanceof Error ? e.message : ''}`);
-    }
-    if (fileRef.current) fileRef.current.value = '';
+  const remove = async (userId: number) => {
+    await forgetAccount(userId);
+    setRemoving(null);
+    setNote('Účet je z tabletu odebraný. Zoo zůstává uložená.');
   };
 
   return (
@@ -38,47 +28,41 @@ export function Profiles({ go }: { go: (r: Route) => void }) {
         <h1>Kdo jde cvičit?</h1>
       </header>
       <div className="profile-grid">
-        {profiles.map(p => (
-          <div key={p.id} className="profile-card">
-            <button
-              type="button"
-              className="profile-pick"
-              onClick={() => {
-                setActive(p.id);
-                go({ name: 'home' });
-              }}
-            >
-              <AvatarImage avatar={p.avatar} size={104} />
-              <span className="profile-name">{p.name}</span>
-              <span className="profile-coins">
-                <Coin size={20} /> {p.coins} {coinsWord(p.coins)}
-              </span>
+        {accounts.map(a => (
+          <div key={a.userId} className="profile-card" data-testid={`profile-card-${a.userId}`}>
+            <button type="button" className="profile-pick" data-testid={`profile-pick-${a.userId}`} onClick={() => pick(a.userId)}>
+              <AvatarImage avatar={a.avatar ?? DEFAULT_AVATAR} size={104} />
+              <span className="profile-name">{a.displayName}</span>
             </button>
-            <button type="button" className="link" onClick={() => go({ name: 'edit', id: p.id })}>
-              Upravit
+            <button type="button" className="link" data-testid={`profile-remove-${a.userId}`} onClick={() => setRemoving(a.userId)}>
+              Odebrat z tabletu
             </button>
           </div>
         ))}
-        <button type="button" className="profile-card add" onClick={() => go({ name: 'edit' })}>
+        <button type="button" className="profile-card add" data-testid="profile-add-btn" onClick={() => go({ name: 'login' })}>
           <span className="plus" aria-hidden="true">+</span>
-          <span className="profile-name">Nový profil</span>
+          <span className="profile-name">Přidat dítě</span>
         </button>
       </div>
 
-      <section className="backup">
-        <h2>Záloha</h2>
-        <p>Zoo se ukládá jen v tomto prohlížeči. Zálohu si stáhni, ať o nic nepřijdeš.</p>
-        <div className="row">
-          <button type="button" className="btn" onClick={download} disabled={!profiles.length}>
-            Stáhnout zálohu
-          </button>
-          <button type="button" className="btn" onClick={() => fileRef.current?.click()}>
-            Obnovit ze zálohy
-          </button>
-          <input ref={fileRef} id="backup-file" type="file" accept="application/json,.json" hidden onChange={e => restore(e.target.files?.[0])} />
-        </div>
-        {note && <p className="note">{note}</p>}
-      </section>
+      {removing !== null && (
+        <section className="panel danger" data-testid="profile-remove-confirm">
+          {hasUnsaved(removing) ? (
+            <p>Na tabletu jsou ještě neuložené změny. Připoj se k internetu a chvíli počkej, jinak se ztratí.</p>
+          ) : (
+            <p>Pro další hraní bude potřeba znovu zadat heslo.</p>
+          )}
+          <div className="row">
+            <button type="button" className="btn danger-btn" data-testid="profile-remove-yes" onClick={() => void remove(removing)}>
+              Odebrat
+            </button>
+            <button type="button" className="btn" onClick={() => setRemoving(null)}>
+              Nechat
+            </button>
+          </div>
+        </section>
+      )}
+      {note && <p className="note">{note}</p>}
     </div>
   );
 }

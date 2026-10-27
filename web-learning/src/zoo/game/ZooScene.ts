@@ -654,6 +654,12 @@ export class ZooScene extends Phaser.Scene {
     if (!pen) return;
     this.walkWhere(this.besides(pen), () => {
       const name = SPECIES_NAME[animal.species];
+      // visits are read-only: only the owner's own actions change a zoo
+      if (this.ctl.visiting) {
+        this.ctl.toast(`Zvířátka tu krmí ${this.host().name}. Na návštěvě se můžeš dívat.`);
+        animal.trick();
+        return;
+      }
       if (useZoo.getState().feed(this.ctl.hostId, animal.id) === 'full') {
         this.ctl.toast(`${name} už je ${FED_WORD[animal.species]}. Zkus to zase později.`);
         animal.trick();
@@ -671,6 +677,10 @@ export class ZooScene extends Phaser.Scene {
 
   private goWater(o: PlacedObject) {
     this.walkWhere(this.besides(o), () => {
+      if (this.ctl.visiting) {
+        this.ctl.toast(`Kytičky tu zalévá ${this.host().name}. Na návštěvě se můžeš dívat.`);
+        return;
+      }
       this.player.water((o.x + 0.5) * TILE, (o.y + 1) * TILE - 14, () => {
         const result = useZoo.getState().water(this.ctl.hostId, o.id);
         const stage = getProfile(this.ctl.hostId)?.objects.find(x => x.id === o.id)?.stage ?? 0;

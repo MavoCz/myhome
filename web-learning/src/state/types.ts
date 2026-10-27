@@ -39,18 +39,24 @@ export interface Animal {
   joy: number;
 }
 
-export interface Profile {
-  id: string;
-  name: string;
+/** A child's zoo as stored on the server (learning_zoos.state). Bump `schema` when the shape changes. */
+export interface ZooDoc {
+  schema: 1;
   avatar: Avatar;
   coins: number;
-  /** all coins ever earned, for the profile card */
+  /** all coins ever earned, for the profile card and the parents' overview */
   earned: number;
   objects: PlacedObject[];
   animals: Animal[];
   /** YYYY-MM-DD of the last exercise reward, for the daily bonus */
   lastExerciseDay?: string;
   createdAt: number;
+}
+
+/** A zoo plus whose it is: the myhome user id (as a string) and display name. */
+export interface Profile extends ZooDoc {
+  id: string;
+  name: string;
 }
 
 export type ExerciseEvent =

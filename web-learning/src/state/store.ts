@@ -1,185 +1,394 @@
 import { create } from 'zustand';
-import { createJSONStorage, persist } from 'zustand/middleware';
-import type { Avatar, ItemId, PlacedObject, Profile, Species } from './types';
-import { DAILY_BONUS, FEED_COOLDOWN_MS, REFUND_RATE, START_COINS, WATER_COOLDOWN_MS, today } from './economy';
+import type { ExerciseResultRequest, MyZooResponse } from 'common/src/api/generated/model';
+import type { Avatar, ExerciseEvent, ItemId, PlacedObject, Profile, Species, ZooDoc } from './types';
+import { today } from './economy';
+import { applyOp, canFeed, dailyBonus, newZoo, uid, waterResult, type Op, type WaterResult } from './ops';
 import { item } from '../zoo/catalog';
-
-// crypto.randomUUID only exists on https/localhost, and the tablet may open the dev server over plain http
-const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+import {
+  activeAccount,
+  getMyZoo,
+  httpStatus,
+  listFamilyZoos,
+  logout,
+  onSessionExpired,
+  recordResults,
+  saveMyZoo,
+  useAccounts,
+} from '../api';
 
 export type FeedResult = 'fed' | 'full';
-export type WaterResult = 'grew' | 'wait' | 'bloom';
+export type { WaterResult } from './ops';
+
+/**
+ * - signed-out: no child is active, or the active child's session ran out (a parent signs in again)
+ * - new: signed in, but the child has no zoo yet (picks an avatar first)
+ * - closed: the server refused the learning module right now (outside the time a parent allowed)
+ * - offline: the server is unreachable and nothing is cached on this device yet
+ */
+export type ZooStatus = 'signed-out' | 'loading' | 'new' | 'ready' | 'closed' | 'offline';
+
+export interface Notice {
+  text: string;
+  coins: number;
+}
 
 interface ZooState {
+  /** the active child's zoo first (once it exists), then the siblings' zoos, which are read-only */
   profiles: Profile[];
   activeId: string | null;
+  status: ZooStatus;
+  /** bonus coins from parents, shown once on the home screen */
+  notices: Notice[];
 
-  setActive(id: string | null): void;
-  createProfile(name: string, avatar: Avatar): string;
-  updateProfile(id: string, patch: Partial<Pick<Profile, 'name' | 'avatar'>>): void;
-  deleteProfile(id: string): void;
-
+  takeNotices(): Notice[];
+  createZoo(avatar: Avatar): void;
+  setAvatar(avatar: Avatar): void;
   /** Adds coins for finished exercise work; returns the daily bonus that was added on top, if any. */
-  reward(id: string, coins: number): number;
+  reward(id: string, coins: number, event: ExerciseEvent): number;
   build(id: string, kind: PlacedObject['kind'], x: number, y: number): boolean;
   addAnimal(id: string, species: Species, penId: string): boolean;
   removeObject(id: string, objectId: string): void;
   removeAnimal(id: string, animalId: string): void;
   feed(id: string, animalId: string): FeedResult;
   water(id: string, objectId: string): WaterResult;
-
-  importBackup(json: string): number;
 }
 
-function starterObjects(): PlacedObject[] {
-  const objects: PlacedObject[] = [];
-  for (let y = 13; y <= 16; y++) objects.push({ id: uid(), kind: 'path', x: 12, y });
-  objects.push({ id: uid(), kind: 'tree', x: 1, y: 1 });
-  objects.push({ id: uid(), kind: 'tree', x: 22, y: 2 });
-  objects.push({ id: uid(), kind: 'flowerbed', x: 10, y: 15, stage: 0 });
-  return objects;
+// ---------- per-child cache and sync ----------
+
+/** What this device knows about the active child's zoo: the last saved server copy plus unsaved ops. */
+interface Cache {
+  base: ZooDoc | null;
+  version: number;
+  pending: Op[];
+  outbox: ExerciseResultRequest[];
 }
 
-const priceOf = (id: ItemId) => item(id).price;
+const SAVE_DELAY_MS = 1500;
+const RETRY_MS = 20_000;
+const cacheKey = (userId: number) => `learning-zoo:${userId}`;
 
-export const useZoo = create<ZooState>()(
-  persist(
-    (set, get) => {
-      const patch = (id: string, fn: (p: Profile) => Profile | null) => {
-        let changed = false;
-        set(s => ({
-          profiles: s.profiles.map(p => {
-            if (p.id !== id) return p;
-            const next = fn(p);
-            if (!next) return p;
-            changed = true;
-            return next;
-          }),
-        }));
-        return changed;
-      };
+function readCache(userId: number): Cache {
+  try {
+    const raw = localStorage.getItem(cacheKey(userId));
+    if (raw) return JSON.parse(raw) as Cache;
+  } catch {
+    // unreadable cache: start from the server copy
+  }
+  return { base: null, version: 0, pending: [], outbox: [] };
+}
 
-      return {
-        profiles: [],
-        activeId: null,
+let userId: number | null = null;
+let cache: Cache = readCache(-1);
+let others: Profile[] = [];
+let saving: Promise<void> | null = null;
+let sending: Promise<void> | null = null;
+let saveTimer: ReturnType<typeof setTimeout> | undefined;
+let retryTimer: ReturnType<typeof setTimeout> | undefined;
 
-        setActive: id => set({ activeId: id }),
+function writeCache() {
+  if (userId === null) return;
+  try {
+    localStorage.setItem(cacheKey(userId), JSON.stringify(cache));
+  } catch {
+    // storage full or blocked: the server copy still gets saved
+  }
+}
 
-        createProfile(name, avatar) {
-          const profile: Profile = {
-            id: uid(),
-            name: name.trim() || 'Bez jména',
-            avatar,
-            coins: START_COINS,
-            earned: 0,
-            objects: starterObjects(),
-            animals: [],
-            createdAt: Date.now(),
-          };
-          set(s => ({ profiles: [...s.profiles, profile], activeId: profile.id }));
-          return profile.id;
-        },
+const current = () => cache.pending.reduce<ZooDoc | null>(applyOp, cache.base);
 
-        updateProfile(id, changes) {
-          patch(id, p => ({ ...p, ...changes, name: (changes.name ?? p.name).trim() || p.name }));
-        },
+/** Server state is the app's own document; anything without the basic arrays is treated as no zoo. */
+function asDoc(state: unknown): ZooDoc | null {
+  const d = state as ZooDoc | null;
+  return d && Array.isArray(d.objects) && Array.isArray(d.animals) ? d : null;
+}
 
-        deleteProfile(id) {
-          set(s => ({ profiles: s.profiles.filter(p => p.id !== id), activeId: s.activeId === id ? null : s.activeId }));
-        },
+function publish() {
+  const doc = current();
+  const account = activeAccount();
+  const me: Profile[] = doc && account ? [{ ...doc, id: String(account.userId), name: account.displayName }] : [];
+  useZoo.setState({ profiles: [...me, ...others], activeId: account ? String(account.userId) : null });
+  if (doc && account && account.avatar !== doc.avatar) useAccounts.getState().update(account.userId, { avatar: doc.avatar });
+}
 
-        reward(id, coins) {
-          let bonus = 0;
-          patch(id, p => {
-            const day = today();
-            bonus = p.lastExerciseDay === day ? 0 : DAILY_BONUS;
-            const total = coins + bonus;
-            return { ...p, coins: p.coins + total, earned: p.earned + total, lastExerciseDay: day };
-          });
-          return bonus;
-        },
+function dispatch(op: Op) {
+  cache.pending.push(op);
+  writeCache();
+  publish();
+  scheduleSave(SAVE_DELAY_MS);
+}
 
-        build(id, kind, x, y) {
-          return patch(id, p => {
-            const price = priceOf(kind);
-            if (p.coins < price) return null;
-            const obj: PlacedObject = { id: uid(), kind, x, y };
-            if (kind === 'flowerbed') obj.stage = 0;
-            return { ...p, coins: p.coins - price, objects: [...p.objects, obj] };
-          });
-        },
+function scheduleSave(ms: number) {
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(() => void save(), ms);
+}
 
-        addAnimal(id, species, penId) {
-          return patch(id, p => {
-            const price = priceOf(`animal-${species}`);
-            if (p.coins < price) return null;
-            return { ...p, coins: p.coins - price, animals: [...p.animals, { id: uid(), species, penId, joy: 0 }] };
-          });
-        },
+function scheduleRetry() {
+  clearTimeout(retryTimer);
+  retryTimer = setTimeout(() => {
+    void save();
+    void sendResults();
+  }, RETRY_MS);
+}
 
-        removeObject(id, objectId) {
-          patch(id, p => {
-            const obj = p.objects.find(o => o.id === objectId);
-            if (!obj) return null;
-            if (p.animals.some(a => a.penId === objectId)) return null;
-            const refund = Math.floor(priceOf(obj.kind) * REFUND_RATE);
-            return { ...p, coins: p.coins + refund, objects: p.objects.filter(o => o.id !== objectId) };
-          });
-        },
+/** Takes the server copy as the new base and replays the unsaved ops on top of it. */
+function rebase(server: MyZooResponse) {
+  cache.base = asDoc(server.state);
+  cache.version = server.version ?? 0;
+  const pendingIds = new Set((server.pendingGrants ?? []).map(g => g.id));
+  // a grant that is no longer pending was claimed (by this device's lost response, or another tablet)
+  cache.pending = cache.pending.filter(op => op.type !== 'grant' || pendingIds.has(op.grantId));
+  const known = new Set(cache.pending.flatMap(op => (op.type === 'grant' ? [op.grantId] : [])));
+  for (const g of server.pendingGrants ?? []) {
+    if (g.id == null || known.has(g.id) || !current()) continue;
+    cache.pending.push({ type: 'grant', grantId: g.id, amount: g.amount ?? 0 });
+    const notices = useZoo.getState().notices;
+    useZoo.setState({ notices: [...notices, { text: g.note ? `Bonus od rodičů: ${g.note}` : 'Bonus od rodičů', coins: g.amount ?? 0 }] });
+  }
+  writeCache();
+  publish();
+}
 
-        removeAnimal(id, animalId) {
-          patch(id, p => {
-            const a = p.animals.find(x => x.id === animalId);
-            if (!a) return null;
-            const refund = Math.floor(priceOf(`animal-${a.species}`) * REFUND_RATE);
-            return { ...p, coins: p.coins + refund, animals: p.animals.filter(x => x.id !== animalId) };
-          });
-        },
+function fail(e: unknown) {
+  const status = httpStatus(e);
+  if (status === 403) useZoo.setState({ status: 'closed' });
+  else if (status === null) scheduleRetry(); // offline or server down; customFetch already handled 401
+  else console.error('Learning sync failed', e);
+}
 
-        feed(id, animalId) {
-          const now = Date.now();
-          const a = get().profiles.find(p => p.id === id)?.animals.find(x => x.id === animalId);
-          if (!a || (a.lastFed && now - a.lastFed < FEED_COOLDOWN_MS)) return 'full';
-          patch(id, p => ({
-            ...p,
-            animals: p.animals.map(x => (x.id === animalId ? { ...x, lastFed: now, joy: x.joy + 1 } : x)),
-          }));
-          return 'fed';
-        },
+async function save() {
+  if (saving) return saving;
+  const doc = current();
+  if (userId === null || !doc || !cache.pending.length) return;
+  const owner = userId;
+  const sent = cache.pending.length;
+  const claimedGrantIds = cache.pending.slice(0, sent).flatMap(op => (op.type === 'grant' ? [op.grantId] : []));
+  saving = (async () => {
+    try {
+      const res = await saveMyZoo({ version: cache.version, state: doc as unknown as Record<string, unknown>, claimedGrantIds });
+      if (owner !== userId) return;
+      cache.base = doc;
+      cache.version = res.version ?? cache.version + 1;
+      cache.pending = cache.pending.slice(sent);
+      writeCache();
+      if (cache.pending.length) scheduleSave(SAVE_DELAY_MS);
+    } catch (e) {
+      if (owner !== userId) return;
+      if (httpStatus(e) === 409) {
+        // saved from another tablet in between: take that copy, replay what this one did, try again
+        try {
+          rebase(await getMyZoo());
+          scheduleSave(0);
+        } catch (e2) {
+          fail(e2);
+        }
+        return;
+      }
+      fail(e);
+    } finally {
+      saving = null;
+    }
+  })();
+  return saving;
+}
 
-        water(id, objectId) {
-          const now = Date.now();
-          const o = get().profiles.find(p => p.id === id)?.objects.find(x => x.id === objectId);
-          if (!o) return 'wait';
-          if ((o.stage ?? 0) >= 3) return 'bloom';
-          if (o.lastWatered && now - o.lastWatered < WATER_COOLDOWN_MS) return 'wait';
-          patch(id, p => ({
-            ...p,
-            objects: p.objects.map(x => (x.id === objectId ? { ...x, stage: (x.stage ?? 0) + 1, lastWatered: now } : x)),
-          }));
-          return 'grew';
-        },
+async function sendResults() {
+  if (sending || userId === null || !cache.outbox.length) return;
+  const owner = userId;
+  const batch = cache.outbox.slice(0, 200);
+  sending = (async () => {
+    try {
+      await recordResults(batch);
+      if (owner !== userId) return;
+      const sentIds = new Set(batch.map(r => r.clientId));
+      cache.outbox = cache.outbox.filter(r => !sentIds.has(r.clientId));
+      writeCache();
+      if (cache.outbox.length) void sendResults();
+    } catch (e) {
+      if (owner === userId) fail(e);
+    } finally {
+      sending = null;
+    }
+  })();
+  return sending;
+}
 
-        importBackup(json) {
-          const data = JSON.parse(json) as { profiles?: Profile[] };
-          if (!Array.isArray(data.profiles)) throw new Error('V souboru nejsou žádné profily.');
-          const valid = data.profiles.filter(p => p && typeof p.id === 'string' && typeof p.name === 'string' && Array.isArray(p.objects));
-          set(s => ({ profiles: [...s.profiles.filter(p => !valid.some(v => v.id === p.id)), ...valid] }));
-          return valid.length;
-        },
-      };
-    },
-    {
-      name: 'skolni-zoo',
-      version: 1,
-      storage: createJSONStorage(() => localStorage),
-      partialize: s => ({ profiles: s.profiles, activeId: s.activeId }),
-    },
-  ),
-);
+/** Saves what can be saved now; used before switching child and when the tablet goes to sleep. */
+export async function flushNow() {
+  clearTimeout(saveTimer);
+  await Promise.allSettled([save(), sendResults()]);
+}
+
+/** Loads the server copy of the active child's zoo (and the siblings'); falls back to this device's cache. */
+export async function refresh() {
+  const account = activeAccount();
+  if (!account) return;
+  if (!account.refreshToken) {
+    useZoo.setState({ status: 'signed-out' });
+    return;
+  }
+  const owner = account.userId;
+  if (!current()) useZoo.setState({ status: 'loading' });
+  try {
+    const server = await getMyZoo();
+    if (owner !== userId) return;
+    rebase(server);
+    useZoo.setState({ status: current() ? 'ready' : 'new' });
+    void flushNow();
+  } catch (e) {
+    if (owner !== userId) return;
+    const status = httpStatus(e);
+    if (status === 403) useZoo.setState({ status: 'closed' });
+    else if (status === null) {
+      useZoo.setState({ status: current() ? 'ready' : 'offline' });
+      scheduleRetry();
+    } else useZoo.setState({ status: current() ? 'ready' : 'offline' });
+    return;
+  }
+  try {
+    const zoos = await listFamilyZoos();
+    if (owner !== userId) return;
+    others = zoos.flatMap(z => {
+      const doc = asDoc(z.state);
+      return doc && z.userId !== owner ? [{ ...doc, id: String(z.userId), name: z.displayName ?? '' }] : [];
+    });
+    publish();
+  } catch {
+    // siblings' zoos are a nice extra; the child's own zoo works without them
+  }
+}
+
+/** Makes a signed-in child the active one: saves the previous child's work first, then loads theirs. */
+export async function openAccount(next: number) {
+  if (userId !== null && userId !== next) await flushNow();
+  clearTimeout(retryTimer);
+  useAccounts.getState().setActive(next);
+  userId = next;
+  cache = readCache(next);
+  others = [];
+  useZoo.setState({ notices: [] });
+  publish();
+  await refresh();
+}
+
+/** Whether the child has work on this device that the server does not have yet. */
+export function hasUnsaved(id: number) {
+  const c = id === userId ? cache : readCache(id);
+  return c.pending.length > 0 || c.outbox.length > 0;
+}
+
+/** Signs a child out of this device and forgets the local copy of their zoo. */
+export async function forgetAccount(id: number) {
+  const account = useAccounts.getState().accounts.find(a => a.userId === id);
+  if (id === userId) {
+    clearTimeout(saveTimer);
+    clearTimeout(retryTimer);
+    userId = null;
+    cache = readCache(-1);
+    others = [];
+  }
+  try {
+    localStorage.removeItem(cacheKey(id));
+  } catch {
+    // nothing to clean up
+  }
+  useAccounts.getState().remove(id);
+  await logout(account?.refreshToken ?? null);
+  if (useAccounts.getState().activeUserId === null) useZoo.setState({ profiles: [], activeId: null, status: 'signed-out' });
+}
+
+onSessionExpired(id => {
+  if (id === userId) useZoo.setState({ status: 'signed-out' });
+});
+
+if (typeof window !== 'undefined') {
+  window.addEventListener('online', () => void flushNow());
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'hidden') void flushNow();
+    else if (useZoo.getState().status !== 'loading') void refresh();
+  });
+}
+
+// ---------- the store the screens and the zoo scene use ----------
+
+/** Only the active child's own zoo changes; visits are read-only. */
+const mine = (id: string) => (userId !== null && id === String(userId) ? current() : null);
+
+export const useZoo = create<ZooState>()((set, get) => ({
+  profiles: [],
+  activeId: null,
+  // the accounts store hydrates synchronously, so a remembered child starts out loading, not signed out
+  status: useAccounts.getState().activeUserId !== null ? 'loading' : 'signed-out',
+  notices: [],
+
+  takeNotices() {
+    const notices = get().notices;
+    if (notices.length) set({ notices: [] });
+    return notices;
+  },
+
+  createZoo(avatar) {
+    if (userId === null || current()) return;
+    // first, so bonus coins waiting for the child land on the new zoo
+    cache.pending.unshift({ type: 'init', doc: newZoo(avatar) });
+    writeCache();
+    set({ status: 'ready' });
+    publish();
+    // grants that waited for the zoo to exist
+    void refresh();
+  },
+
+  setAvatar(avatar) {
+    if (current()) dispatch({ type: 'avatar', avatar });
+  },
+
+  reward(id, coins, event) {
+    const doc = mine(id);
+    if (!doc) return 0;
+    const day = today();
+    const bonus = dailyBonus(doc, day);
+    const { exercise, ...rest } = event;
+    cache.outbox.push({ clientId: uid(), exercise, event: rest, coins, solvedAt: new Date().toISOString() });
+    dispatch({ type: 'reward', coins, day });
+    void sendResults();
+    return bonus;
+  },
+
+  build(id, kind, x, y) {
+    const doc = mine(id);
+    if (!doc || doc.coins < item(kind as ItemId).price) return false;
+    dispatch({ type: 'build', objectId: uid(), kind, x, y });
+    return true;
+  },
+
+  addAnimal(id, species, penId) {
+    const doc = mine(id);
+    if (!doc || doc.coins < item(`animal-${species}`).price) return false;
+    dispatch({ type: 'addAnimal', animalId: uid(), species, penId });
+    return true;
+  },
+
+  removeObject(id, objectId) {
+    if (mine(id)) dispatch({ type: 'removeObject', objectId });
+  },
+
+  removeAnimal(id, animalId) {
+    if (mine(id)) dispatch({ type: 'removeAnimal', animalId });
+  },
+
+  feed(id, animalId) {
+    const doc = mine(id), at = Date.now();
+    if (!doc || !canFeed(doc, animalId, at)) return 'full';
+    dispatch({ type: 'feed', animalId, at });
+    return 'fed';
+  },
+
+  water(id, objectId) {
+    const doc = mine(id), at = Date.now();
+    if (!doc) return 'wait';
+    const result = waterResult(doc, objectId, at);
+    if (result === 'grew') dispatch({ type: 'water', objectId, at });
+    return result;
+  },
+}));
 
 export const getProfile = (id: string) => useZoo.getState().profiles.find(p => p.id === id);
-
-export function exportBackup(): string {
-  return JSON.stringify({ app: 'skolni-zoo', version: 1, exportedAt: new Date().toISOString(), profiles: useZoo.getState().profiles }, null, 2);
-}

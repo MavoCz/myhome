@@ -94,6 +94,9 @@ importers:
 
   web-learning:
     dependencies:
+      common:
+        specifier: workspace:*
+        version: link:../common
       phaser:
         specifier: 3.90.0
         version: 3.90.0

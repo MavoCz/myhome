@@ -20,7 +20,7 @@ export function ExerciseScreen({ id, go }: { id: ExerciseId; go: (r: Route) => v
       const event = parseExerciseMessage(e.data);
       if (!event || event.exercise !== id) return;
       const r = rewardFor(event);
-      const bonus = useZoo.getState().reward(activeId, r.coins);
+      const bonus = useZoo.getState().reward(activeId, r.coins, event);
       push(r.label, r.coins);
       if (bonus) push(`Denní bonus za první cvičení: ${bonus} ${coinsWord(bonus)}`, bonus);
     };

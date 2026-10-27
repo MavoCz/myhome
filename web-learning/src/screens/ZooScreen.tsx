@@ -43,7 +43,7 @@ export function ZooScreen({ hostId, go }: { hostId: string; go: (r: Route) => vo
 
   useEffect(() => {
     const name = getProfile(hostId)?.name;
-    if (ctl.visiting && name) push(`Jsi na návštěvě u ${name}. Můžeš krmit zvířátka a zalévat kytičky.`);
+    if (ctl.visiting && name) push(`Návštěva v zoo: ${name}. Tady se můžeš dívat a procházet.`);
   }, [ctl, hostId, push]);
 
   if (!host || !visitor) return null;
@@ -73,7 +73,11 @@ export function ZooScreen({ hostId, go }: { hostId: string; go: (r: Route) => vo
       </div>
 
       {mode === 'walk' && !loading && (
-        <p className="zoo-help">Klepni kamkoli a postavička tam dojde. Klepni na zvířátko a nakrmí ho, na záhonek a zalije ho. Mapu posuneš tažením.</p>
+        <p className="zoo-help">
+          {ctl.visiting
+            ? 'Klepni kamkoli a postavička tam dojde. Mapu posuneš tažením.'
+            : 'Klepni kamkoli a postavička tam dojde. Klepni na zvířátko a nakrmí ho, na záhonek a zalije ho. Mapu posuneš tažením.'}
+        </p>
       )}
 
       {mode === 'build' && (

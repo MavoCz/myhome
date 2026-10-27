@@ -17,7 +17,8 @@ Hotový web servíruje backend myhome na adrese `/learning/`.
 ## Jak je to poskládané
 
 - `src/` – aplikace v Reactu + TypeScriptu: profily, domovská obrazovka, peněženka, obchod.
-- `src/state/` – data (Zustand, ukládá se do `localStorage` pod klíčem `skolni-zoo`) a `economy.ts`, kde jsou všechny ceny, odměny a časy krmení/zalévání.
+- `src/api.ts` – přihlášené děti na tabletu a volání serveru.
+- `src/state/` – data (Zustand, ukládání na server s kopií v prohlížeči, změny zoo jako operace v `ops.ts`) a `economy.ts`, kde jsou všechny ceny, odměny a časy krmení/zalévání.
 - `src/zoo/` – zoo v Phaseru 3: `game/ZooScene.ts` (mapa, stavění, procházka), `game/animal.ts`, `game/player.ts`, grafika v `art/` (zvířata, rekvizity, kytičky a ikonky jako obrázky v `art/img/`, postavička jako SVG; zem, cesty a výběhy kreslí scéna), katalog obchodu v `catalog.ts`.
 - `exercises/` – samostatné stránky cvičení. Aplikace je zobrazuje v rámu; po vyřešení příkladu nebo kola pošlou rodiči `postMessage` (`source: 'skolni-zoo-exercise'`) a bodíky spočítá `rewardFor` v `economy.ts`.
 
@@ -39,4 +40,4 @@ Celý prompt, seznam vygenerovaných obrázků a zjištění jsou v `docs/art-pi
 
 ## Data
 
-Všechno je uložené jen v prohlížeči daného zařízení. Na obrazovce výběru profilu je stažení a obnovení zálohy (JSON).
+Každé dítě je dětský účet v rodině myhome. Zoo se ukládá na server (modul `learning`), takže se neztratí a funguje i na jiném tabletu. Rodič dítě na tabletu jednou přihlásí, potom stačí klepnout na jeho obrázek. Bez internetu se dá hrát dál a změny se uloží, až bude spojení zpátky.

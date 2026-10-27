@@ -999,11 +999,11 @@ const RAIFFEISEN_BOM_CSV = (() => {
   const rows = [
     RAIFFEISEN_FULL_COLUMNS_HEADER,
     // outgoing: supermarket purchase
-    '05.03.2026;05.03.2026;CZ0000000011111111;Osobní účet;Platba kartou;;;Potraviny s.r.o.;Karetní transakce;nákup potravin;;;;;;-320,50;CZK;-320,50;CZK;0,00;BOM-TXN-001;;Billa;Praha',
+    '05.03.2026;05.03.2026;CZ0000000011111111;Osobní účet;Platba kartou;;Potraviny s.r.o.;Karetní transakce;nákup potravin;;;;;-320,50;CZK;-320,50;CZK;0,00;BOM-TXN-001;;Billa;Praha',
     // outgoing: online purchase
     '10.03.2026;10.03.2026;CZ0000000011111111;Osobní účet;Odchozí platba;CZ1234567890123456;E-shop Czech s.r.o.;Odchozí platba;objednavka 12345;;12345;;;-1500,00;CZK;-1500,00;CZK;0,00;BOM-TXN-002;;;Brno',
     // incoming: salary — should be skipped
-    '01.03.2026;01.03.2026;CZ0000000011111111;Osobní účet;Příchozí platba;CZ9876543210987654;Zaměstnavatel a.s.;Příchozí platba;Výplata Březen 2026;;;;;;;55000,00;CZK;55000,00;CZK;0,00;BOM-TXN-003;;;',
+    '01.03.2026;01.03.2026;CZ0000000011111111;Osobní účet;Příchozí platba;CZ9876543210987654;Zaměstnavatel a.s.;Příchozí platba;Výplata Březen 2026;;;;;55000,00;CZK;55000,00;CZK;0,00;BOM-TXN-003;;;',
   ];
   const content = rows.join('\n');
   // Prepend UTF-8 BOM (EF BB BF)

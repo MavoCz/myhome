@@ -8,6 +8,6 @@
     "test:web": "pnpm --filter e2e test:web"
   },
   "devDependencies": {
-    "orval": "^7.8.0"
+    "orval": "7.21.0"
   }
 }

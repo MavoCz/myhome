@@ -109,13 +109,17 @@ test.describe('Family Page', () => {
 
     // MUI Select: click the combobox trigger, then pick option from portal
     await roleSelect.getByRole('combobox').click();
-    await authenticatedPage.getByRole('option', { name: 'PARENT' }).click();
-
-    // Wait for the mutation to complete
-    await authenticatedPage.waitForResponse(
-      (resp) => resp.url().includes('/api/family/members') && resp.request().method() === 'PUT',
+    // Listen before clicking so a fast response is not missed
+    const roleUpdated = authenticatedPage.waitForResponse(
+      (resp) => resp.url().endsWith(`/api/family/members/${member.userId}/role`) && resp.request().method() === 'PUT',
     );
-    await expect(roleSelect.getByRole('combobox')).toContainText('PARENT');
+    await authenticatedPage.getByRole('option', { name: 'PARENT' }).click();
+    expect((await roleUpdated).ok()).toBeTruthy();
+    await expect(roleSelect.getByRole('combobox')).toHaveText('PARENT');
+
+    // The change is persisted
+    await authenticatedPage.reload();
+    await expect(roleSelect.getByRole('combobox')).toHaveText('PARENT');
   });
 
   test('admin can delete a member with confirmation', async ({ authenticatedPage, testAuth }) => {
@@ -140,12 +144,18 @@ test.describe('Family Page', () => {
 
     const dialog = authenticatedPage.getByTestId('remove-confirm-dialog');
     await expect(dialog).toBeVisible();
-    await expect(authenticatedPage.getByText(displayName)).toBeVisible();
+    // The name is also in the member's table row, so look for it inside the dialog only
+    await expect(dialog).toContainText(displayName);
 
     await dialog.getByRole('button', { name: /^remove$/i }).click();
 
     await expect(dialog).not.toBeVisible();
-    await expect(authenticatedPage.getByTestId(`family-member-row-${member.userId}`)).not.toBeVisible();
+    await expect(authenticatedPage.getByTestId(`family-member-row-${member.userId}`)).toHaveCount(0);
+
+    // The removal is persisted
+    await authenticatedPage.reload();
+    await expect(authenticatedPage.getByTestId(`family-member-row-${testAuth.user!.id}`)).toBeVisible();
+    await expect(authenticatedPage.getByTestId(`family-member-row-${member.userId}`)).toHaveCount(0);
   });
 
   test('family page shows Color column', async ({ authenticatedPage }) => {
@@ -157,21 +167,27 @@ test.describe('Family Page', () => {
     await authenticatedPage.goto('/family');
     const userId = testAuth.user!.id!;
 
-    // Click a specific color swatch (orange: #F28E2B)
-    const colorSwatch = authenticatedPage.getByTestId(`family-color-${userId}-F28E2B`);
-    await expect(colorSwatch).toBeVisible();
-    await colorSwatch.click();
+    // The only member gets the first palette colour (blue) by default; the selected swatch has a 3px border
+    const blueSwatch = authenticatedPage.getByTestId(`family-color-${userId}-4E79A7`);
+    const orangeSwatch = authenticatedPage.getByTestId(`family-color-${userId}-F28E2B`);
+    await expect(blueSwatch).toHaveCSS('border-top-width', '3px');
+    await expect(orangeSwatch).toHaveCSS('border-top-width', '2px');
 
-    // Wait for the mutation
-    await authenticatedPage.waitForResponse(
-      (resp) => resp.url().includes('/color') && resp.request().method() === 'PUT',
+    // Listen before clicking so a fast response is not missed
+    const colorUpdated = authenticatedPage.waitForResponse(
+      (resp) => resp.url().endsWith(`/api/family/members/${userId}/color`) && resp.request().method() === 'PUT',
     );
+    await orangeSwatch.click();
+    expect((await colorUpdated).ok()).toBeTruthy();
 
-    // The swatch should now have a highlighted border (re-render after mutation)
-    // Verify by reloading and checking the swatch still appears selected
+    // The selection moves to the clicked swatch once the member list is refetched
+    await expect(orangeSwatch).toHaveCSS('border-top-width', '3px');
+    await expect(blueSwatch).toHaveCSS('border-top-width', '2px');
+
+    // ...and survives a reload
     await authenticatedPage.reload();
-    const updatedSwatch = authenticatedPage.getByTestId(`family-color-${userId}-F28E2B`);
-    await expect(updatedSwatch).toBeVisible();
+    await expect(orangeSwatch).toHaveCSS('border-top-width', '3px');
+    await expect(blueSwatch).toHaveCSS('border-top-width', '2px');
   });
 
   test('admin can cancel member deletion', async ({ authenticatedPage, testAuth }) => {

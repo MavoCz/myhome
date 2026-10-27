@@ -141,9 +141,9 @@ test.describe('Expenses page', () => {
     await expect(authenticatedPage.getByText('Delete me now')).not.toBeVisible();
   });
 
-  test('navigates to Monthly Summary via button', async ({ authenticatedPage }) => {
+  test('navigates to Monthly Summary via the module tab', async ({ authenticatedPage }) => {
     await goToExpenses(authenticatedPage);
-    await authenticatedPage.getByRole('link', { name: /monthly summary/i }).click();
+    await authenticatedPage.getByTestId('module-tab-monthly-summary').click();
     await expect(authenticatedPage).toHaveURL(/\/expenses\/summary/);
     await expect(authenticatedPage.getByRole('heading', { name: /monthly summary/i })).toBeVisible();
   });
@@ -160,15 +160,18 @@ test.describe('Expenses page', () => {
 // ===========================================================================
 
 test.describe('Expenses module tile on homepage', () => {
+  // "Expenses" also labels the header nav and the bottom nav; the tile's accessible name includes its description
+  const expensesTile = (page: import('@playwright/test').Page) =>
+    page.getByRole('button', { name: /^Expenses\s*Track and split family costs/ });
+
   test('expenses tile is visible on homepage', async ({ authenticatedPage }) => {
     await authenticatedPage.goto('/home');
-    await expect(authenticatedPage.getByText('Expenses')).toBeVisible();
+    await expect(expensesTile(authenticatedPage)).toBeVisible();
   });
 
   test('clicking expenses tile navigates to /expenses', async ({ authenticatedPage }) => {
     await authenticatedPage.goto('/home');
-    // Click the module tile by name
-    await authenticatedPage.getByText('Expenses').click();
+    await expensesTile(authenticatedPage).click();
     await expect(authenticatedPage).toHaveURL(/\/expenses/);
     await expect(authenticatedPage.getByRole('heading', { name: /expenses/i })).toBeVisible();
   });
@@ -239,124 +242,126 @@ test.describe('Monthly Summary page', () => {
 });
 
 // ===========================================================================
-// Manage Groups tab (inline in ExpensesPage)
+// Manage Groups page (/expenses/groups, reached via the module tab)
 // ===========================================================================
 
-test.describe('Manage Groups tab', () => {
-  test('ADMIN user sees "Manage Groups" tab on ExpensesPage', async ({ authenticatedPage }) => {
+async function goToManageGroups(page: import('@playwright/test').Page) {
+  await goToExpenses(page);
+  await page.getByTestId('module-tab-manage-groups').click();
+  await expect(page).toHaveURL(/\/expenses\/groups$/);
+  await expect(page.getByRole('heading', { name: /manage groups/i })).toBeVisible();
+}
+
+async function createGroup(page: import('@playwright/test').Page, name: string) {
+  await page.getByTestId('expense-groups-add-btn').click();
+  const dialog = page.getByTestId('expense-group-dialog');
+  await expect(dialog).toBeVisible();
+  await dialog.getByTestId('expense-group-name-input').fill(name);
+  await dialog.getByTestId('expense-group-submit-btn').click();
+  await expect(dialog).not.toBeVisible();
+  const row = page.locator('[data-testid^="expense-group-row-"]').filter({ hasText: name });
+  await expect(row).toBeVisible();
+  return row;
+}
+
+function defaultGroupRow(page: import('@playwright/test').Page) {
+  return page
+    .getByTestId('expense-groups-table')
+    .locator('[data-testid^="expense-group-row-"]')
+    .filter({ has: page.locator('.MuiChip-label', { hasText: /^Default$/ }) });
+}
+
+test.describe('Manage Groups page', () => {
+  test('ADMIN user sees the Manage Groups module tab on the Expenses page', async ({ authenticatedPage }) => {
     await goToExpenses(authenticatedPage);
-    await expect(authenticatedPage.getByTestId('expenses-page-tab-manage-groups')).toBeVisible();
+    await expect(authenticatedPage.getByTestId('module-tab-manage-groups')).toBeVisible();
   });
 
-  test('clicking Manage Groups tab shows groups table', async ({ authenticatedPage }) => {
-    await goToExpenses(authenticatedPage);
-    await authenticatedPage.getByTestId('expenses-page-tab-manage-groups').click();
+  test('clicking the Manage Groups tab shows the groups table', async ({ authenticatedPage }) => {
+    await goToManageGroups(authenticatedPage);
     await expect(authenticatedPage.getByTestId('expense-groups-table')).toBeVisible();
+    await expect(authenticatedPage.getByTestId('module-tab-manage-groups')).toHaveAttribute('aria-selected', 'true');
   });
 
-  test('ADMIN user sees the default General group in Manage Groups tab', async ({ authenticatedPage }) => {
-    await goToExpenses(authenticatedPage);
-    await authenticatedPage.getByTestId('expenses-page-tab-manage-groups').click();
-    const table = authenticatedPage.getByTestId('expense-groups-table');
-    await expect(table.locator('.MuiChip-label').filter({ hasText: /^Default$/ }).first()).toBeVisible();
+  test('/expenses/groups opens the Manage Groups page directly', async ({ authenticatedPage }) => {
+    await authenticatedPage.goto('/expenses/groups');
+    await expect(authenticatedPage).toHaveURL(/\/expenses\/groups$/);
+    await expect(authenticatedPage.getByRole('heading', { name: /manage groups/i })).toBeVisible();
+    await expect(authenticatedPage.getByTestId('expense-groups-table')).toBeVisible();
+    await expect(authenticatedPage.getByTestId('module-tab-manage-groups')).toHaveAttribute('aria-selected', 'true');
   });
 
-  test('ADMIN user can open Add Group dialog from Manage Groups tab', async ({ authenticatedPage }) => {
-    await goToExpenses(authenticatedPage);
-    await authenticatedPage.getByTestId('expenses-page-tab-manage-groups').click();
+  test('ADMIN user sees the default General group', async ({ authenticatedPage }) => {
+    await goToManageGroups(authenticatedPage);
+    const row = defaultGroupRow(authenticatedPage);
+    await expect(row).toHaveCount(1);
+    await expect(row).toContainText('General');
+  });
+
+  test('ADMIN user can open the Add Group dialog', async ({ authenticatedPage }) => {
+    await goToManageGroups(authenticatedPage);
     await authenticatedPage.getByTestId('expense-groups-add-btn').click();
-    await expect(authenticatedPage.getByTestId('expense-group-dialog')).toBeVisible();
-    await expect(authenticatedPage.getByRole('heading', { name: /create expense group/i })).toBeVisible();
+    const dialog = authenticatedPage.getByTestId('expense-group-dialog');
+    await expect(dialog).toBeVisible();
+    await expect(dialog.getByRole('heading', { name: /create expense group/i })).toBeVisible();
   });
 
   test('Add Group dialog closes on Cancel', async ({ authenticatedPage }) => {
-    await goToExpenses(authenticatedPage);
-    await authenticatedPage.getByTestId('expenses-page-tab-manage-groups').click();
+    await goToManageGroups(authenticatedPage);
     await authenticatedPage.getByTestId('expense-groups-add-btn').click();
-    await authenticatedPage.getByRole('button', { name: /cancel/i }).click();
-    await expect(authenticatedPage.getByTestId('expense-group-dialog')).not.toBeVisible();
+    const dialog = authenticatedPage.getByTestId('expense-group-dialog');
+    await dialog.getByRole('button', { name: /cancel/i }).click();
+    await expect(dialog).not.toBeVisible();
   });
 
   test('creates a new expense group and it appears in the table', async ({ authenticatedPage }) => {
-    await goToExpenses(authenticatedPage);
-    await authenticatedPage.getByTestId('expenses-page-tab-manage-groups').click();
-    await authenticatedPage.getByTestId('expense-groups-add-btn').click();
-
-    const dialog = authenticatedPage.getByTestId('expense-group-dialog');
-    await expect(dialog).toBeVisible();
-
-    await dialog.getByRole('textbox', { name: /name/i }).fill('E2E Test Group');
-
-    await dialog.getByRole('button', { name: /create|save/i }).click();
-    await expect(dialog).not.toBeVisible();
-
-    await expect(authenticatedPage.getByText('E2E Test Group')).toBeVisible();
+    await goToManageGroups(authenticatedPage);
+    const row = await createGroup(authenticatedPage, 'E2E Test Group');
+    await expect(row).toContainText('Active');
   });
 
   test('edit button opens Edit Group dialog pre-filled', async ({ authenticatedPage }) => {
-    await goToExpenses(authenticatedPage);
-    await authenticatedPage.getByTestId('expenses-page-tab-manage-groups').click();
+    await goToManageGroups(authenticatedPage);
+    const row = await createGroup(authenticatedPage, 'EditableGroup');
 
-    // Create a group first
-    await authenticatedPage.getByTestId('expense-groups-add-btn').click();
+    await row.locator('[data-testid^="expense-group-edit-btn-"]').click();
+
     const dialog = authenticatedPage.getByTestId('expense-group-dialog');
-    await dialog.getByRole('textbox', { name: /name/i }).fill('EditableGroup');
-    await dialog.getByRole('button', { name: /create|save/i }).click();
-    await expect(dialog).not.toBeVisible();
-
-    // Click edit button for the new group
-    const editBtns = authenticatedPage.locator('[data-testid^="expense-group-edit-btn-"]');
-    // Find the one that corresponds to the new group row
-    const newGroupRow = authenticatedPage.locator('[data-testid^="expense-group-row-"]').filter({ hasText: 'EditableGroup' });
-    await expect(newGroupRow).toBeVisible();
-    const editBtn = newGroupRow.locator('[data-testid^="expense-group-edit-btn-"]');
-    await editBtn.click();
-
-    const editDialog = authenticatedPage.getByTestId('expense-group-dialog');
-    await expect(editDialog).toBeVisible();
-    await expect(authenticatedPage.getByRole('heading', { name: /edit expense group/i })).toBeVisible();
-    // Pre-filled name
-    await expect(editDialog.getByRole('textbox', { name: /name/i })).toHaveValue('EditableGroup');
+    await expect(dialog).toBeVisible();
+    await expect(dialog.getByRole('heading', { name: /edit expense group/i })).toBeVisible();
+    await expect(dialog.getByTestId('expense-group-name-input')).toHaveValue('EditableGroup');
   });
 
-  test('Add Group dialog shows allowChildren switch for non-default groups', async ({ authenticatedPage }) => {
-    await goToExpenses(authenticatedPage);
-    await authenticatedPage.getByTestId('expenses-page-tab-manage-groups').click();
+  test('allowChildren switch is shown for non-default groups only', async ({ authenticatedPage }) => {
+    await goToManageGroups(authenticatedPage);
     await authenticatedPage.getByTestId('expense-groups-add-btn').click();
-    await expect(authenticatedPage.getByTestId('expense-group-allow-children-switch')).toBeVisible();
+    const dialog = authenticatedPage.getByTestId('expense-group-dialog');
+    await expect(dialog.getByTestId('expense-group-allow-children-switch')).toBeVisible();
+    await dialog.getByRole('button', { name: /cancel/i }).click();
+    await expect(dialog).not.toBeVisible();
+
+    // The default group is always restricted, so its edit dialog has no switch
+    await defaultGroupRow(authenticatedPage).locator('[data-testid^="expense-group-edit-btn-"]').click();
+    await expect(dialog.getByRole('heading', { name: /edit expense group/i })).toBeVisible();
+    await expect(dialog.getByTestId('expense-group-allow-children-switch')).toHaveCount(0);
   });
 
   test('archive button archives a non-default group', async ({ authenticatedPage }) => {
-    await goToExpenses(authenticatedPage);
-    await authenticatedPage.getByTestId('expenses-page-tab-manage-groups').click();
-    await authenticatedPage.getByTestId('expense-groups-add-btn').click();
-    const dialog = authenticatedPage.getByTestId('expense-group-dialog');
-    await dialog.getByRole('textbox', { name: /name/i }).fill('Archive Target Group');
-    await dialog.getByRole('button', { name: /create|save/i }).click();
-    await expect(dialog).not.toBeVisible();
+    await goToManageGroups(authenticatedPage);
+    const row = await createGroup(authenticatedPage, 'Archive Target Group');
 
-    const archiveBtns = authenticatedPage.locator('[data-testid^="expense-group-archive-btn-"]');
-    await expect(archiveBtns.first()).toBeVisible();
-    await archiveBtns.first().click();
+    await row.locator('[data-testid^="expense-group-archive-btn-"]').click();
 
-    await expect(authenticatedPage.getByText('Archived')).toBeVisible();
+    await expect(row).toContainText('Archived');
+    await expect(row.locator('[data-testid^="expense-group-archive-btn-"]')).toHaveCount(0);
   });
 
   test('default group has no archive button', async ({ authenticatedPage }) => {
-    await goToExpenses(authenticatedPage);
-    await authenticatedPage.getByTestId('expenses-page-tab-manage-groups').click();
-    const defaultRow = authenticatedPage
-      .locator('[data-testid^="expense-group-row-"]')
-      .filter({ hasText: 'Default' });
-    await expect(defaultRow).toBeVisible();
-    const archiveBtnInDefault = defaultRow.locator('[data-testid^="expense-group-archive-btn-"]');
-    await expect(archiveBtnInDefault).not.toBeVisible();
-  });
-
-  test('/expenses/groups URL redirects to /home (route removed)', async ({ authenticatedPage }) => {
-    await authenticatedPage.goto('/expenses/groups');
-    // Should redirect to /home since route no longer exists
-    await expect(authenticatedPage).toHaveURL(/\/home/);
+    await goToManageGroups(authenticatedPage);
+    const row = defaultGroupRow(authenticatedPage);
+    await expect(row).toBeVisible();
+    await expect(row.locator('[data-testid^="expense-group-edit-btn-"]')).toBeVisible();
+    await expect(row.locator('[data-testid^="expense-group-archive-btn-"]')).toHaveCount(0);
   });
 });
 

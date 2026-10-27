@@ -50,14 +50,17 @@ test.describe('Header (desktop)', () => {
     await expect(authenticatedPage.getByRole('heading', { name: /welcome back/i })).toBeVisible();
   });
 
+  // The header renders a desktop and a mobile copy of the bell; CSS hides the one that does not fit the viewport
   test('notification bell is visible', async ({ authenticatedPage }) => {
     await authenticatedPage.goto('/home');
-    await expect(authenticatedPage.getByTestId('notif-bell-btn')).toBeVisible();
+    const visibleBell = authenticatedPage.getByTestId('notif-bell-btn').filter({ visible: true });
+    await expect(visibleBell).toHaveCount(1);
+    await expect(visibleBell).toBeVisible();
   });
 
   test('notification bell opens popover with Notifications heading', async ({ authenticatedPage }) => {
     await authenticatedPage.goto('/home');
-    await authenticatedPage.getByTestId('notif-bell-btn').click();
+    await authenticatedPage.getByTestId('notif-bell-btn').filter({ visible: true }).click();
     await expect(authenticatedPage.getByRole('heading', { name: /^notifications$/i })).toBeVisible();
   });
 });

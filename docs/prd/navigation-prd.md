@@ -107,7 +107,7 @@ interface ModuleMenuItem {
 | Module | Path | mainTabLabel | Sub-pages |
 |--------|------|-------------|-----------|
 | Family | `/family` | — | None |
-| Expenses | `/expenses` | "List" | Monthly Summary, Manage Groups (PARENT only) |
+| Expenses | `/expenses` | "List" | Monthly Summary, Manage Groups (ADMIN and PARENT only) |
 
 ## 6. Responsive Behavior
 

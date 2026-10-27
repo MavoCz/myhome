@@ -80,7 +80,7 @@ Exchange rates are sourced from the **Frankfurter API** (`api.frankfurter.dev`, 
 
 A named container scoping a set of related expenses within a family (e.g. "General", "Skiing Trip Jan 2026", "Sea Vacation Aug 2026"). Groups have an optional start/end date. A default "General" group is created automatically for every family and cannot be archived or deleted.
 
-Each group has an `allowChildren` boolean (default `true` for new groups). When `allowChildren=false`, CHILD members cannot see expenses in that group or add expenses to it. The "General" default group is always `allowChildren=false` and this cannot be overridden. Group management (create, edit, archive, delete) is accessible from the **Manage Groups** tab inside `ExpensesPage` — there is no separate `/expenses/groups` route.
+Each group has an `allowChildren` boolean (default `true` for new groups). When `allowChildren=false`, CHILD members cannot see expenses in that group or add expenses to it. The "General" default group is always `allowChildren=false` and this cannot be overridden. Group management (create, edit, archive, delete) lives on its own page, `ManageGroupsPage` at `/expenses/groups`, reached through the **Manage Groups** module tab (next to **List** and **Monthly Summary**; see the navigation PRD).
 
 ### 6.2 Expense
 
@@ -110,7 +110,7 @@ An aggregated view for a selected calendar month showing total spend, spend per 
 - As an ADMIN, I want to create and configure expense groups (with optional date ranges and `allowChildren` flag) so that trip-specific costs are clearly separated and CHILD visibility is controlled.
 - As an ADMIN, I want to set per-member split percentages per group so that recurring ratios (e.g. 60 %/40 %) are applied to new expenses without manual entry.
 - As an ADMIN, I want to grant or revoke `ACCESS` and `MANAGE` permissions on the expenses module to PARENT and CHILD members, so that I control who can see or modify financial records.
-- As an ADMIN, I want to manage groups from a tab within the Expenses page, so I don't need to navigate to a separate admin page.
+- As an ADMIN, I want to reach group management from a tab of the Expenses module, so it is one click away from the expense list.
 
 ### PARENT (with `ACCESS` or `MANAGE` grant)
 
@@ -152,7 +152,9 @@ An aggregated view for a selected calendar month showing total spend, spend per 
 - **GRP-04** Deleting a group is only permitted when it has zero expenses (ADMIN only).
 - **GRP-05** ADMIN can configure per-member split percentages per group.
   - *AC:* Percentages across all included members must sum to 100 %; system rejects any save where sum ≠ 100 % with a validation error.
-- **GRP-06** Group management (create, edit, archive, delete) is accessible from the **Manage Groups** tab inside `ExpensesPage`. The tab is only visible to ADMIN and PARENT users. No separate `/expenses/groups` route exists.
+- **GRP-06** Group management (create, edit, archive, delete) is on the `/expenses/groups` page (`ManageGroupsPage`), reached through the **Manage Groups** module tab of the Expenses module.
+  - *AC:* The tab is only shown to ADMIN and PARENT users (`menuItems[].roles` in the module definition); it is selected while `/expenses/groups` is open.
+  - *AC:* Opening `/expenses/groups` directly renders the page. The route itself has no client-side role guard; group permissions are enforced by the backend.
 - **GRP-07** CHILD members with `ACCESS` only see groups where `allowChildren=true` (filtered server-side). They cannot add expenses to groups with `allowChildren=false`.
   - *AC:* `GET /api/expenses/groups` returns only `allowChildren=true` groups for CHILD role.
   - *AC:* `POST /api/expenses` to a group with `allowChildren=false` returns HTTP 403 for CHILD users.

@@ -62,9 +62,25 @@ async function saveZoo(api: APIRequestContext, token: string, version: number, s
 }
 
 test.describe('Learning zoo API', () => {
-  test('requires authentication', async ({ api }) => {
-    const res = await api.get('/api/learning/zoo');
-    expect(res.status()).toBe(401);
+  for (const [method, url] of [
+    ['GET', '/api/learning/zoo'],
+    ['PUT', '/api/learning/zoo'],
+    ['GET', '/api/learning/zoos'],
+    ['POST', '/api/learning/results'],
+    ['GET', '/api/learning/progress'],
+    ['GET', '/api/learning/grants'],
+    ['POST', '/api/learning/grants'],
+  ] as const) {
+    test(`${method} ${url} requires authentication`, async ({ api }) => {
+      const res = await api.fetch(url, { method, data: method === 'GET' ? undefined : {} });
+      expect(res.status()).toBe(401);
+    });
+  }
+
+  test('saving a zoo without a state is a bad request', async ({ api, authResponse }) => {
+    const child = await createChild(api, authResponse.accessToken!, authResponse.user!.familyId!, 'no-state');
+    const res = await api.put('/api/learning/zoo', { headers: bearer(child.token), data: { version: 0 } });
+    expect(res.status()).toBe(400);
   });
 
   test('child without learning access is refused', async ({ api, authResponse }) => {
@@ -173,6 +189,12 @@ test.describe('Learning progress API', () => {
     );
   });
 
+  test('an empty batch of results is a bad request', async ({ api, authResponse }) => {
+    const child = await createChild(api, authResponse.accessToken!, authResponse.user!.familyId!, 'empty');
+    const res = await api.post('/api/learning/results', { headers: bearer(child.token), data: { results: [] } });
+    expect(res.status()).toBe(400);
+  });
+
   test('children cannot read progress or grant coins', async ({ api, authResponse }) => {
     const child = await createChild(api, authResponse.accessToken!, authResponse.user!.familyId!, 'nosy');
     expect((await api.get('/api/learning/progress', { headers: bearer(child.token) })).status()).toBe(403);
@@ -221,6 +243,15 @@ test.describe('Learning bonus coins API', () => {
 
     const recent: CoinGrantResponse[] = await (await api.get('/api/learning/grants', { headers: bearer(adminToken) })).json();
     expect(recent[0].claimedAt).not.toBeNull();
+  });
+
+  test('a grant needs a positive amount', async ({ api, authResponse }) => {
+    const child = await createChild(api, authResponse.accessToken!, authResponse.user!.familyId!, 'zero');
+    const res = await api.post('/api/learning/grants', {
+      headers: bearer(authResponse.accessToken!),
+      data: { userId: child.userId, amount: 0 },
+    });
+    expect(res.status()).toBe(400);
   });
 
   test('coins can only go to a child of the family', async ({ api, authResponse }) => {

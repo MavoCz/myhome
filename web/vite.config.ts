@@ -10,6 +10,11 @@ export default defineConfig({
         target: process.env.VITE_API_TARGET ?? 'http://localhost:8080',
         changeOrigin: true,
       },
+      // The kids' app is a separate build the backend serves (pnpm dev:learning runs it with hot reload on :5175)
+      '^/learning(/|$)': {
+        target: process.env.VITE_API_TARGET ?? 'http://localhost:8080',
+        changeOrigin: true,
+      },
       '/api-docs': {
         target: process.env.VITE_API_TARGET ?? 'http://localhost:8080',
         changeOrigin: true,

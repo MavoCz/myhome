@@ -55,6 +55,9 @@ Modules are direct sub-packages under the base package. Spring Modulith enforces
 net.voldrich.myhome.backend/
 ├── auth/                    # Auth module public API (AuthModuleApi, AuthUser, annotations)
 │   └── internal/            # Hidden: controllers, services, repositories, filters, DTOs
+├── expenses/                # Expense groups, splits, balances, CSV import
+├── learning/                # Školní zoo: children's zoo documents, exercise results, bonus coins (docs/prd/learning-module-prd.md)
+├── notification/            # In-app notifications + SSE
 ├── jooq/                    # Generated JOOQ classes (build/generated-sources/jooq)
 └── BackendSpringApplication.java
 ```

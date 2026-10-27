@@ -15,8 +15,8 @@ err()  { echo -e "${RED}[dev]${NC} $1"; }
 
 cleanup() {
   log "Shutting down..."
-  kill $BACKEND_PID $FRONTEND_PID 2>/dev/null || true
-  wait $BACKEND_PID $FRONTEND_PID 2>/dev/null || true
+  kill $BACKEND_PID $FRONTEND_PID $LEARNING_PID 2>/dev/null || true
+  wait $BACKEND_PID $FRONTEND_PID $LEARNING_PID 2>/dev/null || true
   log "Done."
 }
 
@@ -33,10 +33,16 @@ cd "$SCRIPT_DIR"
 pnpm dev &
 FRONTEND_PID=$!
 
+# --- Learning app (Školní zoo) ---
+log "Starting learning app dev server (port 5175)..."
+pnpm dev:learning &
+LEARNING_PID=$!
+
 trap cleanup EXIT INT TERM
 
 log "Backend:  http://localhost:8080"
 log "Frontend: http://localhost:5173"
+log "Learning: http://localhost:5175/learning/ (also on the LAN for a tablet)"
 log "Swagger:  http://localhost:8080/swagger-ui.html"
 log "Press Ctrl+C to stop all services."
 

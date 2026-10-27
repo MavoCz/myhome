@@ -1,6 +1,6 @@
 import * as dotenv from 'dotenv';
 import * as path from 'path';
-import { spawn, ChildProcess } from 'child_process';
+import { spawn, execFileSync, ChildProcess } from 'child_process';
 import { startPostgres } from './helpers/docker';
 
 dotenv.config({ path: path.resolve(__dirname, '.env.test') });
@@ -67,7 +67,11 @@ export default async function globalSetup(): Promise<void> {
     password: DB_PASSWORD,
   });
 
-  // 2. Start Spring Boot backend pointing at the test database
+  // 2. Build the kids' learning app; the backend serves the build at /learning/ (from resources/learning-static)
+  console.log('[e2e] Building learning app...');
+  execFileSync('pnpm', ['--filter', 'web-learning', 'build'], { cwd: path.resolve(__dirname, '..'), stdio: 'inherit' });
+
+  // 3. Start Spring Boot backend pointing at the test database
   console.log('[e2e] Starting backend...');
   const jdbcUrl = `jdbc:postgresql://localhost:${DB_PORT}/${DB_NAME}`;
 
@@ -92,7 +96,7 @@ export default async function globalSetup(): Promise<void> {
   await waitForBackend(BACKEND_PORT);
   console.log('[e2e] Backend is ready.');
 
-  // 3. Start Vite dev server proxying to the test backend
+  // 4. Start Vite dev server proxying to the test backend
   console.log('[e2e] Starting Vite dev server...');
   const vite = spawnLogged('pnpm', ['exec', 'vite', '--port', VITE_PORT, '--strictPort'], {
     cwd: WEB_DIR,

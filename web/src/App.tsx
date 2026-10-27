@@ -10,8 +10,10 @@ import './stores/authStore';
 import { modules } from './modules/registry';
 import { expensesModule } from './modules/expenses';
 import { familyModule } from './modules/family';
+import { learningModule } from './modules/learning';
 modules.push(familyModule);
 modules.push(expensesModule);
+modules.push(learningModule);
 
 const queryClient = new QueryClient({
   defaultOptions: {

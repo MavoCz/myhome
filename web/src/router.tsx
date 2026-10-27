@@ -7,6 +7,7 @@ import { RegisterPage } from './modules/auth/pages/RegisterPage';
 import { HomePage } from './pages/HomePage';
 import { FamilyPage } from './modules/auth/pages/FamilyPage';
 import { ExpensesPage, ExpenseSummaryPage, ManageGroupsPage } from './modules/expenses';
+import { LearningPage } from './modules/learning';
 
 export const router = createBrowserRouter([
   {
@@ -27,6 +28,7 @@ export const router = createBrowserRouter([
           { path: '/expenses', element: <ExpensesPage /> },
           { path: '/expenses/summary', element: <ExpenseSummaryPage /> },
           { path: '/expenses/groups', element: <ManageGroupsPage /> },
+          { path: '/learning-progress', element: <LearningPage /> },
           { index: true, element: <Navigate to="/home" replace /> },
         ],
       },

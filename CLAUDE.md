@@ -40,6 +40,7 @@ pnpm generate-api            # Export OpenAPI spec + generate TypeScript types &
 PostgreSQL is managed automatically by Spring Boot Docker Compose support (`backend/compose.yml`). Running `./gradlew bootRun` auto-starts the PostgreSQL container. No manual Docker commands needed.
 
 - **Fresh database:** `docker compose -f backend/compose.yml down -v` then restart the app
+- **Compose project `myhome`, database `myhome`:** the explicit `name:` in `compose.yml` keeps this repo off the shared `backend-postgres-1` container that other repos from the same template use
 - **Credentials:** root/root (configured in `compose.yml` and `application.properties`)
 - **Port:** 5433 (mapped from container's 5432)
 
@@ -84,10 +85,11 @@ The currently implemented module provides JWT authentication and family-based au
 
 ## Frontend
 
-The frontend is a React + TypeScript SPA served from the backend's `static/` directory. It uses a pnpm workspace with two packages:
+The frontend is a React + TypeScript SPA served from the backend's `static/` directory. It uses a pnpm workspace with these packages:
 
 - **`common/`** — Shared API types + fetch client (no React deps). Used by both web and future React Native apps.
 - **`web/`** — React SPA with Vite, MUI v6, React Router v7, Zustand, TanStack Query v5.
+- **`web-learning/`** — Školní zoo, the kids' learning app (React + Phaser, Czech UI, no MUI). Served by the backend at `/learning/` from `resources/learning-static/`. Has its own `web-learning/CLAUDE.md`; read it before working there.
 
 
 ### Frontend Commands
@@ -97,7 +99,8 @@ Run from project root:
 ```bash
 pnpm install                 # Install all dependencies
 pnpm dev                     # Start Vite dev server (port 5173, proxies /api to :8080)
-pnpm build                   # Build SPA → backend/src/main/resources/static/
+pnpm dev:learning            # Start learning app dev server (port 5174, --host, proxies /api to :8080)
+pnpm build                   # Build SPA → static/, then learning app → learning-static/
 pnpm generate-api            # Export OpenAPI spec + regenerate TypeScript types & hooks
 ```
 

@@ -1,4 +1,5 @@
 packages:
   - "common"
   - "web"
+  - "web-learning"
   - "e2e"

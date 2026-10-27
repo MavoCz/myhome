@@ -10,4 +10,15 @@ public class SpaForwardingController {
     public String forward() {
         return "forward:/index.html";
     }
+
+    // Relative asset URLs of the learning app need the trailing slash
+    @RequestMapping("/learning")
+    public String learningRedirect() {
+        return "redirect:/learning/";
+    }
+
+    @RequestMapping("/learning/")
+    public String learning() {
+        return "forward:/learning/index.html";
+    }
 }

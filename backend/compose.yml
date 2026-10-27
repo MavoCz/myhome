@@ -1,9 +1,18 @@
+# Explicit project name: other repos built from the same template also have backend/compose.yml,
+# and without it they would all share one "backend" container and database.
+name: myhome
+
 services:
   postgres:
     image: postgres:18
     environment:
       POSTGRES_USER: root
       POSTGRES_PASSWORD: root
-      POSTGRES_DB: backend
+      POSTGRES_DB: myhome
     ports:
       - "5433:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql
+
+volumes:
+  postgres-data:

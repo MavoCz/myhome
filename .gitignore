@@ -12,3 +12,6 @@ e2e/test-results/
 # OS
 .DS_Store
 Thumbs.db
+
+# Built learning app (served from backend at /learning/)
+backend/src/main/resources/learning-static/

@@ -1,0 +1,910 @@
+<!doctype html>
+<html lang="cs">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<style>
+:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+body{margin:0}
+img{max-width:100%}
+[hidden]{display:none!important}
+</style>
+<title>Sčítání pod sebou</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Patrick+Hand&display=swap">
+<style>
+/* Layout: a squared exercise book on a school desk. Notebook on the left, tools on the right
+   (number keys while solving, base-ten blocks while explaining). Stacks to one column on phones. */
+:root {
+  --desk: #e4eaf3;
+  --paper: #fdfdfb;
+  --grid: #d3dfee;
+  --ink: #1d2640;
+  --muted: #5b6985;
+  --a: #2a5bd7;
+  --a-deep: #1c43a6;
+  --on-a: #ffffff;
+  --b: #0b8a73;
+  --carry: #e06800;
+  --hi: rgba(255, 207, 51, .40);
+  --focus: #2a5bd7;
+  --focus-soft: rgba(42, 91, 215, .18);
+  --ok: #16914a;
+  --bad: #d23c3c;
+  --key: #ffffff;
+  --key-edge: #c5d1e4;
+  --bubble: #ffffff;
+  --star: #f2b100;
+  --shadow: 0 1px 0 rgba(29, 38, 64, .05), 0 10px 28px -14px rgba(29, 38, 64, .30);
+  --font-ui: "Baloo 2", "Trebuchet MS", system-ui, sans-serif;
+  --font-hand: "Patrick Hand", "Chalkboard SE", "Comic Sans MS", cursive;
+  --cell: clamp(56px, min(10vw, 11vh), 96px);
+  --half: calc(var(--cell) / 2);
+  --u: clamp(7px, 1.2vmin, 12px);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --desk: #0e1613; --paper: #1b2924; --grid: rgba(220, 238, 228, .08); --ink: #eef4ef; --muted: #9fb5aa;
+    --a: #8db4ff; --a-deep: #5b84d4; --on-a: #0e1613; --b: #5fdcc0; --carry: #ffab5a;
+    --hi: rgba(255, 220, 90, .15); --focus: #8db4ff; --focus-soft: rgba(141, 180, 255, .2);
+    --ok: #5fd68c; --bad: #ff7d7d; --key: #23342d; --key-edge: #3a4f46; --bubble: #24362f;
+    --shadow: 0 10px 28px -14px rgba(0, 0, 0, .7);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --desk: #0e1613; --paper: #1b2924; --grid: rgba(220, 238, 228, .08); --ink: #eef4ef; --muted: #9fb5aa;
+  --a: #8db4ff; --a-deep: #5b84d4; --on-a: #0e1613; --b: #5fdcc0; --carry: #ffab5a;
+  --hi: rgba(255, 220, 90, .15); --focus: #8db4ff; --focus-soft: rgba(141, 180, 255, .2);
+  --ok: #5fd68c; --bad: #ff7d7d; --key: #23342d; --key-edge: #3a4f46; --bubble: #24362f;
+  --shadow: 0 10px 28px -14px rgba(0, 0, 0, .7);
+  color-scheme: dark;
+}
+
+html, body { min-height: 100%; }
+body {
+  background: var(--desk);
+  color: var(--ink);
+  font-family: var(--font-ui);
+  font-size: 16px;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-user-select: none;
+  user-select: none;
+}
+button { font-family: inherit; color: inherit; cursor: pointer; }
+:focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; }
+
+.app {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding-block: 14px 28px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+/* Header */
+.top { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 18px; }
+.brand { display: flex; align-items: baseline; gap: 4px 12px; flex-wrap: wrap; margin-right: auto; }
+h1 { margin: 0; font-size: clamp(1.45rem, 3.2vw, 2rem); font-weight: 800; line-height: 1.1; text-wrap: balance; }
+.grade { font-weight: 600; color: var(--muted); font-size: .98rem; white-space: nowrap; }
+.modes {
+  display: inline-flex; padding: 3px; gap: 2px;
+  background: var(--key); border: 2px solid var(--key-edge); border-radius: 999px;
+}
+.modes button {
+  border: 0; background: transparent; border-radius: 999px;
+  font-size: 1rem; font-weight: 700; color: var(--muted);
+  min-height: 42px; padding: 0 14px;
+}
+.modes button[aria-checked="true"] { background: var(--a); color: var(--on-a); }
+.tools { display: flex; align-items: center; gap: 10px; }
+.score {
+  display: flex; align-items: center; gap: 6px;
+  font-weight: 800; font-size: 1.5rem; font-variant-numeric: tabular-nums;
+  padding: 0 6px;
+}
+.score svg { width: 30px; height: 30px; fill: var(--star); display: block; }
+.icon-btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  min-height: 44px; padding: 0 14px; border-radius: 999px;
+  background: var(--key); border: 2px solid var(--key-edge);
+  font-weight: 700; font-size: 1rem; color: var(--muted);
+}
+.icon-btn svg { width: 22px; height: 22px; }
+.icon-btn .off { display: none; }
+.icon-btn[aria-pressed="false"] .on { display: none; }
+.icon-btn[aria-pressed="false"] .off { display: inline; }
+
+/* Stage */
+.stage { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr); gap: 18px; align-items: start; }
+@media (max-width: 760px) { .stage { grid-template-columns: minmax(0, 1fr); } }
+
+.paper {
+  position: relative;
+  min-width: 0;
+  background-color: var(--paper);
+  background-image:
+    linear-gradient(var(--grid) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+  background-size: var(--half) var(--half);
+  border-radius: 6px 18px 18px 6px;
+  box-shadow: var(--shadow);
+  padding: 20px 16px 24px;
+  display: flex; flex-direction: column; align-items: center; gap: 22px;
+}
+
+.bubble {
+  position: relative;
+  max-width: min(34ch, 100%);
+  min-height: calc(2 * 1.35em + 24px);
+  display: flex; align-items: center; justify-content: center;
+  padding: 10px 18px;
+  background: var(--bubble);
+  border: 2px solid var(--key-edge);
+  border-radius: 18px;
+  box-shadow: var(--shadow);
+  font-size: clamp(1.1rem, 2.3vw, 1.4rem);
+  font-weight: 600; line-height: 1.35; text-align: center; text-wrap: balance;
+}
+.bubble::after {
+  content: ""; position: absolute; left: 50%; bottom: -9px;
+  width: 15px; height: 15px; background: var(--bubble);
+  border-right: 2px solid var(--key-edge); border-bottom: 2px solid var(--key-edge);
+  transform: translateX(-50%) rotate(45deg);
+}
+.bubble.ok, .bubble.ok::after { border-color: var(--ok); }
+.bubble.hint, .bubble.hint::after { border-color: var(--carry); }
+.bubble .a { color: var(--a); font-weight: 800; }
+.bubble .b { color: var(--b); font-weight: 800; }
+.bubble .c { color: var(--carry); font-weight: 800; }
+.bubble b { font-weight: 800; }
+
+/* The written sum: columns sign | S | D | J, rows label | carry | a | b | result */
+.sheet {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(4, var(--cell));
+  grid-template-rows: var(--half) var(--half) var(--cell) var(--cell) var(--cell);
+  font-family: var(--font-hand);
+}
+.sheet > * { position: relative; z-index: 1; }
+.hl {
+  grid-row: 2 / 6; grid-column: 4;
+  margin: 0 3px; border-radius: 10px;
+  background: var(--hi);
+  transition: transform .45s cubic-bezier(.3, .7, .2, 1), opacity .3s;
+  pointer-events: none;
+}
+.sheet > .hl { z-index: 0; }
+.lbl {
+  grid-row: 1; display: grid; place-items: center;
+  font: 700 calc(var(--half) * .5) var(--font-ui);
+  color: var(--muted); letter-spacing: .06em;
+  transition: opacity .3s;
+}
+.lbl.ghost { opacity: 0; }
+.carry {
+  grid-row: 2; display: grid; place-items: center;
+  font-size: calc(var(--half) * .95); line-height: 1; color: var(--carry);
+}
+.d { display: grid; place-items: center; font-size: calc(var(--cell) * .8); line-height: 1; }
+.d.a { grid-row: 3; color: var(--a); }
+.d.b { grid-row: 4; color: var(--b); }
+.d.sign { grid-row: 4; grid-column: 1; color: var(--ink); }
+.rule {
+  grid-row: 5; grid-column: 1 / -1; align-self: start;
+  height: 3px; margin-top: -1.5px; border-radius: 2px; background: var(--ink);
+}
+.res {
+  grid-row: 5; display: grid; place-items: center;
+  margin: 7px 5px 3px; border-radius: 10px;
+  font-size: calc(var(--cell) * .8); line-height: 1; color: var(--ink);
+}
+.res.active { box-shadow: inset 0 0 0 3px var(--focus); animation: pulse 1.4s ease-in-out infinite; }
+.res.wrong { color: var(--bad); }
+
+.actions, .panel-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; }
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  min-height: 54px; padding: 0 22px; border-radius: 16px;
+  font-size: 1.15rem; font-weight: 700;
+  background: var(--key); color: var(--ink);
+  border: 2px solid var(--key-edge); box-shadow: 0 3px 0 var(--key-edge);
+}
+.btn svg { width: 20px; height: 20px; fill: currentColor; }
+.btn:active { transform: translateY(2px); box-shadow: 0 1px 0 var(--key-edge); }
+.btn.primary { background: var(--a); color: var(--on-a); border-color: var(--a-deep); box-shadow: 0 3px 0 var(--a-deep); }
+.btn.primary:active { box-shadow: 0 1px 0 var(--a-deep); }
+.btn.glow { animation: nudge 1.3s ease-in-out infinite; }
+
+/* Side panels */
+.side { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+.panel { background: var(--paper); border-radius: 18px; box-shadow: var(--shadow); padding: 16px; min-width: 0; }
+.panel h2 {
+  margin: 0 0 12px; font-size: .9rem; font-weight: 700; color: var(--muted);
+  text-transform: uppercase; letter-spacing: .1em;
+}
+.keypad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.key {
+  height: clamp(62px, 10.5vh, 90px);
+  border-radius: 18px;
+  font-size: clamp(1.9rem, 4vw, 2.6rem); font-weight: 700; font-variant-numeric: tabular-nums;
+  background: var(--key); color: var(--ink);
+  border: 2px solid var(--key-edge); box-shadow: 0 4px 0 var(--key-edge);
+  transition: opacity .2s;
+}
+.key.zero { grid-column: 1 / -1; }
+.key:active:not(:disabled) { transform: translateY(3px); box-shadow: 0 1px 0 var(--key-edge); }
+.key:disabled { opacity: .4; cursor: default; }
+.tip { margin: 14px 2px 0; color: var(--muted); font-size: 1rem; line-height: 1.4; }
+.tip strong { color: var(--ink); }
+
+/* Base-ten blocks: same rows as the notebook (carry, top number, bottom number, line, result) */
+.blocks-wrap { overflow-x: auto; padding-bottom: 4px; }
+.blocks {
+  display: grid;
+  grid-template-rows: auto calc(var(--u) * 10) calc(var(--u) * 10) calc(var(--u) * 10) 3px calc(var(--u) * 10) auto;
+  justify-content: center;
+  column-gap: 16px; row-gap: 8px;
+}
+.bhead { text-align: center; font-weight: 700; font-size: .95rem; color: var(--muted); }
+.bin { display: flex; align-items: flex-end; justify-content: center; gap: 2px; }
+.bin.k0 { gap: 6px; }
+.bin .slot { display: flex; align-items: flex-end; }
+.bin.k0 .slot { flex-direction: column; width: var(--u); }
+.grid5 { display: grid; grid-template-columns: repeat(5, var(--u)); gap: 2px; align-content: end; }
+.brule { grid-column: 1 / -1; background: var(--ink); border-radius: 2px; }
+.count { text-align: center; font-family: var(--font-hand); font-size: 1.8rem; line-height: 1.2; min-height: 1.2em; }
+
+.cube, .rod, .flat { background-color: var(--pc); box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .2); border-radius: 2px; flex: none; }
+.cube { width: var(--u); height: var(--u); }
+.rod {
+  width: var(--u); height: calc(var(--u) * 10);
+  background-image: repeating-linear-gradient(to bottom, transparent 0 calc(var(--u) - 1px), rgba(0, 0, 0, .22) calc(var(--u) - 1px) var(--u));
+}
+.flat {
+  width: calc(var(--u) * 10); height: calc(var(--u) * 10);
+  background-image:
+    repeating-linear-gradient(to bottom, transparent 0 calc(var(--u) - 1px), rgba(0, 0, 0, .22) calc(var(--u) - 1px) var(--u)),
+    repeating-linear-gradient(to right, transparent 0 calc(var(--u) - 1px), rgba(0, 0, 0, .22) calc(var(--u) - 1px) var(--u));
+}
+.pa { --pc: var(--a); }
+.pb { --pc: var(--b); }
+.pc { --pc: var(--carry); }
+.glow { filter: brightness(1.2) drop-shadow(0 0 3px var(--carry)); }
+.legend {
+  --u: 4px;
+  display: flex; flex-wrap: wrap; justify-content: center; align-items: flex-end; gap: 10px 20px;
+  margin: 14px 0; color: var(--muted); font-size: .95rem;
+}
+.legend span { display: inline-flex; align-items: flex-end; gap: 6px; }
+
+/* Flying digit and celebration stars */
+.flyer { position: fixed; z-index: 50; pointer-events: none; display: grid; place-items: center; font-family: var(--font-hand); line-height: 1; color: var(--carry); }
+.spark { position: fixed; z-index: 60; width: 18px; height: 18px; pointer-events: none; }
+.spark.big { width: 40px; height: 40px; }
+.spark svg { width: 100%; height: 100%; fill: var(--star); display: block; }
+
+@keyframes pulse { 50% { box-shadow: inset 0 0 0 3px var(--focus), 0 0 0 7px var(--focus-soft); } }
+@keyframes nudge { 50% { transform: translateY(-3px); box-shadow: 0 6px 0 var(--a-deep), 0 0 0 6px var(--focus-soft); } }
+@media (prefers-reduced-motion: reduce) {
+  .res.active, .btn.glow { animation: none; }
+  .hl { transition: none; }
+}
+</style>
+</head>
+<body>
+
+<div class="app">
+  <header class="top">
+    <div class="brand">
+      <h1>Sčítání pod sebou</h1>
+      <span class="grade">3. ročník · čísla do 100</span>
+    </div>
+    <div class="modes" role="radiogroup" aria-label="Druh příkladů">
+      <button type="button" role="radio" data-mode="easy" id="mode-easy">Bez přechodu</button>
+      <button type="button" role="radio" data-mode="carry" id="mode-carry">S přechodem</button>
+      <button type="button" role="radio" data-mode="mix" id="mode-mix">Obojí</button>
+    </div>
+    <div class="tools">
+      <button type="button" class="icon-btn" id="voiceBtn" aria-pressed="true">
+        <svg class="on" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9z"/><path d="M16.5 8.5a5 5 0 0 1 0 7"/><path d="M19 6a8.5 8.5 0 0 1 0 12"/></svg>
+        <svg class="off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9z"/><path d="M17 9l5 6M22 9l-5 6"/></svg>
+        <span>Hlas</span>
+      </button>
+    </div>
+  </header>
+
+  <main class="stage">
+    <section class="paper" id="paper" aria-label="Sešit">
+      <div class="bubble" id="bubble" aria-live="polite"></div>
+      <div class="sheet" id="sheet"></div>
+      <div class="actions" id="actions">
+        <button type="button" class="btn" id="demoBtn">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4.5v15l12-7.5z"/></svg>Ukaž mi jak
+        </button>
+        <button type="button" class="btn primary" id="nextBtn">Další příklad</button>
+      </div>
+    </section>
+
+    <aside class="side">
+      <section class="panel" id="keysPanel">
+        <h2>Napiš číslici</h2>
+        <div class="keypad" id="keypad"></div>
+        <p class="tip">Sčítáme vždycky zprava: nejdřív <strong>jednotky (J)</strong>, potom <strong>desítky (D)</strong>.</p>
+      </section>
+
+      <section class="panel" id="blocksPanel" hidden>
+        <h2>Kostičky</h2>
+        <div class="blocks-wrap"><div class="blocks" id="blocks"></div></div>
+        <div class="legend">
+          <span><i class="cube pa"></i>kostička = 1</span>
+          <span><i class="rod pa"></i>tyčka = 10</span>
+          <span><i class="flat pa"></i>destička = 100</span>
+        </div>
+        <div class="panel-actions">
+          <button type="button" class="btn" id="skipBtn">Přeskočit</button>
+          <button type="button" class="btn primary" id="tryBtn" hidden>Zkusím to</button>
+        </div>
+      </section>
+    </aside>
+  </main>
+</div>
+
+<script>
+(() => {
+  const $ = s => document.querySelector(s);
+  const RM = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const T = ms => RM ? Math.min(ms, 120) : ms;      // movement durations
+  const W = ms => RM ? Math.round(ms * .7) : ms;    // reading pauses
+  const sleep = ms => new Promise(r => setTimeout(r, ms));
+  const rand = (lo, hi) => lo + Math.floor(Math.random() * (hi - lo + 1));
+  const pick = arr => arr[Math.floor(Math.random() * arr.length)];
+  const EASE = 'cubic-bezier(.3,.7,.2,1)';
+  const STAR = '<svg viewBox="0 0 24 24"><path d="M12 2.5l2.9 6.1 6.6.8-4.9 4.6 1.3 6.6L12 17.3l-5.9 3.3 1.3-6.6L2.5 9.4l6.6-.8z"/></svg>';
+
+  function el(tag, cls, parent, text) {
+    const e = document.createElement(tag);
+    if (cls) e.className = cls;
+    if (text !== undefined) e.textContent = text;
+    if (parent) parent.appendChild(e);
+    return e;
+  }
+
+  // ---------- saved settings ----------
+  const KEY = 'scitani-pod-sebou';
+  function load() { try { return JSON.parse(localStorage.getItem(KEY)) || {}; } catch { return {}; } }
+  function persist() { try { localStorage.setItem(KEY, JSON.stringify({ mode: state.mode, stars: state.stars, voice: state.voice })); } catch {} }
+  const saved = load();
+
+  const state = {
+    mode: ['easy', 'carry', 'mix'].includes(saved.mode) ? saved.mode : 'mix',
+    stars: saved.stars | 0,
+    voice: saved.voice === true,
+    a: 0, b: 0, cols: [], step: 0,
+    mistakes: 0, totalMistakes: 0,
+    busy: false, demo: false, done: false,
+    last: null, gen: 0,
+  };
+
+  // ---------- maths ----------
+  const digits = n => n < 10 ? [n] : [n % 10, Math.floor(n / 10)];
+
+  function buildCols(a, b) {
+    const da = digits(a), db = digits(b), cols = [];
+    let carry = 0;
+    for (let k = 0; k < 2; k++) {
+      const x = da[k], y = db[k];
+      if (x === undefined && y === undefined) break;
+      const sum = (x ?? 0) + (y ?? 0) + carry;
+      cols.push({ k, x, y, carryIn: carry, sum, digit: sum % 10, carryOut: sum >= 10 ? 1 : 0 });
+      carry = sum >= 10 ? 1 : 0;
+    }
+    if (carry) cols.push({ k: 2, x: undefined, y: undefined, carryIn: 1, sum: 1, digit: 1, carryOut: 0 });
+    return cols;
+  }
+
+  function gen(wantCarry) {
+    if (wantCarry === undefined) {
+      wantCarry = state.mode === 'carry' ? true : state.mode === 'easy' ? false : Math.random() < .6;
+    }
+    for (let i = 0; i < 1000; i++) {
+      let a = rand(11, 89);
+      let b = Math.random() < .15 ? rand(2, 9) : rand(11, 89);
+      if (b > a) [a, b] = [b, a];
+      if (a + b > 100) continue;
+      if ((a % 10 + b % 10 >= 10) !== wantCarry) continue;
+      if (a % 10 === 0 && b % 10 === 0) continue;
+      if (state.last && state.last[0] === a && state.last[1] === b) continue;
+      return [a, b];
+    }
+    return wantCarry ? [47, 38] : [52, 34];
+  }
+
+  function terms(col) {
+    const t = [];
+    if (col.carryIn) t.push({ cls: 'c', v: 1 });
+    if (col.x !== undefined) t.push({ cls: 'a', v: col.x });
+    if (col.y !== undefined) t.push({ cls: 'b', v: col.y });
+    return t;
+  }
+  const termsHtml = col => terms(col).map(p => `<span class="${p.cls}">${p.v}</span>`).join(' + ');
+
+  function promptFor(col) {
+    const t = termsHtml(col);
+    if (col.k === 0) return `Začni jednotkami. Kolik je ${t}?`;
+    if (col.k === 1) {
+      if (terms(col).length === 1) return `Teď desítky. Pod ${t} nic není. Co napíšeš dolů?`;
+      return col.carryIn
+        ? `Teď desítky. Nezapomeň na jedničku nahoře! Kolik je ${t}?`
+        : `Teď desítky. Kolik je ${t}?`;
+    }
+    return `Jednička nahoře u stovek nemá s čím se sčítat. Napiš ji dolů.`;
+  }
+
+  function hintFor(col, level) {
+    const t = termsHtml(col), parts = terms(col);
+    if (col.k === 2) return `Napiš dolů tu <span class="c">1</span>, kterou si pamatuješ.`;
+    if (parts.length === 1) return `Číslo jen opiš dolů: <span class="${parts[0].cls}">${parts[0].v}</span>.`;
+    if (level === 1) {
+      return col.carryIn ? `Ještě jednou. Počítej i jedničku nahoře: ${t}.` : `Ještě jednou. Sečti ${t}.`;
+    }
+    if (col.carryOut) {
+      return `${t} = ${col.sum}. Napiš jen <b>${col.digit}</b>, jednička půjde k ${col.k === 0 ? 'desítkám' : 'stovkám'}.`;
+    }
+    return `${t} = ${col.sum}. Napiš <b>${col.digit}</b>.`;
+  }
+
+  // ---------- voice ----------
+  let interacted = false, csVoice = null;
+  const canSpeak = 'speechSynthesis' in window;
+  function pickVoice() {
+    try { csVoice = speechSynthesis.getVoices().find(v => /^cs([-_]|$)/i.test(v.lang)) || null; } catch {}
+  }
+  if (canSpeak) { try { pickVoice(); speechSynthesis.addEventListener('voiceschanged', pickVoice); } catch {} }
+  const markInteracted = () => { interacted = true; };
+  document.addEventListener('pointerdown', markInteracted, { capture: true });
+  document.addEventListener('keydown', markInteracted, { capture: true });
+
+  function stopSpeech() { if (canSpeak) { try { speechSynthesis.cancel(); } catch {} } }
+  function speak(text) {
+    return new Promise(done => {
+      if (!canSpeak || !state.voice || !interacted || !speechSynthesis.getVoices().length) return done();
+      try {
+        speechSynthesis.cancel();
+        const u = new SpeechSynthesisUtterance(text.replace(/\+/g, ' plus ').replace(/=/g, ' je '));
+        u.lang = 'cs-CZ';
+        if (csVoice) u.voice = csVoice;
+        u.rate = .95;
+        u.pitch = 1.05;
+        u.onend = done;
+        u.onerror = done;
+        // some devices never report the end of speech; do not keep the child waiting
+        setTimeout(done, Math.min(9000, 1200 + text.length * 70));
+        speechSynthesis.speak(u);
+      } catch { done(); }
+    });
+  }
+
+  // ---------- speech bubble ----------
+  const bubble = $('#bubble');
+  function say(html, tone = '') {
+    // one wrapper, so the flex-centred bubble keeps the sentence on shared lines
+    bubble.innerHTML = `<span>${html}</span>`;
+    bubble.className = 'bubble' + (tone ? ' ' + tone : '');
+    bubble.animate([{ transform: 'scale(.96)', opacity: .5 }, { transform: 'none', opacity: 1 }], { duration: T(220), easing: EASE });
+    return speak(bubble.textContent);
+  }
+  const talk = (html, ms, tone) => Promise.all([say(html, tone), sleep(W(ms))]);
+
+  // ---------- notebook ----------
+  const sheet = $('#sheet'), paper = $('#paper');
+  const NAMES = ['J', 'D', 'S'];
+  const gridCol = k => 4 - k;
+
+  function renderSheet() {
+    sheet.innerHTML = '';
+    el('div', 'hl', sheet).id = 'hl';
+    for (let k = 0; k < 3; k++) {
+      const l = el('div', 'lbl' + (k === 2 ? ' ghost' : ''), sheet, NAMES[k]);
+      l.style.gridColumn = gridCol(k);
+      l.id = 'lbl-' + k;
+      if (k > 0) {
+        const c = el('div', 'carry', sheet);
+        c.id = 'carry-' + k;
+        c.style.gridColumn = gridCol(k);
+      }
+    }
+    digits(state.a).forEach((v, k) => { el('div', 'd a', sheet, v).style.gridColumn = gridCol(k); });
+    digits(state.b).forEach((v, k) => { el('div', 'd b', sheet, v).style.gridColumn = gridCol(k); });
+    el('div', 'd sign', sheet, '+');
+    el('div', 'rule', sheet);
+    for (let k = 0; k < 3; k++) {
+      const r = el('div', 'res', sheet);
+      r.id = 'res-' + k;
+      r.style.gridColumn = gridCol(k);
+      if (k === 2) r.hidden = true;
+    }
+  }
+
+  function setHL(k) {
+    const hl = $('#hl');
+    if (!hl) return;
+    if (k === null) { hl.style.opacity = 0; return; }
+    hl.style.opacity = 1;
+    hl.style.transform = `translateX(calc(var(--cell) * ${-k}))`;
+  }
+
+  // keep the squared paper lined up with the digit cells
+  function alignGrid() {
+    const s = sheet.getBoundingClientRect();
+    const h = s.width / 8;
+    if (!h) return;
+    const p = paper.getBoundingClientRect();
+    const mod = x => ((x % h) + h) % h;
+    paper.style.backgroundSize = `${h}px ${h}px`;
+    paper.style.backgroundPosition = `${mod(s.left - p.left)}px ${mod(s.top - p.top)}px`;
+  }
+  new ResizeObserver(alignGrid).observe(paper);
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(alignGrid);
+
+  function writeDigit(r, d) {
+    r.textContent = d;
+    r.animate([{ transform: 'scale(1.6)', opacity: 0 }, { transform: 'none', opacity: 1 }], { duration: T(300), easing: EASE });
+  }
+
+  function showHundreds() {
+    const r = $('#res-2');
+    r.hidden = false;
+    $('#lbl-2').classList.remove('ghost');
+    r.animate([{ transform: 'scale(.4)', opacity: 0 }, { transform: 'none', opacity: 1 }], { duration: T(300), easing: EASE });
+  }
+
+  // the "1" appears left of the written digit (making e.g. 15), then flies up above the next column
+  async function flyCarry(k) {
+    const r = $('#res-' + k), target = $('#carry-' + (k + 1));
+    const from = r.getBoundingClientRect(), to = target.getBoundingClientRect();
+    const cellW = sheet.getBoundingClientRect().width / 4;
+    const resFont = parseFloat(getComputedStyle(r).fontSize);
+    const carryFont = parseFloat(getComputedStyle(target).fontSize);
+    const f = el('div', 'flyer', document.body, '1');
+    const left = from.left - cellW, top = from.top;
+    Object.assign(f.style, { left: left + 'px', top: top + 'px', width: from.width + 'px', height: from.height + 'px', fontSize: resFont + 'px' });
+    const dx = (to.left + to.width / 2) - (left + from.width / 2);
+    const dy = (to.top + to.height / 2) - (top + from.height / 2);
+    await f.animate([
+      { transform: 'none', opacity: 0 },
+      { transform: 'none', opacity: 1, offset: .15 },
+      { transform: 'none', opacity: 1, offset: .4 },
+      { transform: `translate(${dx * .5}px, ${dy * .6 - 30}px) scale(${(1 + carryFont / resFont) / 2})`, opacity: 1, offset: .7 },
+      { transform: `translate(${dx}px, ${dy}px) scale(${carryFont / resFont})`, opacity: 1 },
+    ], { duration: T(1500), easing: 'ease-in-out', fill: 'forwards' }).finished;
+    target.textContent = '1';
+    f.remove();
+    target.animate([{ transform: 'scale(1.5)' }, { transform: 'none' }], { duration: T(260), easing: EASE });
+  }
+
+  // ---------- keypad ----------
+  const keypad = $('#keypad');
+  [1, 2, 3, 4, 5, 6, 7, 8, 9, 0].forEach(n => {
+    const b = el('button', 'key' + (n === 0 ? ' zero' : ''), keypad, n);
+    b.type = 'button';
+    b.addEventListener('click', () => onDigit(n));
+  });
+  document.addEventListener('keydown', e => {
+    if (/^[0-9]$/.test(e.key) && !e.metaKey && !e.ctrlKey && !e.altKey) onDigit(+e.key);
+  });
+  function setKeys(on) { keypad.querySelectorAll('button').forEach(b => { b.disabled = !on; }); }
+
+  // ---------- solving ----------
+  function activate(i) {
+    const col = state.cols[i];
+    state.step = i;
+    state.mistakes = 0;
+    sheet.querySelectorAll('.res.active').forEach(r => r.classList.remove('active'));
+    if (col.k === 2) showHundreds();
+    $('#res-' + col.k).classList.add('active');
+    setHL(col.k);
+    setKeys(true);
+    say(promptFor(col));
+  }
+
+  async function onDigit(d) {
+    if (state.busy || state.demo || state.done || !state.cols.length) return;
+    const g = state.gen;
+    const col = state.cols[state.step], r = $('#res-' + col.k);
+
+    if (d !== col.digit) {
+      state.mistakes++;
+      state.totalMistakes++;
+      state.busy = true;
+      r.textContent = d;
+      r.classList.add('wrong');
+      r.animate([
+        { transform: 'translateX(0)' }, { transform: 'translateX(-8px)' }, { transform: 'translateX(7px)' },
+        { transform: 'translateX(-5px)' }, { transform: 'translateX(3px)' }, { transform: 'translateX(0)' },
+      ], { duration: T(420) });
+      say(hintFor(col, state.mistakes), 'hint');
+      await sleep(T(700) + 150);
+      if (g !== state.gen) return;
+      r.textContent = '';
+      r.classList.remove('wrong');
+      state.busy = false;
+      return;
+    }
+
+    state.busy = true;
+    r.classList.remove('active');
+    writeDigit(r, d);
+    if (col.carryOut) {
+      setKeys(false);
+      const speech = say(`${termsHtml(col)} = ${col.sum}. Píšu <b>${col.digit}</b> a <span class="c">1</span> si pamatuji.`);
+      await Promise.all([flyCarry(col.k), speech, sleep(W(1700))]);
+    } else {
+      await sleep(T(250));
+    }
+    if (g !== state.gen) return;
+    state.busy = false;
+    if (state.step + 1 < state.cols.length) activate(state.step + 1);
+    else finish();
+  }
+
+  const PRAISE = ['Výborně!', 'Skvělá práce!', 'Paráda, správně!', 'Super, to je ono!', 'Přesně tak!'];
+  function finish() {
+    const { a, b } = state;
+    state.done = true;
+    setHL(null);
+    setKeys(false);
+    state.stars++;
+    persist();
+    window.parent.postMessage({
+      source: 'skolni-zoo-exercise', type: 'reward', exercise: 'scitani',
+      event: { kind: 'problem', mistakes: state.totalMistakes, carry: state.cols[0].carryOut === 1 },
+    }, '*');
+    const extra = state.totalMistakes === 0 ? ' Bez jediné chyby.' : '';
+    say(`${pick(PRAISE)}${extra} <span class="a">${a}</span>&nbsp;+&nbsp;<span class="b">${b}</span>&nbsp;=&nbsp;<b>${a + b}</b>`, 'ok');
+    celebrate();
+    $('#nextBtn').classList.add('glow');
+  }
+
+  async function celebrate() {
+    const s = sheet.getBoundingClientRect();
+    const cx = s.left + s.width / 2, cy = s.top + s.height * .8;
+    if (!RM) {
+      for (let i = 0; i < 14; i++) {
+        const p = el('div', 'spark', document.body);
+        p.innerHTML = STAR;
+        p.style.left = cx - 9 + 'px';
+        p.style.top = cy - 9 + 'px';
+        const ang = Math.random() * Math.PI * 2, dist = 80 + Math.random() * 130;
+        p.animate([
+          { transform: 'translate(0,0) scale(.3)', opacity: 1 },
+          { transform: `translate(${Math.cos(ang) * dist}px, ${Math.sin(ang) * dist}px) scale(${.7 + Math.random() * .8}) rotate(${rand(-180, 180)}deg)`, opacity: 0 },
+        ], { duration: 900 + Math.random() * 500, easing: 'cubic-bezier(.2,.8,.3,1)', fill: 'forwards' }).finished.then(() => p.remove());
+      }
+    }
+    // the star flies to the top-right corner, towards the app's coin counter above the frame
+    const t = { left: innerWidth - 70, top: -30, width: 40, height: 40 };
+    const big = el('div', 'spark big', document.body);
+    big.innerHTML = STAR;
+    big.style.left = cx - 20 + 'px';
+    big.style.top = cy - 20 + 'px';
+    await big.animate([
+      { transform: 'scale(.2)', opacity: 0 },
+      { transform: 'scale(1.5)', opacity: 1, offset: .3 },
+      { transform: `translate(${t.left + t.width / 2 - cx}px, ${t.top + t.height / 2 - cy}px) scale(.75)`, opacity: 1 },
+    ], { duration: T(1100), easing: 'ease-in-out', fill: 'forwards' }).finished;
+    big.remove();
+  }
+
+  // ---------- base-ten blocks ----------
+  const blocks = $('#blocks');
+  const container = bin => bin.querySelector('.grid5') || bin;
+  const piece = (k, cls) => el('div', ['cube', 'rod', 'flat'][k] + ' ' + cls);
+  const PIECES = '.cube, .rod, .flat';
+
+  function renderBlocks() {
+    const ks = state.cols.length === 3 ? [2, 1, 0] : [1, 0];
+    const da = digits(state.a), db = digits(state.b);
+    const HEAD = ['Jednotky', 'Desítky', 'Stovky'];
+    blocks.innerHTML = '';
+    blocks.style.gridTemplateColumns = `repeat(${ks.length}, auto)`;
+    ks.forEach((k, i) => {
+      const put = (node, row) => { node.style.gridColumn = i + 1; node.style.gridRow = row; blocks.appendChild(node); return node; };
+      put(el('div', 'bhead', null, HEAD[k]), 1);
+      const mk = (id, row) => {
+        const bin = el('div', 'bin k' + k);
+        bin.id = id;
+        if (k < 2) el('div', 'slot', bin);
+        if (k === 0) el('div', 'grid5', bin);
+        return put(bin, row);
+      };
+      mk('bc-' + k, 2);
+      const A = mk('ba-' + k, 3), B = mk('bb-' + k, 4);
+      mk('bs-' + k, 6);
+      for (let n = 0; n < (da[k] || 0); n++) container(A).appendChild(piece(k, 'pa'));
+      for (let n = 0; n < (db[k] || 0); n++) container(B).appendChild(piece(k, 'pb'));
+      put(el('div', 'count'), 7).id = 'cnt-' + k;
+    });
+    const rule = el('div', 'brule', blocks);
+    rule.style.gridRow = 5;
+  }
+
+  function flip(els, mutate, dur, stagger = 0) {
+    const first = els.map(e => e.getBoundingClientRect());
+    mutate();
+    return Promise.all(els.map((e, i) => {
+      const last = e.getBoundingClientRect();
+      const dx = first[i].left - last.left, dy = first[i].top - last.top;
+      if (!dx && !dy) return Promise.resolve();
+      return e.animate(
+        [{ transform: `translate(${dx}px, ${dy}px)` }, { transform: 'none' }],
+        { duration: dur, delay: RM ? 0 : i * stagger, easing: EASE, fill: 'backwards' },
+      ).finished;
+    }));
+  }
+
+  function setCount(k, v) {
+    const c = $('#cnt-' + k);
+    c.textContent = v;
+    c.animate([{ transform: 'scale(1.4)' }, { transform: 'none' }], { duration: T(260), easing: EASE });
+  }
+
+  // move carry + top + bottom pieces of one place into the result row
+  function combine(k) {
+    const dest = container($('#bs-' + k));
+    const ps = ['#bc-', '#ba-', '#bb-'].flatMap(p => [...$(p + k).querySelectorAll(PIECES)]);
+    return flip(ps, () => ps.forEach(p => dest.appendChild(p)), T(800), 40);
+  }
+
+  // ten cubes line up into a rod (or ten rods into a flat), then become one orange piece
+  async function gather(k) {
+    const bin = $('#bs-' + k), slot = bin.querySelector('.slot');
+    const all = [...bin.querySelectorAll(PIECES)];
+    const ten = all.slice(0, 10);
+    ten.forEach(p => p.classList.add('glow'));
+    await sleep(T(800));
+    await flip(all, () => ten.forEach(p => slot.appendChild(p)), T(700), 30);
+    await sleep(T(250));
+    const big = piece(k + 1, 'pc');
+    slot.replaceChildren(big);
+    big.animate([{ filter: 'brightness(1.8)' }, { filter: 'none' }], { duration: T(600) });
+  }
+
+  function moveBundle(k) {
+    const big = $('#bs-' + k).querySelector('.slot').firstElementChild;
+    const dest = container($('#bc-' + (k + 1)));
+    return flip([big], () => dest.appendChild(big), T(1100));
+  }
+
+  // ---------- explanation ----------
+  class Cancelled extends Error {}
+
+  async function runDemo() {
+    const g = ++state.gen;
+    const guard = () => { if (g !== state.gen) throw new Cancelled(); };
+    stopSpeech();
+    Object.assign(state, { demo: true, done: false, busy: false, step: 0 });
+    renderSheet();
+    renderBlocks();
+    showMode('blocks');
+    setKeys(false);
+    alignGrid();
+    const { a, b, cols } = state;
+    try {
+      await talk(`Ukážu ti to s kostičkami. Nahoře je <span class="a">${a}</span>, dole <span class="b">${b}</span>.`, 2600); guard();
+      for (const col of cols) {
+        const k = col.k, th = termsHtml(col), r = $('#res-' + k);
+        setHL(k);
+        if (k === 2) showHundreds();
+        r.classList.add('active');
+        if (k === 0) await talk(`Vždycky začínáme jednotkami: ${th}.`, 2200);
+        else if (k === 1) {
+          await talk(col.carryIn
+            ? `Teď desítky. Nahoře máme jednu desítku navíc: ${th}.`
+            : terms(col).length === 1 ? `Teď desítky. Pod <span class="a">${col.x}</span> nic není.` : `Teď desítky: ${th}.`, 2400);
+        } else await talk(`Zbyla nám jedna stovka. Napíšeme ji dolů.`, 2000);
+        guard();
+
+        await combine(k); guard();
+        setCount(k, col.sum);
+        if (k < 2 && terms(col).length > 1) { await talk(`${th} = ${col.sum}.`, 1600); guard(); }
+
+        if (col.carryOut) {
+          await talk(k === 0
+            ? `To je víc než 9. Deset kostiček spojíme do jedné tyčky. To je jedna desítka.`
+            : `To je víc než 9. Deset tyček spojíme do jedné destičky. To je jedna stovka.`, 2400); guard();
+          await gather(k); guard();
+          await sleep(W(600)); guard();
+          setCount(k, col.digit);
+          r.classList.remove('active');
+          writeDigit(r, col.digit);
+          const speech = say(`Píšeme <b>${col.digit}</b> a <span class="c">1</span> si pamatujeme nahoře u ${k === 0 ? 'desítek' : 'stovek'}.`);
+          await Promise.all([moveBundle(k), flyCarry(k), speech, sleep(W(2400))]); guard();
+        } else {
+          r.classList.remove('active');
+          writeDigit(r, col.digit);
+          await talk(`Píšeme <b>${col.digit}</b>.`, 1400); guard();
+        }
+      }
+      setHL(null);
+      say(`Hotovo! <span class="a">${a}</span>&nbsp;+&nbsp;<span class="b">${b}</span>&nbsp;=&nbsp;<b>${a + b}</b>. Teď to zkus ty.`, 'ok');
+      $('#skipBtn').hidden = true;
+      $('#tryBtn').hidden = false;
+      $('#tryBtn').focus({ preventScroll: true });
+    } catch (e) {
+      if (!(e instanceof Cancelled)) throw e;
+    }
+  }
+
+  function showMode(m) {
+    $('#keysPanel').hidden = m !== 'keys';
+    $('#blocksPanel').hidden = m !== 'blocks';
+    $('#actions').hidden = m === 'blocks';
+    $('#skipBtn').hidden = m !== 'blocks';
+    $('#tryBtn').hidden = true;
+  }
+
+  // ---------- problem lifecycle ----------
+  function startProblem(pair) {
+    state.gen++;
+    stopSpeech();
+    const [a, b] = pair;
+    Object.assign(state, {
+      a, b, last: [a, b], cols: buildCols(a, b),
+      step: 0, mistakes: 0, totalMistakes: 0, busy: false, demo: false, done: false,
+    });
+    renderSheet();
+    renderBlocks();
+    showMode('keys');
+    $('#nextBtn').classList.remove('glow');
+    activate(0);
+    requestAnimationFrame(alignGrid);
+  }
+  const newProblem = wantCarry => startProblem(gen(wantCarry));
+
+  function syncModes() {
+    document.querySelectorAll('.modes button').forEach(b => b.setAttribute('aria-checked', String(b.dataset.mode === state.mode)));
+  }
+  document.querySelectorAll('.modes button').forEach(b => b.addEventListener('click', () => {
+    state.mode = b.dataset.mode;
+    persist();
+    syncModes();
+    newProblem();
+  }));
+
+  const voiceBtn = $('#voiceBtn');
+  voiceBtn.addEventListener('click', () => {
+    state.voice = !state.voice;
+    voiceBtn.setAttribute('aria-pressed', String(state.voice));
+    persist();
+    if (state.voice) speak(bubble.textContent); else stopSpeech();
+  });
+
+  $('#nextBtn').addEventListener('click', () => newProblem());
+  $('#demoBtn').addEventListener('click', runDemo);
+  $('#skipBtn').addEventListener('click', () => startProblem([state.a, state.b]));
+  $('#tryBtn').addEventListener('click', () => newProblem(state.cols[0].carryOut === 1));
+
+  // ---------- boot ----------
+  voiceBtn.setAttribute('aria-pressed', String(state.voice));
+  syncModes();
+
+  const hot = window.claude?.hot;
+  hot?.snapshot?.(() => ({ a: state.a, b: state.b }));
+  function start(data) {
+    if (data && data.a > 0 && data.b > 0 && data.a + data.b <= 100) startProblem([data.a, data.b]);
+    else newProblem();
+  }
+  hot?.ready ? hot.ready(start) : start(hot?.data ?? {});
+})();
+</script>
+</body>
+</html>

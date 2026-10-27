@@ -173,6 +173,28 @@ test.describe('Module access (Family page)', () => {
     await expect(dialog.getByTestId('module-access-empty')).toBeVisible();
   });
 
+  test('revoking a grant that was already revoked elsewhere explains it and refreshes the list', async ({
+    authenticatedPage,
+    testAuth,
+  }) => {
+    const child = await addMember(testAuth, 'Ema');
+    const grant = await grantViaApi(testAuth, { userId: child.userId, moduleName: 'learning', permission: 'ACCESS' });
+    const page = authenticatedPage;
+    const dialog = await openAccessDialog(page, child);
+    await expect(dialog.getByTestId(`module-access-row-${grant.id}`)).toBeVisible();
+
+    const api = await backend(testAuth.accessToken);
+    expect((await api.delete(`/api/family/module-access/${grant.id}`)).status()).toBe(200);
+    await api.dispose();
+
+    await dialog.getByTestId(`module-access-revoke-btn-${grant.id}`).click();
+    await page.getByTestId('module-access-revoke-confirm-btn').click();
+    await expect(dialog.getByTestId('module-access-error-alert')).toHaveText(
+      'Could not revoke access: this grant no longer exists (it may have been revoked elsewhere).',
+    );
+    await expect(dialog.getByTestId(`module-access-row-${grant.id}`)).toHaveCount(0);
+  });
+
   test('the form rejects a validity window that ends before it starts', async ({ authenticatedPage, testAuth }) => {
     const child = await addMember(testAuth, 'Ema');
     const page = authenticatedPage;

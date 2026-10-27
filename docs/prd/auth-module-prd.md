@@ -217,7 +217,18 @@ public interface AuthModuleApi {
 
 **Update grant** — `PUT /api/family/module-access/{id}`: the module cannot be changed. `permission` is kept when omitted; `validFrom` / `validUntil` are always replaced (omitted = cleared); `schedules` replaces all schedules when present (`[]` clears them) and leaves them untouched when omitted.
 
-**Errors** — invalid input (blank module name, schedule `dayOfWeek` outside 1–7, missing times, blank timezone) returns `400`; schedule entries are validated too. Granting a module + permission the member already has violates the unique constraint `(family_id, user_id, module_name, permission)` and currently returns `500` (no conflict mapping); the web UI avoids offering such combinations. Non-admins get `403`.
+**Family scoping** — grants always belong to the calling admin's family (taken from the access token). The request has no `familyId`; one sent anyway is ignored, so an admin cannot grant into another family. Grants of other families are invisible: listing returns only the admin's own family's grants, and updating or revoking another family's grant id returns `404`, exactly like an unknown id.
+
+**Errors**
+
+| Status | When |
+|--------|------|
+| `400` | Invalid input: blank module name, missing permission, schedule `dayOfWeek` outside 1–7, missing times, blank timezone (bean validation); a schedule timezone that is not a known zone id (`ZoneId.of`, e.g. `Mars/Base`); a schedule whose `endTime` is not after its `startTime` (windows cannot cross midnight, the access check is `start <= now < end`); granting to a `userId` that is not a member of the admin's family (same status as other "user is not in this family" checks, e.g. expenses' paid-by and learning bonus coins). Schedule checks apply to both grant and update; a rejected update changes nothing. |
+| `404` | Updating or revoking a grant id that does not exist or belongs to another family. |
+| `409` | Granting a module + permission the member already has, or updating a grant to a permission the member already has for that module (unique `(family_id, user_id, module_name, permission)`; checked up front, and a concurrent duplicate insert is translated to `409` as well). |
+| `401` / `403` | Not signed in / not the family admin. |
+
+Schedules stored before timezones were validated and holding an unknown zone never match (the grant fails closed instead of erroring).
 
 ### 7.4 Module Access UI (web)
 
@@ -227,7 +238,7 @@ Family page (`/family`), admins only:
 - **Grant Access** opens a form: module (the registered web modules except `family`, i.e. `expenses`, `learning`), permission, optional valid from / until (`datetime-local`, browser timezone, sent as UTC instants), and optional weekly schedules. Each schedule window is a set of days (Mon–Sun toggles) with one start and end time; one timezone (defaulting to the browser's) applies to all windows. The form expands windows into one schedule entry per day for the API and groups them back when editing.
 - Edit (pencil) reopens the form pre-filled; the module is fixed. Revoke (bin) asks for confirmation.
 - Client-side validation: valid until must be after valid from; every window needs at least one day and must end after it starts (windows cannot cross midnight, matching the backend's `start <= now < end` check); timezone must be a known IANA zone.
-- Duplicates are prevented: module/permission combinations the member already has are not offered (and **Grant Access** is disabled once all are granted). Server errors are shown inside the dialog.
+- Duplicates are prevented: module/permission combinations the member already has are not offered (and **Grant Access** is disabled once all are granted). Server errors are shown inside the dialog with a status-specific message: `409` (member already has that permission for the module), `404` (the grant no longer exists, e.g. revoked in another window; a failed revoke also reloads the list), `400` (details rejected: member no longer in the family, schedule end not after start, or invalid timezone), `401`/`403`, and `5xx` (server error).
 - Non-admins see no access controls.
 
 ## 8. Database Schema

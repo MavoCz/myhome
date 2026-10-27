@@ -128,6 +128,13 @@ export function describeError(err: unknown, fallback: string): string {
   const e = (err ?? {}) as { status?: number; message?: string };
   if (e.status === 403) return 'Only family admins can manage module access.';
   if (e.status === 401) return 'Your session has expired. Please sign in again.';
+  if (e.status === 409) return `${fallback}: this member already has that permission for the module.`;
+  if (e.status === 404) {
+    return `${fallback}: this grant no longer exists (it may have been revoked elsewhere).`;
+  }
+  if (e.status === 400) {
+    return `${fallback}: the details were rejected. Check that the member is still in your family, every schedule ends after it starts and the timezone is valid.`;
+  }
   if (e.status && e.status >= 500) return `${fallback} (server error ${e.status}).`;
   if (e.message) return e.message;
   return e.status ? `${fallback} (HTTP ${e.status}).` : `${fallback}.`;

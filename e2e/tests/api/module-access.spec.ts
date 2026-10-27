@@ -1,5 +1,5 @@
 import { test, expect } from '../../fixtures/api.fixture';
-import { loginAs } from '../../helpers/auth';
+import { createTestUser, loginAs } from '../../helpers/auth';
 import { request, type APIRequestContext } from '@playwright/test';
 import type { GrantModuleAccessRequest, ModuleAccessResponse } from 'myhome-common/api/generated/model';
 import * as dotenv from 'dotenv';
@@ -136,19 +136,144 @@ test.describe('Module access API', () => {
     expect(list[0].schedules).toEqual([]);
   });
 
-  test('granting the same module and permission twice fails', async ({ authApi }) => {
+  test('granting the same module and permission twice is a conflict', async ({ authApi }) => {
     const child = await addMember(authApi);
     await grant(authApi, { userId: child.userId, moduleName: 'learning', permission: 'ACCESS' });
     const duplicate = await authApi.post('/api/family/module-access', {
       data: { userId: child.userId, moduleName: 'learning', permission: 'ACCESS' },
     });
-    // The backend has no conflict mapping yet (unique constraint -> 500); the UI avoids offering duplicates
-    expect(duplicate.ok()).toBeFalsy();
+    expect(duplicate.status()).toBe(409);
+
+    // The other permission for the same module is a separate grant
+    await grant(authApi, { userId: child.userId, moduleName: 'learning', permission: 'MANAGE' });
+    const list = (await (await authApi.get(`/api/family/module-access?userId=${child.userId}`)).json()) as ModuleAccessResponse[];
+    expect(list).toHaveLength(2);
   });
 
-  test('revoking a grant that does not exist fails', async ({ authApi }) => {
-    const res = await authApi.delete('/api/family/module-access/999999999');
-    expect(res.ok()).toBeFalsy();
+  test('changing a grant to a permission the member already has is a conflict', async ({ authApi }) => {
+    const child = await addMember(authApi);
+    const access = await grant(authApi, { userId: child.userId, moduleName: 'learning', permission: 'ACCESS' });
+    await grant(authApi, { userId: child.userId, moduleName: 'learning', permission: 'MANAGE' });
+    const res = await authApi.put(`/api/family/module-access/${access.id}`, { data: { permission: 'MANAGE' } });
+    expect(res.status()).toBe(409);
+  });
+
+  test('updating or revoking a grant that does not exist returns 404', async ({ authApi }) => {
+    const update = await authApi.put('/api/family/module-access/999999999', { data: { permission: 'ACCESS' } });
+    expect(update.status()).toBe(404);
+    const revoke = await authApi.delete('/api/family/module-access/999999999');
+    expect(revoke.status()).toBe(404);
+  });
+
+  test("another family's grant cannot be updated or revoked", async ({ api, authApi }) => {
+    const child = await addMember(authApi);
+    const created = await grant(authApi, { userId: child.userId, moduleName: 'learning', permission: 'ACCESS' });
+
+    const otherAdmin = await createTestUser(api, `other-${Date.now()}-${Math.floor(Math.random() * 1e6)}`);
+    const otherApi = await request.newContext({
+      baseURL: `http://localhost:${BACKEND_PORT}`,
+      extraHTTPHeaders: { Authorization: `Bearer ${otherAdmin.accessToken}` },
+    });
+    const update = await otherApi.put(`/api/family/module-access/${created.id}`, { data: { permission: 'MANAGE' } });
+    expect(update.status()).toBe(404);
+    const revoke = await otherApi.delete(`/api/family/module-access/${created.id}`);
+    expect(revoke.status()).toBe(404);
+    // Listing is scoped to the caller's family too
+    const list = (await (await otherApi.get(`/api/family/module-access?userId=${child.userId}`)).json()) as ModuleAccessResponse[];
+    expect(list).toEqual([]);
+    await otherApi.dispose();
+
+    const mine = (await (await authApi.get(`/api/family/module-access?userId=${child.userId}`)).json()) as ModuleAccessResponse[];
+    expect(mine).toHaveLength(1);
+    expect(mine[0].permission).toBe('ACCESS');
+  });
+
+  test('granting to a user outside the family is rejected', async ({ api, authApi }) => {
+    const outsider = await createTestUser(api, `outsider-${Date.now()}-${Math.floor(Math.random() * 1e6)}`);
+    const res = await authApi.post('/api/family/module-access', {
+      data: { userId: outsider.user!.id, moduleName: 'learning', permission: 'ACCESS' },
+    });
+    expect(res.status()).toBe(400);
+
+    const unknown = await authApi.post('/api/family/module-access', {
+      data: { userId: 999999999, moduleName: 'learning', permission: 'ACCESS' },
+    });
+    expect(unknown.status()).toBe(400);
+  });
+
+  test("a familyId in the request body is ignored: grants always go to the admin's own family", async ({
+    api,
+    authApi,
+  }) => {
+    const otherAdmin = await createTestUser(api, `other-${Date.now()}-${Math.floor(Math.random() * 1e6)}`);
+    const child = await addMember(authApi);
+    const created = await grant(authApi, {
+      userId: child.userId,
+      moduleName: 'learning',
+      permission: 'ACCESS',
+      familyId: otherAdmin.user!.familyId,
+    } as GrantModuleAccessRequest);
+    const list = (await (await authApi.get(`/api/family/module-access?userId=${child.userId}`)).json()) as ModuleAccessResponse[];
+    expect(list.map((g) => g.id)).toEqual([created.id]);
+
+    const otherApi = await apiAs(api, otherAdmin.email);
+    const theirs = (await (await otherApi.get(`/api/family/module-access?userId=${child.userId}`)).json()) as ModuleAccessResponse[];
+    expect(theirs).toEqual([]);
+    await otherApi.dispose();
+  });
+
+  test('an unknown schedule timezone is rejected on grant and update', async ({ authApi }) => {
+    const child = await addMember(authApi);
+    const badGrant = await authApi.post('/api/family/module-access', {
+      data: {
+        userId: child.userId,
+        moduleName: 'learning',
+        permission: 'ACCESS',
+        schedules: [{ dayOfWeek: 1, startTime: '15:00', endTime: '18:00', timezone: 'Mars/Base' }],
+      },
+    });
+    expect(badGrant.status()).toBe(400);
+    const none = (await (await authApi.get(`/api/family/module-access?userId=${child.userId}`)).json()) as ModuleAccessResponse[];
+    expect(none).toEqual([]);
+
+    const created = await grant(authApi, {
+      userId: child.userId,
+      moduleName: 'learning',
+      permission: 'ACCESS',
+      schedules: [{ dayOfWeek: 1, startTime: '15:00', endTime: '18:00', timezone: 'Europe/Prague' }],
+    });
+    const badUpdate = await authApi.put(`/api/family/module-access/${created.id}`, {
+      data: { schedules: [{ dayOfWeek: 2, startTime: '15:00', endTime: '18:00', timezone: 'Mars/Base' }] },
+    });
+    expect(badUpdate.status()).toBe(400);
+    const list = (await (await authApi.get(`/api/family/module-access?userId=${child.userId}`)).json()) as ModuleAccessResponse[];
+    expect(list[0].schedules).toHaveLength(1);
+    expect(list[0].schedules![0]).toMatchObject({ dayOfWeek: 1, timezone: 'Europe/Prague' });
+  });
+
+  test('a schedule that does not end after it starts is rejected', async ({ authApi }) => {
+    const child = await addMember(authApi);
+    for (const [startTime, endTime] of [
+      ['18:00', '15:00'],
+      ['15:00', '15:00'],
+      ['22:00', '02:00'],
+    ]) {
+      const res = await authApi.post('/api/family/module-access', {
+        data: {
+          userId: child.userId,
+          moduleName: 'learning',
+          permission: 'ACCESS',
+          schedules: [{ dayOfWeek: 1, startTime, endTime, timezone: 'UTC' }],
+        },
+      });
+      expect(res.status(), `${startTime}-${endTime}`).toBe(400);
+    }
+
+    const created = await grant(authApi, { userId: child.userId, moduleName: 'learning', permission: 'ACCESS' });
+    const badUpdate = await authApi.put(`/api/family/module-access/${created.id}`, {
+      data: { schedules: [{ dayOfWeek: 1, startTime: '18:00', endTime: '15:00', timezone: 'UTC' }] },
+    });
+    expect(badUpdate.status()).toBe(400);
   });
 });
 

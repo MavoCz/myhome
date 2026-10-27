@@ -83,6 +83,8 @@ export function ModuleAccessDialog({ member, onClose }: ModuleAccessDialogProps)
         setConfirmRevoke(null);
       },
       onError: (err: unknown) => {
+        // The list may be stale (e.g. the grant was revoked elsewhere): reload it
+        queryClient.invalidateQueries({ queryKey });
         setConfirmRevoke(null);
         setError(describeError(err, 'Could not revoke access'));
       },

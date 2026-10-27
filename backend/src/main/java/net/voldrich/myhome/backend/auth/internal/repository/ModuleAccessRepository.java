@@ -43,6 +43,24 @@ public class ModuleAccessRepository {
                 .fetchOptional();
     }
 
+    public Optional<ModuleAccessRecord> findByIdAndFamily(Long id, Long familyId) {
+        return dsl.selectFrom(MA)
+                .where(MA.ID.eq(id).and(MA.FAMILY_ID.eq(familyId)))
+                .fetchOptional();
+    }
+
+    /** Whether another grant (other than {@code excludeId}, which may be null) already covers this combination. */
+    public boolean existsGrant(Long familyId, Long userId, String moduleName, String permission, Long excludeId) {
+        var condition = MA.FAMILY_ID.eq(familyId)
+                .and(MA.USER_ID.eq(userId))
+                .and(MA.MODULE_NAME.eq(moduleName))
+                .and(MA.PERMISSION.eq(permission));
+        if (excludeId != null) {
+            condition = condition.and(MA.ID.ne(excludeId));
+        }
+        return dsl.fetchExists(dsl.selectFrom(MA).where(condition));
+    }
+
     public List<ModuleAccessRecord> findByFamilyAndUser(Long familyId, Long userId) {
         return dsl.selectFrom(MA)
                 .where(MA.FAMILY_ID.eq(familyId).and(MA.USER_ID.eq(userId)))

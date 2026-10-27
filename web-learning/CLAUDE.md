@@ -15,7 +15,7 @@
 This app is the `web-learning` package of the myhome pnpm workspace. From the repo root:
 
 ```bash
-pnpm dev:learning                       # Vite dev server on :5174 with --host (tablet on the same Wi-Fi), /api proxied to :8080
+pnpm dev:learning                       # Vite dev server on :5175 with --host (tablet on the same Wi-Fi), /api proxied to :8080
 pnpm --filter web-learning typecheck    # tsc --noEmit; run after every change
 pnpm --filter web-learning build        # typecheck + build into backend/src/main/resources/learning-static/
 pnpm --filter web-learning preview      # serve the build (used for browser testing)

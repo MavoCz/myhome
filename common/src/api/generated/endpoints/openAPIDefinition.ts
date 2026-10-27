@@ -8,8 +8,12 @@ import type {
   AddFamilyMemberRequest,
   AuthResponse,
   BalanceResponse,
+  ChildProgressResponse,
+  CoinGrantRequest,
+  CoinGrantResponse,
   EditHistoryResponse,
   ExchangeRateResponse,
+  ExerciseResultsRequest,
   ExpenseGroupRequest,
   ExpenseGroupResponse,
   ExpenseRequest,
@@ -27,18 +31,90 @@ import type {
   LoginRequest,
   ModuleAccessResponse,
   MonthlySummaryResponse,
+  MyZooResponse,
   NotificationResponse,
+  ProgressParams,
   RegisterRequest,
+  SaveZooRequest,
+  SaveZooResponse,
   SplitConfigRequest,
   SplitConfigResponse,
   SseEmitter,
   TokenRefreshRequest,
   UpdateColorRequest,
   UpdateModuleAccessRequest,
-  UpdateRoleRequest
+  UpdateRoleRequest,
+  ZooResponse
 } from '../model';
 
 import { customFetch } from '../../client';
+export type getMyZooResponse200 = {
+  data: MyZooResponse
+  status: 200
+}
+    
+export type getMyZooResponseSuccess = (getMyZooResponse200) & {
+  headers: Headers;
+};
+;
+
+export type getMyZooResponse = (getMyZooResponseSuccess)
+
+export const getGetMyZooUrl = () => {
+
+
+  
+
+  return `/api/learning/zoo`
+}
+
+export const getMyZoo = async ( options?: RequestInit): Promise<getMyZooResponse> => {
+  
+  return customFetch<getMyZooResponse>(getGetMyZooUrl(),
+  {      
+    ...options,
+    method: 'GET'
+    
+    
+  }
+);}
+
+
+
+export type saveMyZooResponse200 = {
+  data: SaveZooResponse
+  status: 200
+}
+    
+export type saveMyZooResponseSuccess = (saveMyZooResponse200) & {
+  headers: Headers;
+};
+;
+
+export type saveMyZooResponse = (saveMyZooResponseSuccess)
+
+export const getSaveMyZooUrl = () => {
+
+
+  
+
+  return `/api/learning/zoo`
+}
+
+export const saveMyZoo = async (saveZooRequest: SaveZooRequest, options?: RequestInit): Promise<saveMyZooResponse> => {
+  
+  return customFetch<saveMyZooResponse>(getSaveMyZooUrl(),
+  {      
+    ...options,
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      saveZooRequest,)
+  }
+);}
+
+
+
 export type updateAccessResponse200 = {
   data: ModuleAccessResponse
   status: 200
@@ -409,6 +485,107 @@ export const markAllAsRead = async ( options?: RequestInit): Promise<markAllAsRe
     method: 'POST'
     
     
+  }
+);}
+
+
+
+export type recordResultsResponse200 = {
+  data: void
+  status: 200
+}
+    
+export type recordResultsResponseSuccess = (recordResultsResponse200) & {
+  headers: Headers;
+};
+;
+
+export type recordResultsResponse = (recordResultsResponseSuccess)
+
+export const getRecordResultsUrl = () => {
+
+
+  
+
+  return `/api/learning/results`
+}
+
+export const recordResults = async (exerciseResultsRequest: ExerciseResultsRequest, options?: RequestInit): Promise<recordResultsResponse> => {
+  
+  return customFetch<recordResultsResponse>(getRecordResultsUrl(),
+  {      
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      exerciseResultsRequest,)
+  }
+);}
+
+
+
+export type recentGrantsResponse200 = {
+  data: CoinGrantResponse[]
+  status: 200
+}
+    
+export type recentGrantsResponseSuccess = (recentGrantsResponse200) & {
+  headers: Headers;
+};
+;
+
+export type recentGrantsResponse = (recentGrantsResponseSuccess)
+
+export const getRecentGrantsUrl = () => {
+
+
+  
+
+  return `/api/learning/grants`
+}
+
+export const recentGrants = async ( options?: RequestInit): Promise<recentGrantsResponse> => {
+  
+  return customFetch<recentGrantsResponse>(getRecentGrantsUrl(),
+  {      
+    ...options,
+    method: 'GET'
+    
+    
+  }
+);}
+
+
+
+export type grantCoinsResponse200 = {
+  data: CoinGrantResponse
+  status: 200
+}
+    
+export type grantCoinsResponseSuccess = (grantCoinsResponse200) & {
+  headers: Headers;
+};
+;
+
+export type grantCoinsResponse = (grantCoinsResponseSuccess)
+
+export const getGrantCoinsUrl = () => {
+
+
+  
+
+  return `/api/learning/grants`
+}
+
+export const grantCoins = async (coinGrantRequest: CoinGrantRequest, options?: RequestInit): Promise<grantCoinsResponse> => {
+  
+  return customFetch<grantCoinsResponse>(getGrantCoinsUrl(),
+  {      
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      coinGrantRequest,)
   }
 );}
 
@@ -1032,6 +1209,79 @@ export const getStreamUrl = () => {
 export const stream = async ( options?: RequestInit): Promise<streamResponse> => {
   
   return customFetch<streamResponse>(getStreamUrl(),
+  {      
+    ...options,
+    method: 'GET'
+    
+    
+  }
+);}
+
+
+
+export type listFamilyZoosResponse200 = {
+  data: ZooResponse[]
+  status: 200
+}
+    
+export type listFamilyZoosResponseSuccess = (listFamilyZoosResponse200) & {
+  headers: Headers;
+};
+;
+
+export type listFamilyZoosResponse = (listFamilyZoosResponseSuccess)
+
+export const getListFamilyZoosUrl = () => {
+
+
+  
+
+  return `/api/learning/zoos`
+}
+
+export const listFamilyZoos = async ( options?: RequestInit): Promise<listFamilyZoosResponse> => {
+  
+  return customFetch<listFamilyZoosResponse>(getListFamilyZoosUrl(),
+  {      
+    ...options,
+    method: 'GET'
+    
+    
+  }
+);}
+
+
+
+export type progressResponse200 = {
+  data: ChildProgressResponse[]
+  status: 200
+}
+    
+export type progressResponseSuccess = (progressResponse200) & {
+  headers: Headers;
+};
+;
+
+export type progressResponse = (progressResponseSuccess)
+
+export const getProgressUrl = (params?: ProgressParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : value.toString())
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/learning/progress?${stringifiedParams}` : `/api/learning/progress`
+}
+
+export const progress = async (params?: ProgressParams, options?: RequestInit): Promise<progressResponse> => {
+  
+  return customFetch<progressResponse>(getProgressUrl(params),
   {      
     ...options,
     method: 'GET'

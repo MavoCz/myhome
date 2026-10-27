@@ -99,7 +99,7 @@ Run from project root:
 ```bash
 pnpm install                 # Install all dependencies
 pnpm dev                     # Start Vite dev server (port 5173, proxies /api to :8080)
-pnpm dev:learning            # Start learning app dev server (port 5174, --host, proxies /api to :8080)
+pnpm dev:learning            # Start learning app dev server (port 5175, --host, proxies /api to :8080)
 pnpm build                   # Build SPA → static/, then learning app → learning-static/
 pnpm generate-api            # Export OpenAPI spec + regenerate TypeScript types & hooks
 ```

@@ -81,6 +81,8 @@ export default async function globalSetup(): Promise<void> {
       SPRING_DATASOURCE_PASSWORD: DB_PASSWORD,
       SPRING_DOCKER_COMPOSE_ENABLED: 'false',
       SERVER_PORT: BACKEND_PORT,
+      // Tests register throwaway families; a blank secret leaves registration open
+      APP_REGISTRATION_SECRET: '',
     },
     stdio: 'pipe',
   }, 'backend');

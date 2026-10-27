@@ -7,7 +7,7 @@ Cvičení pro děti (sčítání pod sebou, vyjmenovaná slova). Za vyřešená 
 ```bash
 # z kořene repozitáře myhome
 pnpm install
-pnpm dev:learning                      # http://localhost:5174/learning/, na tabletu přes IP adresu počítače
+pnpm dev:learning                      # http://localhost:5175/learning/, na tabletu přes IP adresu počítače
 pnpm --filter web-learning build       # hotový web do backend/src/main/resources/learning-static/
 pnpm --filter web-learning typecheck
 ```

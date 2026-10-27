@@ -22,8 +22,12 @@ import type {
   AddFamilyMemberRequest,
   AuthResponse,
   BalanceResponse,
+  ChildProgressResponse,
+  CoinGrantRequest,
+  CoinGrantResponse,
   EditHistoryResponse,
   ExchangeRateResponse,
+  ExerciseResultsRequest,
   ExpenseGroupRequest,
   ExpenseGroupResponse,
   ExpenseRequest,
@@ -41,15 +45,20 @@ import type {
   LoginRequest,
   ModuleAccessResponse,
   MonthlySummaryResponse,
+  MyZooResponse,
   NotificationResponse,
+  ProgressParams,
   RegisterRequest,
+  SaveZooRequest,
+  SaveZooResponse,
   SplitConfigRequest,
   SplitConfigResponse,
   SseEmitter,
   TokenRefreshRequest,
   UpdateColorRequest,
   UpdateModuleAccessRequest,
-  UpdateRoleRequest
+  UpdateRoleRequest,
+  ZooResponse
 } from '../../../../common/src/api/generated/model';
 
 import { customFetch } from '../../../../common/src/api/client';
@@ -62,6 +71,127 @@ type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 
 
 
+export const getMyZoo = (
+    
+ options?: SecondParameter<typeof customFetch>,signal?: AbortSignal
+) => {
+      
+      
+      return customFetch<MyZooResponse>(
+      {url: `/api/learning/zoo`, method: 'GET', signal
+    },
+      options);
+    }
+  
+
+
+
+export const getGetMyZooQueryKey = () => {
+    return [
+    `/api/learning/zoo`
+    ] as const;
+    }
+
+    
+export const getGetMyZooQueryOptions = <TData = Awaited<ReturnType<typeof getMyZoo>>, TError = unknown>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getMyZoo>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetMyZooQueryKey();
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getMyZoo>>> = ({ signal }) => getMyZoo(requestOptions, signal);
+
+      
+
+      
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getMyZoo>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetMyZooQueryResult = NonNullable<Awaited<ReturnType<typeof getMyZoo>>>
+export type GetMyZooQueryError = unknown
+
+
+
+export function useGetMyZoo<TData = Awaited<ReturnType<typeof getMyZoo>>, TError = unknown>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getMyZoo>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+  
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetMyZooQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+
+
+
+
+export const saveMyZoo = (
+    saveZooRequest: SaveZooRequest,
+ options?: SecondParameter<typeof customFetch>,) => {
+      
+      
+      return customFetch<SaveZooResponse>(
+      {url: `/api/learning/zoo`, method: 'PUT',
+      headers: {'Content-Type': 'application/json', },
+      data: saveZooRequest
+    },
+      options);
+    }
+  
+
+
+export const getSaveMyZooMutationOptions = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof saveMyZoo>>, TError,{data: SaveZooRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof saveMyZoo>>, TError,{data: SaveZooRequest}, TContext> => {
+
+const mutationKey = ['saveMyZoo'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof saveMyZoo>>, {data: SaveZooRequest}> = (props) => {
+          const {data} = props ?? {};
+
+          return  saveMyZoo(data,requestOptions)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type SaveMyZooMutationResult = NonNullable<Awaited<ReturnType<typeof saveMyZoo>>>
+    export type SaveMyZooMutationBody = SaveZooRequest
+    export type SaveMyZooMutationError = unknown
+
+    export const useSaveMyZoo = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof saveMyZoo>>, TError,{data: SaveZooRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof saveMyZoo>>,
+        TError,
+        {data: SaveZooRequest},
+        TContext
+      > => {
+
+      const mutationOptions = getSaveMyZooMutationOptions(options);
+
+      return useMutation(mutationOptions);
+    }
+    
 export const updateAccess = (
     id: number,
     updateModuleAccessRequest: UpdateModuleAccessRequest,
@@ -694,6 +824,187 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       > => {
 
       const mutationOptions = getMarkAllAsReadMutationOptions(options);
+
+      return useMutation(mutationOptions);
+    }
+    
+export const recordResults = (
+    exerciseResultsRequest: ExerciseResultsRequest,
+ options?: SecondParameter<typeof customFetch>,signal?: AbortSignal
+) => {
+      
+      
+      return customFetch<void>(
+      {url: `/api/learning/results`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: exerciseResultsRequest, signal
+    },
+      options);
+    }
+  
+
+
+export const getRecordResultsMutationOptions = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof recordResults>>, TError,{data: ExerciseResultsRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof recordResults>>, TError,{data: ExerciseResultsRequest}, TContext> => {
+
+const mutationKey = ['recordResults'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof recordResults>>, {data: ExerciseResultsRequest}> = (props) => {
+          const {data} = props ?? {};
+
+          return  recordResults(data,requestOptions)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type RecordResultsMutationResult = NonNullable<Awaited<ReturnType<typeof recordResults>>>
+    export type RecordResultsMutationBody = ExerciseResultsRequest
+    export type RecordResultsMutationError = unknown
+
+    export const useRecordResults = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof recordResults>>, TError,{data: ExerciseResultsRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof recordResults>>,
+        TError,
+        {data: ExerciseResultsRequest},
+        TContext
+      > => {
+
+      const mutationOptions = getRecordResultsMutationOptions(options);
+
+      return useMutation(mutationOptions);
+    }
+    
+export const recentGrants = (
+    
+ options?: SecondParameter<typeof customFetch>,signal?: AbortSignal
+) => {
+      
+      
+      return customFetch<CoinGrantResponse[]>(
+      {url: `/api/learning/grants`, method: 'GET', signal
+    },
+      options);
+    }
+  
+
+
+
+export const getRecentGrantsQueryKey = () => {
+    return [
+    `/api/learning/grants`
+    ] as const;
+    }
+
+    
+export const getRecentGrantsQueryOptions = <TData = Awaited<ReturnType<typeof recentGrants>>, TError = unknown>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof recentGrants>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getRecentGrantsQueryKey();
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof recentGrants>>> = ({ signal }) => recentGrants(requestOptions, signal);
+
+      
+
+      
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof recentGrants>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type RecentGrantsQueryResult = NonNullable<Awaited<ReturnType<typeof recentGrants>>>
+export type RecentGrantsQueryError = unknown
+
+
+
+export function useRecentGrants<TData = Awaited<ReturnType<typeof recentGrants>>, TError = unknown>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof recentGrants>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+  
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getRecentGrantsQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+
+
+
+
+export const grantCoins = (
+    coinGrantRequest: CoinGrantRequest,
+ options?: SecondParameter<typeof customFetch>,signal?: AbortSignal
+) => {
+      
+      
+      return customFetch<CoinGrantResponse>(
+      {url: `/api/learning/grants`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: coinGrantRequest, signal
+    },
+      options);
+    }
+  
+
+
+export const getGrantCoinsMutationOptions = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof grantCoins>>, TError,{data: CoinGrantRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof grantCoins>>, TError,{data: CoinGrantRequest}, TContext> => {
+
+const mutationKey = ['grantCoins'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof grantCoins>>, {data: CoinGrantRequest}> = (props) => {
+          const {data} = props ?? {};
+
+          return  grantCoins(data,requestOptions)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type GrantCoinsMutationResult = NonNullable<Awaited<ReturnType<typeof grantCoins>>>
+    export type GrantCoinsMutationBody = CoinGrantRequest
+    export type GrantCoinsMutationError = unknown
+
+    export const useGrantCoins = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof grantCoins>>, TError,{data: CoinGrantRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof grantCoins>>,
+        TError,
+        {data: CoinGrantRequest},
+        TContext
+      > => {
+
+      const mutationOptions = getGrantCoinsMutationOptions(options);
 
       return useMutation(mutationOptions);
     }
@@ -1774,6 +2085,133 @@ export function useStream<TData = Awaited<ReturnType<typeof stream>>, TError = u
  ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
 
   const queryOptions = getStreamQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+
+
+
+
+export const listFamilyZoos = (
+    
+ options?: SecondParameter<typeof customFetch>,signal?: AbortSignal
+) => {
+      
+      
+      return customFetch<ZooResponse[]>(
+      {url: `/api/learning/zoos`, method: 'GET', signal
+    },
+      options);
+    }
+  
+
+
+
+export const getListFamilyZoosQueryKey = () => {
+    return [
+    `/api/learning/zoos`
+    ] as const;
+    }
+
+    
+export const getListFamilyZoosQueryOptions = <TData = Awaited<ReturnType<typeof listFamilyZoos>>, TError = unknown>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listFamilyZoos>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListFamilyZoosQueryKey();
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listFamilyZoos>>> = ({ signal }) => listFamilyZoos(requestOptions, signal);
+
+      
+
+      
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listFamilyZoos>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type ListFamilyZoosQueryResult = NonNullable<Awaited<ReturnType<typeof listFamilyZoos>>>
+export type ListFamilyZoosQueryError = unknown
+
+
+
+export function useListFamilyZoos<TData = Awaited<ReturnType<typeof listFamilyZoos>>, TError = unknown>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listFamilyZoos>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+  
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getListFamilyZoosQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+
+
+
+
+export const progress = (
+    params?: ProgressParams,
+ options?: SecondParameter<typeof customFetch>,signal?: AbortSignal
+) => {
+      
+      
+      return customFetch<ChildProgressResponse[]>(
+      {url: `/api/learning/progress`, method: 'GET',
+        params, signal
+    },
+      options);
+    }
+  
+
+
+
+export const getProgressQueryKey = (params?: ProgressParams,) => {
+    return [
+    `/api/learning/progress`, ...(params ? [params]: [])
+    ] as const;
+    }
+
+    
+export const getProgressQueryOptions = <TData = Awaited<ReturnType<typeof progress>>, TError = unknown>(params?: ProgressParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof progress>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getProgressQueryKey(params);
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof progress>>> = ({ signal }) => progress(params, requestOptions, signal);
+
+      
+
+      
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof progress>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type ProgressQueryResult = NonNullable<Awaited<ReturnType<typeof progress>>>
+export type ProgressQueryError = unknown
+
+
+
+export function useProgress<TData = Awaited<ReturnType<typeof progress>>, TError = unknown>(
+ params?: ProgressParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof progress>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+  
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getProgressQueryOptions(params,options)
 
   const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
 

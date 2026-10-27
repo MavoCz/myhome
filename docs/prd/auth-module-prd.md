@@ -17,7 +17,7 @@ The auth module provides authentication and authorization for a family-oriented 
 | Role | Description |
 |------|-------------|
 | **ADMIN** | Family administrator. Full automatic access to all modules. Can manage family members (add, remove, change roles), invite existing users by email, and grant/revoke module access. |
-| **PARENT** | Standard family member. No automatic module access — requires explicit grants from an admin. |
+| **PARENT** | Standard family member. Bypasses module access checks like an admin (see §6.1); grants recorded for a parent only take effect if the member later becomes a child. Cannot manage members or grants. |
 | **CHILD** | Restricted family member. No automatic module access — requires explicit grants from an admin. Subject to time and schedule restrictions. |
 
 ## 4. Core Concepts
@@ -35,7 +35,9 @@ A module access grant gives a non-admin user permission to use a specific applic
 - **Validity window** (optional) — `valid_from` / `valid_until` timestamps. Outside this window the grant is inactive.
 - **Schedules** (optional) — recurring weekly time windows (day of week + start/end time + timezone). If schedules are present, at least one must match the current time for the grant to be active.
 
-Admins bypass all module access checks — they always have full access. Parents and children both require explicit grants.
+Admins and parents bypass all module access checks (`RequiresModuleAccessAspect`) — they always have full access. Only children need explicit grants.
+
+Admins manage grants on the web Family page (§7.4).
 
 ### 4.3 Tokens
 
@@ -80,7 +82,7 @@ Access tokens carry all claims needed for authorization (userId, familyId, famil
 
 ### 6.1 Access Check Order
 
-For non-admin users, each module access check follows this sequence:
+For children (admins and parents skip the check entirely), each module access check follows this sequence:
 
 1. **Permission level** — Does the grant's permission satisfy the required level?
 2. **Validity window** — Is `now` between `valid_from` and `valid_until` (if set)?
@@ -212,6 +214,21 @@ public interface AuthModuleApi {
   ]
 }
 ```
+
+**Update grant** — `PUT /api/family/module-access/{id}`: the module cannot be changed. `permission` is kept when omitted; `validFrom` / `validUntil` are always replaced (omitted = cleared); `schedules` replaces all schedules when present (`[]` clears them) and leaves them untouched when omitted.
+
+**Errors** — invalid input (blank module name, schedule `dayOfWeek` outside 1–7, missing times, blank timezone) returns `400`; schedule entries are validated too. Granting a module + permission the member already has violates the unique constraint `(family_id, user_id, module_name, permission)` and currently returns `500` (no conflict mapping); the web UI avoids offering such combinations. Non-admins get `403`.
+
+### 7.4 Module Access UI (web)
+
+Family page (`/family`), admins only:
+
+- Each member row other than the admin's own row and other admins has a key button (**Module access**) that opens a dialog listing the member's grants: module (human name from the web module registry), permission (`ACCESS` / `MANAGE`), validity window (`No time limit`, `From …`, `Until …`, or `… – …` in the browser's locale/timezone) and schedules summarised per window (e.g. `Mon–Fri 15:00–18:00 Europe/Prague`, `Any time` when there are none). A parent's dialog notes that grants do not restrict parents.
+- **Grant Access** opens a form: module (the registered web modules except `family`, i.e. `expenses`, `learning`), permission, optional valid from / until (`datetime-local`, browser timezone, sent as UTC instants), and optional weekly schedules. Each schedule window is a set of days (Mon–Sun toggles) with one start and end time; one timezone (defaulting to the browser's) applies to all windows. The form expands windows into one schedule entry per day for the API and groups them back when editing.
+- Edit (pencil) reopens the form pre-filled; the module is fixed. Revoke (bin) asks for confirmation.
+- Client-side validation: valid until must be after valid from; every window needs at least one day and must end after it starts (windows cannot cross midnight, matching the backend's `start <= now < end` check); timezone must be a known IANA zone.
+- Duplicates are prevented: module/permission combinations the member already has are not offered (and **Grant Access** is disabled once all are granted). Server errors are shown inside the dialog.
+- Non-admins see no access controls.
 
 ## 8. Database Schema
 

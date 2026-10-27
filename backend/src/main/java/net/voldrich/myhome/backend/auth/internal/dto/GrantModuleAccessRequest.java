@@ -1,5 +1,6 @@
 package net.voldrich.myhome.backend.auth.internal.dto;
 
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import net.voldrich.myhome.backend.auth.ModulePermission;
@@ -13,5 +14,5 @@ public record GrantModuleAccessRequest(
         @NotNull ModulePermission permission,
         OffsetDateTime validFrom,
         OffsetDateTime validUntil,
-        List<ScheduleRequest> schedules
+        List<@Valid ScheduleRequest> schedules
 ) {}

@@ -24,6 +24,8 @@ import Tabs from '@mui/material/Tabs';
 import IconButton from '@mui/material/IconButton';
 import PersonAddIcon from '@mui/icons-material/PersonAdd';
 import DeleteIcon from '@mui/icons-material/Delete';
+import KeyIcon from '@mui/icons-material/Key';
+import Tooltip from '@mui/material/Tooltip';
 import { useQueryClient } from '@tanstack/react-query';
 import {
   useListMembers,
@@ -39,6 +41,8 @@ import { useAuth } from '../../../hooks/useAuth';
 import { FormField } from '../../../components/forms/FormField';
 import { PasswordField } from '../../../components/forms/PasswordField';
 import { MEMBER_COLORS, buildMemberColorMap } from '../../expenses/utils/memberColors';
+import { ModuleAccessDialog } from '../components/ModuleAccessDialog';
+import type { FamilyMemberResponse } from '../../../../../common/src/api/generated/model';
 
 const ROLES: FamilyRole[] = ['ADMIN', 'PARENT', 'CHILD'];
 
@@ -55,6 +59,7 @@ export function FamilyPage() {
   const { data: members = [], isLoading } = useListMembers();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [confirmRemove, setConfirmRemove] = useState<{ userId: number; name: string } | null>(null);
+  const [accessMember, setAccessMember] = useState<FamilyMemberResponse | null>(null);
 
   const removeMutation = useRemoveMember({
     mutation: {
@@ -166,7 +171,19 @@ export function FamilyPage() {
                       </Box>
                     </TableCell>
                     {isAdmin && (
-                      <TableCell align="right">
+                      <TableCell align="right" sx={{ whiteSpace: 'nowrap' }}>
+                        {/* Admins bypass module checks, so grants only matter for parents and children */}
+                        {!isSelf && member.role !== 'ADMIN' && (
+                          <Tooltip title="Module access">
+                            <IconButton
+                              aria-label="Module access"
+                              onClick={() => setAccessMember(member)}
+                              data-testid={`family-access-btn-${member.userId}`}
+                            >
+                              <KeyIcon />
+                            </IconButton>
+                          </Tooltip>
+                        )}
                         {!isSelf && (
                           <IconButton
                             color="error"
@@ -194,6 +211,8 @@ export function FamilyPage() {
           setDialogOpen(false);
         }}
       />
+
+      {isAdmin && <ModuleAccessDialog member={accessMember} onClose={() => setAccessMember(null)} />}
 
       <Dialog open={!!confirmRemove} onClose={() => setConfirmRemove(null)} data-testid="remove-confirm-dialog">
         <DialogTitle>Remove Member</DialogTitle>

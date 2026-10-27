@@ -201,6 +201,8 @@ Registered modules automatically appear in the bottom nav (mobile), header inlin
 
 Each module's frontend code lives in `web/src/modules/<module-name>/` following the same pattern as `auth/`.
 
+The module `id` must equal the backend module name used in `@RequiresModuleAccess` (e.g. `expenses`, `learning`): the Family page's module access dialog offers every registered module except `family` as a grantable module and shows its `name` as the label (see [Auth PRD §7.4](auth-module-prd.md)).
+
 ## 11. Backend Integration
 
 | File | Change |

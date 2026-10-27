@@ -41,7 +41,8 @@ export function ExpenseForm({ open, onClose, onSuccess, onSubmit, initial, famil
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const { data: groups = [] } = useListGroups();
+  const { data: groups = [], isSuccess: groupsLoaded } = useListGroups();
+  const defaultGroupId = (groups.find((g: ExpenseGroupResponse) => g.isDefault) ?? groups[0])?.id;
 
   useEffect(() => {
     if (initial) {
@@ -64,11 +65,8 @@ export function ExpenseForm({ open, onClose, onSuccess, onSubmit, initial, famil
 
   // Auto-select default group only when creating a new expense
   useEffect(() => {
-    if (!initial && !groupId && groups.length > 0) {
-      const defaultGroup = groups.find((g: ExpenseGroupResponse) => g.isDefault) ?? groups[0];
-      if (defaultGroup?.id) setGroupId(defaultGroup.id);
-    }
-  }, [groups, groupId, initial]);
+    if (!initial && !groupId && defaultGroupId) setGroupId(defaultGroupId);
+  }, [defaultGroupId, groupId, initial]);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -82,7 +80,8 @@ export function ExpenseForm({ open, onClose, onSuccess, onSubmit, initial, famil
         currency: currency as ExpenseRequest['currency'],
         date,
         paidByUserId: paidByUserId as number,
-        groupId: groupId || undefined,
+        // '' = not chosen yet (the effect may not have run): a new expense still goes to the default group
+        groupId: (groupId === '' && !initial ? defaultGroupId : groupId) || undefined,
       });
       onSuccess();
       onClose();
@@ -158,7 +157,7 @@ export function ExpenseForm({ open, onClose, onSuccess, onSubmit, initial, famil
         </DialogContent>
         <DialogActions>
           <Button onClick={onClose}>Cancel</Button>
-          <Button type="submit" variant="contained" disabled={loading} data-testid="expense-submit-btn">
+          <Button type="submit" variant="contained" disabled={loading || (!initial && !groupsLoaded)} data-testid="expense-submit-btn">
             {loading ? 'Saving...' : initial ? 'Save Changes' : 'Add Expense'}
           </Button>
         </DialogActions>

@@ -465,8 +465,23 @@ h1 { margin: 0; font-size: clamp(1.45rem, 3.2vw, 2rem); font-weight: 800; line-h
   // ---------- voice ----------
   let interacted = false, csVoice = null;
   const canSpeak = 'speechSynthesis' in window;
+  // iPad lists several Czech voices: the Eloquence ones (Eddy, Flo, Reed…) sound robotic, while a downloaded
+  // Zuzana (Enhanced / Premium) sounds natural. Take the best one installed, not the first one listed.
+  const ROBOTIC = /\b(eddy|flo|grandma|grandpa|reed|rocko|sandy|shelley)\b/i;
+  function voiceScore(v) {
+    const id = `${v.name} ${v.voiceURI}`;
+    if (ROBOTIC.test(id)) return 0;
+    if (/premium/i.test(id)) return 5;
+    if (/enhanced|natural|neural/i.test(id)) return 4;
+    if (/google/i.test(id)) return 3;
+    if (/zuzana/i.test(id)) return 2;
+    return 1;
+  }
   function pickVoice() {
-    try { csVoice = speechSynthesis.getVoices().find(v => /^cs([-_]|$)/i.test(v.lang)) || null; } catch {}
+    try {
+      const czech = speechSynthesis.getVoices().filter(v => /^cs([-_]|$)/i.test(v.lang));
+      csVoice = czech.sort((a, b) => voiceScore(b) - voiceScore(a))[0] || null;
+    } catch {}
   }
   if (canSpeak) { try { pickVoice(); speechSynthesis.addEventListener('voiceschanged', pickVoice); } catch {} }
   const markInteracted = () => { interacted = true; };
@@ -483,7 +498,6 @@ h1 { margin: 0; font-size: clamp(1.45rem, 3.2vw, 2rem); font-weight: 800; line-h
         u.lang = 'cs-CZ';
         if (csVoice) u.voice = csVoice;
         u.rate = .95;
-        u.pitch = 1.05;
         u.onend = done;
         u.onerror = done;
         // some devices never report the end of speech; do not keep the child waiting

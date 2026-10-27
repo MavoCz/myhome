@@ -38,6 +38,10 @@ python3 tools/comfy_gen.py "Cute fox made of layered colored paper cutouts, ... 
 
 Celý prompt, seznam vygenerovaných obrázků a zjištění jsou v `docs/art-pipeline.md`. Rozpracované úkoly jsou v `docs/tasks/`.
 
+## Hlas na iPadu
+
+Cvičení čtou zadání hlasem iPadu (hlas je ve výchozím stavu vypnutý, zapíná se tlačítkem Hlas). Nejpřirozeněji zní Zuzana v kvalitnější verzi: Nastavení → Zpřístupnění → Mluvený obsah → Hlasy → Čeština → Zuzana → stáhnout **Prémiová** (nebo **Vylepšená**). Aplikace si sama vybere nejlepší nainstalovaný český hlas a robotické hlasy (Eddy, Flo, Reed…) vynechá. Po stažení stačí cvičení zavřít a otevřít znovu.
+
 ## Data
 
 Každé dítě je dětský účet v rodině myhome. Zoo se ukládá na server (modul `learning`), takže se neztratí a funguje i na jiném tabletu. Rodič dítě na tabletu jednou přihlásí, potom stačí klepnout na jeho obrázek. Bez internetu se dá hrát dál a změny se uloží, až bude spojení zpátky.

@@ -59,6 +59,39 @@ test.describe('Auth API', () => {
     expect(Array.isArray(members)).toBeTruthy();
   });
 
+  test('re-adding a removed member explains why and invite brings them back', async ({ authApi }) => {
+    const member = {
+      email: `readd-${Date.now()}@example.com`,
+      password: 'Password123!',
+      displayName: 'Readd',
+      role: 'CHILD',
+    };
+    const added = await authApi.post('/api/family/members', { data: member });
+    expect(added.ok()).toBeTruthy();
+    const { userId } = (await added.json()) as FamilyMemberResponse;
+
+    const removed = await authApi.delete(`/api/family/members/${userId}`);
+    expect(removed.ok()).toBeTruthy();
+
+    // The account survives removal, so a plain add conflicts, with a readable reason
+    const again = await authApi.post('/api/family/members', { data: member });
+    expect(again.status()).toBe(409);
+    expect(((await again.json()) as { message?: string }).message).toContain('invite');
+
+    const invited = await authApi.post('/api/family/members/invite', {
+      data: { email: member.email, role: 'CHILD' },
+    });
+    expect(invited.ok()).toBeTruthy();
+  });
+
+  test('invite of an unknown email returns 400 with a message', async ({ authApi }) => {
+    const res = await authApi.post('/api/family/members/invite', {
+      data: { email: `nobody-${Date.now()}@example.com`, role: 'CHILD' },
+    });
+    expect(res.status()).toBe(400);
+    expect(((await res.json()) as { message?: string }).message).toBe('User not found with this email');
+  });
+
   test('refresh token rotates and returns new tokens', async ({ api }) => {
     const initial = await createTestUser(api, `refresh-${Date.now()}`);
 

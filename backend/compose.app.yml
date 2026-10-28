@@ -1,14 +1,15 @@
 services:
   postgres:
     image: postgres:18
+    restart: unless-stopped
     environment:
       POSTGRES_DB: backend
       POSTGRES_USER: root
-      POSTGRES_PASSWORD: root
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in backend/.env}
     ports:
-      - "5433:5432"
+      - "127.0.0.1:5433:5432"
     volumes:
-      - myhome_postgres_data:/var/lib/postgresql/data
+      - myhome_postgres_data:/var/lib/postgresql
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U root -d backend"]
       interval: 5s
@@ -20,12 +21,15 @@ services:
       context: .
       dockerfile: Dockerfile
     image: myhome/backend:latest
+    restart: unless-stopped
     ports:
-      - "8080:8080"
+      - "127.0.0.1:8080:8080"
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/backend
       SPRING_DATASOURCE_USERNAME: root
-      SPRING_DATASOURCE_PASSWORD: root
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in backend/.env}
+      APP_JWT_SECRET: ${APP_JWT_SECRET:?set APP_JWT_SECRET in backend/.env}
+      APP_REGISTRATION_SECRET: ${APP_REGISTRATION_SECRET:?set APP_REGISTRATION_SECRET in backend/.env}
     depends_on:
       postgres:
         condition: service_healthy

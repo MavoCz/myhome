@@ -11,9 +11,11 @@ import net.voldrich.myhome.backend.auth.internal.repository.FamilyMemberReposito
 import net.voldrich.myhome.backend.auth.internal.repository.UserRepository;
 import net.voldrich.myhome.backend.auth.internal.security.AuthUserDetails;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 
@@ -36,7 +38,8 @@ public class FamilyService {
     @Transactional
     public FamilyMemberResponse addMember(AuthUserDetails currentUser, AddFamilyMemberRequest request) {
         if (userRepository.existsByEmail(request.email())) {
-            throw new IllegalArgumentException("Email already registered");
+            throw new ResponseStatusException(HttpStatus.CONFLICT,
+                    "A user with this email already exists. If they were removed from a family earlier, invite them instead.");
         }
 
         var user = userRepository.create(request.email(), passwordEncoder.encode(request.password()), request.displayName());

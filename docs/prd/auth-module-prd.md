@@ -179,6 +179,9 @@ public interface AuthModuleApi {
 - An admin cannot remove themselves from the family
 - An admin cannot change their own role
 - A user can only be invited if they exist and do not already belong to a family
+- Removing a member only detaches them from the family; their user account is kept. Adding them again with **Add member** therefore fails with `409` ("A user with this email already exists…"); use **Invite member** to bring them back (they keep their existing password)
+
+**Error responses:** failures raised deliberately by the services carry the reason in the body as `{ "status": 409, "message": "…" }` so the UI can show it. `IllegalArgumentException` maps to `400`; `ResponseStatusException` keeps its own status.
 
 ### 7.3 Module Access Management
 

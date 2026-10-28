@@ -5,64 +5,66 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
+<style>
+:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+body{margin:0}
+img{max-width:100%}
+[hidden]{display:none!important}
+</style>
 <title>Násobilka</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Andika:wght@400;700&family=Baloo+2:wght@500;600;700;800&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Patrick+Hand&display=swap">
 <style>
-/* Layout: a lined Czech exercise book (linkovaný sešit) with a red margin on the left,
-   the "row of listed words" panel on the right. Stacks to one column on phones. */
+/* Same look as Sčítání pod sebou: a squared exercise book on a school desk, number keys on the right. */
 :root {
-  --desk: #e7ebf2;
+  --desk: #e4eaf3;
   --paper: #fdfdfb;
-  --line: #cfdcf0;
-  --margin: #f0a3a3;
+  --grid: #d3dfee;
   --ink: #1d2640;
   --muted: #5b6985;
-  --accent: #2a5bd7;
-  --accent-deep: #1c43a6;
-  --on-accent: #ffffff;
-  --soft: #0b8467;          /* měkké i */
-  --soft-bg: rgba(11, 132, 103, .10);
-  --hard: #c2410c;          /* tvrdé y */
-  --hard-bg: rgba(194, 65, 12, .10);
-  --hi: rgba(255, 207, 51, .45);
+  --a: #2a5bd7;
+  --a-deep: #1c43a6;
+  --on-a: #ffffff;
+  --b: #0b8a73;
+  --carry: #e06800;
+  --hi: rgba(255, 207, 51, .40);
+  --focus: #2a5bd7;
+  --focus-soft: rgba(42, 91, 215, .18);
   --ok: #16914a;
   --bad: #d23c3c;
   --key: #ffffff;
   --key-edge: #c5d1e4;
+  --bubble: #ffffff;
   --star: #f2b100;
-  --focus-soft: rgba(42, 91, 215, .18);
   --shadow: 0 1px 0 rgba(29, 38, 64, .05), 0 10px 28px -14px rgba(29, 38, 64, .30);
   --font-ui: "Baloo 2", "Trebuchet MS", system-ui, sans-serif;
-  --font-read: "Andika", "Verdana", system-ui, sans-serif;
-  color-scheme: light;
-  padding-top: env(safe-area-inset-top, 0px);
-  padding-bottom: env(safe-area-inset-bottom, 0px);
+  --font-hand: "Patrick Hand", "Chalkboard SE", "Comic Sans MS", cursive;
+  --cell: clamp(56px, min(10vw, 11vh), 96px);
+  --half: calc(var(--cell) / 2);
+  --u: clamp(7px, 1.2vmin, 12px);
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --desk: #0e1613; --paper: #1b2924; --line: rgba(220, 238, 228, .10); --margin: rgba(255, 140, 140, .35);
-    --ink: #eef4ef; --muted: #9fb5aa; --accent: #8db4ff; --accent-deep: #5b84d4; --on-accent: #0e1613;
-    --soft: #5fdcb8; --soft-bg: rgba(95, 220, 184, .12); --hard: #ffa064; --hard-bg: rgba(255, 160, 100, .13);
-    --hi: rgba(255, 220, 90, .22); --ok: #5fd68c; --bad: #ff7d7d; --key: #23342d; --key-edge: #3a4f46;
-    --focus-soft: rgba(141, 180, 255, .2); --shadow: 0 10px 28px -14px rgba(0, 0, 0, .7);
+    --desk: #0e1613; --paper: #1b2924; --grid: rgba(220, 238, 228, .08); --ink: #eef4ef; --muted: #9fb5aa;
+    --a: #8db4ff; --a-deep: #5b84d4; --on-a: #0e1613; --b: #5fdcc0; --carry: #ffab5a;
+    --hi: rgba(255, 220, 90, .15); --focus: #8db4ff; --focus-soft: rgba(141, 180, 255, .2);
+    --ok: #5fd68c; --bad: #ff7d7d; --key: #23342d; --key-edge: #3a4f46; --bubble: #24362f;
+    --shadow: 0 10px 28px -14px rgba(0, 0, 0, .7);
     color-scheme: dark;
   }
 }
 :root[data-theme="dark"] {
-  --desk: #0e1613; --paper: #1b2924; --line: rgba(220, 238, 228, .10); --margin: rgba(255, 140, 140, .35);
-  --ink: #eef4ef; --muted: #9fb5aa; --accent: #8db4ff; --accent-deep: #5b84d4; --on-accent: #0e1613;
-  --soft: #5fdcb8; --soft-bg: rgba(95, 220, 184, .12); --hard: #ffa064; --hard-bg: rgba(255, 160, 100, .13);
-  --hi: rgba(255, 220, 90, .22); --ok: #5fd68c; --bad: #ff7d7d; --key: #23342d; --key-edge: #3a4f46;
-  --focus-soft: rgba(141, 180, 255, .2); --shadow: 0 10px 28px -14px rgba(0, 0, 0, .7);
+  --desk: #0e1613; --paper: #1b2924; --grid: rgba(220, 238, 228, .08); --ink: #eef4ef; --muted: #9fb5aa;
+  --a: #8db4ff; --a-deep: #5b84d4; --on-a: #0e1613; --b: #5fdcc0; --carry: #ffab5a;
+  --hi: rgba(255, 220, 90, .15); --focus: #8db4ff; --focus-soft: rgba(141, 180, 255, .2);
+  --ok: #5fd68c; --bad: #ff7d7d; --key: #23342d; --key-edge: #3a4f46; --bubble: #24362f;
+  --shadow: 0 10px 28px -14px rgba(0, 0, 0, .7);
   color-scheme: dark;
 }
 
-[hidden] { display: none !important; }
 html, body { min-height: 100%; }
 body {
-  margin: 0;
   background: var(--desk);
   color: var(--ink);
   font-family: var(--font-ui);
@@ -73,7 +75,7 @@ body {
   user-select: none;
 }
 button { font-family: inherit; color: inherit; cursor: pointer; }
-:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
+:focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; }
 
 .app {
   max-width: 1180px;
@@ -81,25 +83,32 @@ button { font-family: inherit; color: inherit; cursor: pointer; }
   padding-block: 14px 28px;
   padding-left: max(16px, env(safe-area-inset-left, 0px));
   padding-right: max(16px, env(safe-area-inset-right, 0px));
-  display: flex; flex-direction: column; gap: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
 }
 
 /* Header */
 .top { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 18px; }
-.brand { display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px 12px; margin-right: auto; }
-h1 { margin: 0; font-size: clamp(1.45rem, 3.2vw, 2rem); font-weight: 800; line-height: 1.1; }
-.sub { color: var(--muted); font-weight: 600; white-space: nowrap; }
-.tabs {
+.brand { display: flex; align-items: baseline; gap: 4px 12px; flex-wrap: wrap; margin-right: auto; }
+h1 { margin: 0; font-size: clamp(1.45rem, 3.2vw, 2rem); font-weight: 800; line-height: 1.1; text-wrap: balance; }
+.grade { font-weight: 600; color: var(--muted); font-size: .98rem; white-space: nowrap; }
+.modes {
   display: inline-flex; padding: 3px; gap: 2px;
   background: var(--key); border: 2px solid var(--key-edge); border-radius: 999px;
 }
-.tabs button {
+.modes button {
   border: 0; background: transparent; border-radius: 999px;
-  min-height: 42px; padding: 0 16px; font-size: 1rem; font-weight: 700; color: var(--muted);
+  font-size: 1rem; font-weight: 700; color: var(--muted);
+  min-height: 42px; padding: 0 14px;
 }
-.tabs button[aria-selected="true"] { background: var(--accent); color: var(--on-accent); }
+.modes button[aria-checked="true"] { background: var(--a); color: var(--on-a); }
 .tools { display: flex; align-items: center; gap: 10px; }
-.score { display: flex; align-items: center; gap: 6px; padding: 0 6px; font-weight: 800; font-size: 1.5rem; font-variant-numeric: tabular-nums; }
+.score {
+  display: flex; align-items: center; gap: 6px;
+  font-weight: 800; font-size: 1.5rem; font-variant-numeric: tabular-nums;
+  padding: 0 6px;
+}
 .score svg { width: 30px; height: 30px; fill: var(--star); display: block; }
 .icon-btn {
   display: inline-flex; align-items: center; gap: 6px;
@@ -113,77 +122,94 @@ h1 { margin: 0; font-size: clamp(1.45rem, 3.2vw, 2rem); font-weight: 800; line-h
 .icon-btn[aria-pressed="false"] .off { display: inline; }
 
 /* Stage */
-.stage { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: 18px; align-items: start; }
+.stage { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr); gap: 18px; align-items: start; }
 @media (max-width: 760px) { .stage { grid-template-columns: minmax(0, 1fr); } }
 
-.sheet {
-  --lh: 44px;
-  position: relative; min-width: 0;
+.paper {
+  position: relative;
+  min-width: 0;
   background-color: var(--paper);
   background-image:
-    linear-gradient(to right, transparent 0 34px, var(--margin) 34px 36px, transparent 36px),
-    repeating-linear-gradient(to bottom, transparent 0 calc(var(--lh) - 1px), var(--line) calc(var(--lh) - 1px) var(--lh));
+    linear-gradient(var(--grid) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+  background-size: var(--half) var(--half);
   border-radius: 6px 18px 18px 6px;
   box-shadow: var(--shadow);
-  padding: 18px 18px 22px 52px;
-  display: flex; flex-direction: column; gap: 18px;
+  padding: 20px 16px 24px;
+  display: flex; flex-direction: column; align-items: center; gap: 22px;
 }
-.sheet-top { display: flex; align-items: center; gap: 12px; }
-.dots { display: flex; flex-wrap: wrap; gap: 6px; margin-right: auto; }
-.dot { width: 16px; height: 16px; border-radius: 50%; border: 2px solid var(--key-edge); background: var(--paper); transition: background .3s, border-color .3s, transform .3s; }
-.dot.now { border-color: var(--accent); transform: scale(1.25); }
-.dot.ok { background: var(--ok); border-color: var(--ok); }
-.dot.bad { background: var(--bad); border-color: var(--bad); }
-.round-btn {
-  width: 52px; height: 52px; border-radius: 50%;
-  display: grid; place-items: center;
-  background: var(--key); border: 2px solid var(--key-edge); box-shadow: 0 3px 0 var(--key-edge);
-  color: var(--accent);
-}
-.round-btn svg { width: 26px; height: 26px; }
 
-.prompt {
-  min-height: 190px;
-  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px;
-  text-align: center; font-family: var(--font-read);
+.bubble {
+  position: relative;
+  max-width: min(34ch, 100%);
+  min-height: calc(2 * 1.35em + 24px);
+  display: flex; align-items: center; justify-content: center;
+  padding: 10px 18px;
+  background: var(--bubble);
+  border: 2px solid var(--key-edge);
+  border-radius: 18px;
+  box-shadow: var(--shadow);
+  font-size: clamp(1.1rem, 2.3vw, 1.4rem);
+  font-weight: 600; line-height: 1.35; text-align: center; text-wrap: balance;
 }
-.word { font-size: clamp(3rem, 9vw, 5.4rem); font-weight: 700; line-height: 1.15; letter-spacing: .01em; }
-.sentence { font-size: clamp(1.6rem, 4.4vw, 2.5rem); line-height: 1.45; text-wrap: balance; }
-.sentence .w { font-weight: 700; }
-.gap {
-  display: inline-block; min-width: .62em; text-align: center;
-  border-bottom: .09em dashed var(--muted);
-  line-height: 1; padding-bottom: .02em;
-  transition: border-color .3s, color .3s;
+.bubble::after {
+  content: ""; position: absolute; left: 50%; bottom: -9px;
+  width: 15px; height: 15px; background: var(--bubble);
+  border-right: 2px solid var(--key-edge); border-bottom: 2px solid var(--key-edge);
+  transform: translateX(-50%) rotate(45deg);
 }
-.gap.ok { border-bottom-style: solid; border-color: var(--ok); color: var(--ok); }
-.gap.bad { border-bottom-style: solid; border-color: var(--bad); color: var(--bad); }
-.gap.fix { border-bottom-style: solid; border-color: var(--hard); color: var(--hard); }
-.gap.fix.soft { border-color: var(--soft); color: var(--soft); }
+.bubble.ok, .bubble.ok::after { border-color: var(--ok); }
+.bubble.hint, .bubble.hint::after { border-color: var(--carry); }
+.bubble .a { color: var(--a); font-weight: 800; }
+.bubble .b { color: var(--b); font-weight: 800; }
+.bubble .c { color: var(--carry); font-weight: 800; }
+.bubble b { font-weight: 800; }
 
-.answers { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
-.ans {
-  min-height: 130px; border-radius: 22px;
-  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0;
-  background: var(--key); border: 3px solid currentColor; box-shadow: 0 5px 0 currentColor;
-  font-family: var(--font-read);
+/* The written sum: columns sign | S | D | J, rows label | carry | a | b | result */
+.sheet {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(4, var(--cell));
+  grid-template-rows: var(--half) var(--half) var(--cell) var(--cell) var(--cell);
+  font-family: var(--font-hand);
 }
-.answers.four { grid-template-columns: repeat(4, 1fr); gap: 10px; }
-.answers.four .ans .ch { font-size: clamp(2.6rem, 6vw, 3.6rem); }
-.answers.four .ans .nm { font-size: .85rem; text-align: center; }
-.ans .ch { font-size: clamp(3.6rem, 8vw, 4.8rem); font-weight: 700; line-height: 1; padding-bottom: .16em; }
-.ans .nm { font-family: var(--font-ui); font-size: 1.05rem; font-weight: 700; letter-spacing: .04em; }
-.ans.i { color: var(--soft); background: var(--soft-bg); }
-.ans.y { color: var(--hard); background: var(--hard-bg); }
-.ans:active:not(:disabled) { transform: translateY(4px); box-shadow: 0 1px 0 currentColor; }
-.ans:disabled { opacity: .45; cursor: default; }
+.sheet > * { position: relative; z-index: 1; }
+.hl {
+  grid-row: 2 / 6; grid-column: 4;
+  margin: 0 3px; border-radius: 10px;
+  background: var(--hi);
+  transition: transform .45s cubic-bezier(.3, .7, .2, 1), opacity .3s;
+  pointer-events: none;
+}
+.sheet > .hl { z-index: 0; }
+.lbl {
+  grid-row: 1; display: grid; place-items: center;
+  font: 700 calc(var(--half) * .5) var(--font-ui);
+  color: var(--muted); letter-spacing: .06em;
+  transition: opacity .3s;
+}
+.lbl.ghost { opacity: 0; }
+.carry {
+  grid-row: 2; display: grid; place-items: center;
+  font-size: calc(var(--half) * .95); line-height: 1; color: var(--carry);
+}
+.d { display: grid; place-items: center; font-size: calc(var(--cell) * .8); line-height: 1; }
+.d.a { grid-row: 3; color: var(--a); }
+.d.b { grid-row: 4; color: var(--b); }
+.d.sign { grid-row: 4; grid-column: 1; color: var(--ink); }
+.rule {
+  grid-row: 5; grid-column: 1 / -1; align-self: start;
+  height: 3px; margin-top: -1.5px; border-radius: 2px; background: var(--ink);
+}
+.res {
+  grid-row: 5; display: grid; place-items: center;
+  margin: 7px 5px 3px; border-radius: 10px;
+  font-size: calc(var(--cell) * .8); line-height: 1; color: var(--ink);
+}
+.res.active { box-shadow: inset 0 0 0 3px var(--focus); animation: pulse 1.4s ease-in-out infinite; }
+.res.wrong { color: var(--bad); }
 
-.feedback { min-height: 3.1em; font-size: clamp(1.05rem, 2.2vw, 1.25rem); font-weight: 600; line-height: 1.4; text-align: center; text-wrap: balance; }
-.feedback b { font-family: var(--font-read); font-weight: 700; }
-.feedback .yy { color: var(--hard); font-family: var(--font-read); font-weight: 700; }
-.feedback .ii { color: var(--soft); font-family: var(--font-read); font-weight: 700; }
-
-.actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; }
+.actions, .panel-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; }
 .btn {
   display: inline-flex; align-items: center; justify-content: center; gap: 8px;
   min-height: 54px; padding: 0 22px; border-radius: 16px;
@@ -191,113 +217,85 @@ h1 { margin: 0; font-size: clamp(1.45rem, 3.2vw, 2rem); font-weight: 800; line-h
   background: var(--key); color: var(--ink);
   border: 2px solid var(--key-edge); box-shadow: 0 3px 0 var(--key-edge);
 }
+.btn svg { width: 20px; height: 20px; fill: currentColor; }
 .btn:active { transform: translateY(2px); box-shadow: 0 1px 0 var(--key-edge); }
-.btn:disabled { opacity: .5; cursor: default; }
-.btn.primary { background: var(--accent); color: var(--on-accent); border-color: var(--accent-deep); box-shadow: 0 3px 0 var(--accent-deep); }
-.btn.primary:active { box-shadow: 0 1px 0 var(--accent-deep); }
+.btn.primary { background: var(--a); color: var(--on-a); border-color: var(--a-deep); box-shadow: 0 3px 0 var(--a-deep); }
+.btn.primary:active { box-shadow: 0 1px 0 var(--a-deep); }
 .btn.glow { animation: nudge 1.3s ease-in-out infinite; }
 
-/* Results */
-.result { display: flex; flex-direction: column; align-items: center; gap: 12px; font-family: var(--font-ui); font-size: 1.2rem; }
-.result .big { font-size: clamp(2.6rem, 7vw, 4rem); font-weight: 800; line-height: 1; }
-.result .stars { display: flex; gap: 10px; }
-.result .stars svg { width: 54px; height: 54px; fill: var(--key-edge); }
-.result .stars svg.on { fill: var(--star); }
-.result h3 { margin: 6px 0 0; font-size: 1rem; color: var(--muted); text-transform: uppercase; letter-spacing: .1em; }
-.miss { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px 16px; font-family: var(--font-read); font-size: 1.5rem; }
-.miss .yy { color: var(--hard); font-weight: 700; }
-.miss .ii { color: var(--soft); font-weight: 700; }
-
-/* Side panel */
+/* Side panels */
 .side { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
 .panel { background: var(--paper); border-radius: 18px; box-shadow: var(--shadow); padding: 16px; min-width: 0; }
-.panel h2 { margin: 0 0 12px; font-size: .9rem; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .1em; }
-.panel h2 .L { color: var(--hard); font-size: 1.15rem; letter-spacing: 0; }
-.chips { display: flex; flex-wrap: wrap; gap: 8px; min-height: 48px; align-content: flex-start; }
-.chip {
-  display: inline-flex; align-items: center;
-  min-height: 40px; padding: 0 12px; border-radius: 999px;
-  background: var(--key); border: 2px solid var(--key-edge);
-  font-family: var(--font-read); font-size: 1.12rem; font-weight: 400;
-  transition: background .12s, border-color .12s, transform .2s;
+.panel h2 {
+  margin: 0 0 12px; font-size: .9rem; font-weight: 700; color: var(--muted);
+  text-transform: uppercase; letter-spacing: .1em;
 }
-button.chip { cursor: pointer; }
-.chip.scan { background: var(--hi); border-color: var(--hi); }
-.chip.found { background: var(--hard-bg); border-color: var(--hard); color: var(--hard); font-weight: 700; transform: scale(1.12); }
-.chip.reading { background: var(--hi); border-color: var(--hard); transform: scale(1.08); }
-.placeholder { color: var(--muted); font-size: 1rem; line-height: 1.4; margin: 0; }
-.explain { margin-top: 14px; font-size: 1.1rem; font-weight: 600; line-height: 1.45; min-height: 1.5em; }
-.explain b { font-family: var(--font-read); }
-.explain .yy { color: var(--hard); font-family: var(--font-read); font-weight: 700; }
-.explain .ii { color: var(--soft); font-family: var(--font-read); font-weight: 700; }
-.stamp {
-  display: inline-block; margin-top: 12px; padding: 4px 14px; border: 3px solid var(--soft); border-radius: 10px;
-  color: var(--soft); font-weight: 800; font-size: 1.2rem; text-transform: uppercase; letter-spacing: .06em;
-  transform: rotate(-4deg);
+.keypad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.key {
+  height: clamp(62px, 10.5vh, 90px);
+  border-radius: 18px;
+  font-size: clamp(1.9rem, 4vw, 2.6rem); font-weight: 700; font-variant-numeric: tabular-nums;
+  background: var(--key); color: var(--ink);
+  border: 2px solid var(--key-edge); box-shadow: 0 4px 0 var(--key-edge);
+  transition: opacity .2s;
 }
-.letters { display: flex; flex-wrap: wrap; gap: 8px; }
-.letter {
-  width: 52px; height: 52px; border-radius: 14px;
-  font-family: var(--font-read); font-size: 1.6rem; font-weight: 700;
-  background: var(--key); border: 2px solid var(--key-edge); color: var(--muted);
-  box-shadow: 0 3px 0 var(--key-edge);
-}
-.letter[aria-pressed="true"] { background: var(--hard-bg); border-color: var(--hard); color: var(--hard); box-shadow: 0 3px 0 var(--hard); }
-.note { margin: 10px 0 0; color: var(--muted); font-size: .95rem; }
+.key.zero { grid-column: 1 / -1; }
+.key:active:not(:disabled) { transform: translateY(3px); box-shadow: 0 1px 0 var(--key-edge); }
+.key:disabled { opacity: .4; cursor: default; }
+.tip { margin: 14px 2px 0; color: var(--muted); font-size: 1rem; line-height: 1.4; }
+.tip strong { color: var(--ink); }
 
-/* Learn tab */
-.learn { display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px; }
-.learn .sheet { gap: 16px; }
-.learn-head { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
-.learn-head .letters { margin-right: auto; }
-.learn .chips { gap: 10px; }
-.learn .chip { min-height: 52px; padding: 0 18px; font-size: clamp(1.25rem, 2.6vw, 1.6rem); }
-.related { min-height: 2.6em; font-size: 1.15rem; line-height: 1.45; }
-.related b { font-family: var(--font-read); color: var(--hard); }
-.related span { font-family: var(--font-read); }
-
-.flyer { position: fixed; z-index: 50; pointer-events: none; display: grid; place-items: center; font-family: var(--font-read); font-weight: 700; line-height: 1; }
+/* Flying digit and celebration stars */
+.flyer { position: fixed; z-index: 50; pointer-events: none; display: grid; place-items: center; font-family: var(--font-hand); line-height: 1; color: var(--carry); }
 .spark { position: fixed; z-index: 60; width: 18px; height: 18px; pointer-events: none; }
+.spark.big { width: 40px; height: 40px; }
 .spark svg { width: 100%; height: 100%; fill: var(--star); display: block; }
 
-@keyframes nudge { 50% { transform: translateY(-3px); box-shadow: 0 6px 0 var(--accent-deep), 0 0 0 6px var(--focus-soft); } }
-@media (prefers-reduced-motion: reduce) { .btn.glow { animation: none; } }
-</style>
+@keyframes pulse { 50% { box-shadow: inset 0 0 0 3px var(--focus), 0 0 0 7px var(--focus-soft); } }
+@keyframes nudge { 50% { transform: translateY(-3px); box-shadow: 0 6px 0 var(--a-deep), 0 0 0 6px var(--focus-soft); } }
+@media (prefers-reduced-motion: reduce) {
+  .res.active, .btn.glow { animation: none; }
+  .hl { transition: none; }
+}
 
-<style>
-#groupPick .letter { width: auto; min-width: 0; height: auto; min-height: 48px; padding: 0 16px; white-space: nowrap; font-size: 1.15rem; }
-.btn[aria-pressed="true"] { background: var(--hard-bg); border-color: var(--hard); color: var(--hard); }
-.answers.many .ans .ch { font-size: clamp(2.2rem, 5.5vw, 3.4rem); }
-.ans .ch.long { font-size: clamp(2rem, 5vw, 3rem); }
-.hintword { color: var(--muted); font-weight: 600; }
-.keys { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin: 6px 0 0; }
-.key { min-height: 64px; border-radius: 14px; border: 2px solid var(--key-edge); background: var(--key); color: var(--ink);
-  font-family: var(--font-read); font-size: 1.9rem; font-weight: 700; cursor: pointer; box-shadow: 0 3px 0 var(--key-edge); }
-.key:active:not(:disabled) { transform: translateY(3px); box-shadow: 0 0 0 var(--key-edge); }
-.key.go { background: var(--accent); border-color: var(--accent-deep); color: var(--on-accent); box-shadow: 0 3px 0 var(--accent-deep); }
-.key:disabled { opacity: .45; cursor: default; }
-.eq { font-size: clamp(3rem, 9vw, 5.4rem); font-weight: 700; line-height: 1.15; font-family: var(--font-read); }
-.eq .gap { min-width: 1.6em; display: inline-block; text-align: center; border-bottom: 4px solid var(--ink); margin-left: .2em; }
-.eq .gap.ok { color: var(--ok); border-color: var(--ok); } .eq .gap.bad { color: var(--bad); border-color: var(--bad); }
-.dotgrid { display: grid; gap: 6px; justify-content: center; margin-top: 8px; }
-.dotgrid i { width: 16px; height: 16px; border-radius: 50%; background: var(--accent); display: block; }
-.dotgrid i.row2 { background: var(--hard); }
-.rules { display: flex; flex-direction: column; gap: 10px; }
-.rule { border: 2px solid var(--line); border-radius: 14px; padding: 10px 12px; transition: background .2s, border-color .2s; }
-.rule .rt { font-family: var(--font-read); font-size: 1.35rem; font-weight: 700; display: flex; flex-wrap: wrap; gap: 4px 14px; }
-.rule .rd { margin-top: 4px; color: var(--muted); font-size: .98rem; line-height: 1.35; }
-.rule.y .rt b { color: var(--hard); } .rule.i .rt b { color: var(--soft); }
-.rule.on.y { background: var(--hard-bg); border-color: var(--hard); }
-.rule.on.i { background: var(--soft-bg); border-color: var(--soft); }
-.rule .rt .cur { background: var(--hi); border-radius: 6px; padding: 0 4px; }
+.dots { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; min-height: 16px; }
+.dot { width: 16px; height: 16px; border-radius: 50%; border: 2px solid var(--key-edge); background: transparent; }
+.dot.ok { background: var(--ok); border-color: var(--ok); } .dot.bad { background: var(--bad); border-color: var(--bad); }
+.dot.now { border-color: var(--focus); box-shadow: 0 0 0 3px var(--focus-soft); }
+.eqrow { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 0 calc(var(--cell) * .12); font-family: var(--font-hand); min-height: calc(var(--cell) * 1.3); }
+.eqrow .d { font-size: calc(var(--cell) * .85); width: auto; min-width: calc(var(--cell) * .5); }
+.eqrow .d.a { color: var(--a); } .eqrow .d.b { color: var(--b); } .eqrow .d.sign { color: var(--ink); }
+.eqrow .res { width: var(--cell); height: var(--cell); margin: 0; box-shadow: inset 0 0 0 3px var(--key-edge); background: var(--paper); }
+.eqrow .res.active { box-shadow: inset 0 0 0 3px var(--focus); }
+.eqrow .res.ok { color: var(--ok); box-shadow: inset 0 0 0 3px var(--ok); }
+.key.small { height: 52px; font-size: 1.4rem; }
+.picks { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; }
+.key[aria-pressed="true"] { background: var(--a); color: var(--on-a); border-color: var(--a-deep); box-shadow: 0 4px 0 var(--a-deep); }
+.dotgrid { display: grid; gap: 6px; justify-content: center; margin: 4px 0 8px; }
+.dotgrid i { width: 16px; height: 16px; border-radius: 50%; background: var(--pc); display: block; }
+.pa { --pc: var(--a); } .pb { --pc: var(--b); }
+.dotcap { text-align: center; color: var(--muted); font-size: 1.05rem; font-weight: 600; }
+.result { text-align: center; display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 8px 0; }
+.result .big { font-family: var(--font-hand); font-size: 4rem; line-height: 1; }
+.result .stars { display: flex; gap: 8px; } .result .stars svg { width: 44px; height: 44px; fill: var(--key-edge); }
+.result .stars svg.on { fill: var(--star); }
+.result h3 { margin: 6px 0 0; font-size: 1rem; color: var(--muted); text-transform: uppercase; letter-spacing: .1em; }
+.miss { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
+.miss span { background: var(--bubble); border: 2px solid var(--key-edge); border-radius: 12px; padding: 4px 12px; font-family: var(--font-hand); font-size: 1.5rem; }
 </style>
 </head>
 <body>
+
 <div class="app">
   <header class="top">
     <div class="brand">
       <h1>Násobilka</h1>
-      <span class="sub">násobení a dělení do 100</span>
+      <span class="grade">násobení a dělení do 100</span>
+    </div>
+    <div class="modes" role="radiogroup" aria-label="Druh příkladů">
+      <button type="button" role="radio" data-mode="mul" id="mode-mul">Násobení</button>
+      <button type="button" role="radio" data-mode="div" id="mode-div">Dělení</button>
+      <button type="button" role="radio" data-mode="mix" id="mode-mix">Obojí</button>
     </div>
     <div class="tools">
       <button type="button" class="icon-btn" id="voiceBtn" aria-pressed="true">
@@ -308,34 +306,32 @@ button.chip { cursor: pointer; }
     </div>
   </header>
 
-  <main class="stage" id="practice">
-    <section class="sheet" aria-label="Sešit">
-      <div class="sheet-top">
-        <div class="dots" id="dots" aria-label="Postup kolem"></div>
-        <button type="button" class="round-btn" id="sayBtn" aria-label="Přečíst příklad">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9z"/><path d="M16.5 8.5a5 5 0 0 1 0 7"/></svg>
-        </button>
-      </div>
-      <div class="prompt" id="prompt"></div>
-      <div class="keys" id="keys"></div>
-      <div class="feedback" id="feedback" aria-live="polite"></div>
-      <div class="actions">
+  <main class="stage">
+    <section class="paper" id="paper" aria-label="Sešit">
+      <div class="dots" id="dots" aria-label="Postup kolem"></div>
+      <div class="bubble" id="bubble" aria-live="polite"></div>
+      <div class="sheet-eq" id="prompt" style="width:100%"></div>
+      <div class="actions" id="actions">
+        <button type="button" class="btn" id="delBtn">Smazat</button>
         <button type="button" class="btn" id="hintBtn">Ukaž tečky</button>
-        <button type="button" class="btn primary" id="nextBtn" hidden>Dál</button>
+        <button type="button" class="btn primary" id="nextBtn" hidden>Další příklad</button>
       </div>
     </section>
 
     <aside class="side">
-      <section class="panel">
+      <section class="panel" id="keysPanel">
+        <h2>Napiš číslici</h2>
+        <div class="keypad" id="keypad"></div>
+        <p class="tip">Násobilku si můžeš spočítat v <strong>tečkách</strong>: řádky krát tečky v řádku.</p>
+      </section>
+      <section class="panel" id="dotsPanel" hidden>
         <h2>Tečky</h2>
-        <div id="dotsBox"><p class="placeholder">Tečky se ukážou, když klepneš na „Ukaž tečky“ nebo když se spleteš.</p></div>
-        <div class="explain" id="explain"></div>
+        <div id="dotsBox"></div>
+        <div class="dotcap" id="dotCap"></div>
       </section>
       <section class="panel">
-        <h2>Co procvičovat</h2>
-        <div class="letters" id="tablePick"></div>
-        <button type="button" class="btn" id="divBtn" aria-pressed="false">I dělení</button>
-        <p class="note">Každé kolo má 10 příkladů. Vyber, které násobilky chceš.</p>
+        <h2>Která násobilka</h2>
+        <div class="picks" id="tablePick"></div>
       </section>
     </aside>
   </main>
@@ -347,7 +343,6 @@ button.chip { cursor: pointer; }
   const T = ms => RM ? Math.min(ms, 120) : ms;
   const W = ms => RM ? Math.round(ms * .7) : ms;
   const sleep = ms => new Promise(r => setTimeout(r, ms));
-  const EASE = 'cubic-bezier(.3,.7,.2,1)';
   const STAR = '<svg viewBox="0 0 24 24"><path d="M12 2.5l2.9 6.1 6.6.8-4.9 4.6 1.3 6.6L12 17.3l-5.9 3.3 1.3-6.6L2.5 9.4l6.6-.8z"/></svg>';
   const TABLES = [2, 3, 4, 5, 6, 7, 8, 9, 10];
   const ROUND = 10;
@@ -377,11 +372,11 @@ button.chip { cursor: pointer; }
     voice: saved.voice === true,
     tables: Array.isArray(saved.tables) && saved.tables.some(n => TABLES.includes(n))
       ? saved.tables.filter(n => TABLES.includes(n)) : [2, 3, 4, 5],
-    div: saved.div === true,
+    mode: ['mul', 'div', 'mix'].includes(saved.mode) ? saved.mode : 'mul',
     round: [], idx: 0, results: [], busy: false, answered: false, gen: 0, retry: false, typed: '',
   };
   function persist() {
-    try { localStorage.setItem(KEY, JSON.stringify({ stars: state.stars, voice: state.voice, tables: state.tables, div: state.div })); } catch {}
+    try { localStorage.setItem(KEY, JSON.stringify({ stars: state.stars, voice: state.voice, tables: state.tables, mode: state.mode })); } catch {}
   }
   // ---------- voice ----------
   let interacted = false, csVoice = null;
@@ -432,17 +427,18 @@ button.chip { cursor: pointer; }
 
 
   // ---------- practice ----------
-  const prompt = $('#prompt'), feedback = $('#feedback'), dots = $('#dots'), keysEl = $('#keys');
-  const nextBtn = $('#nextBtn'), hintBtn = $('#hintBtn'), dotsBox = $('#dotsBox'), explainEl = $('#explain');
+  const prompt = $('#prompt'), bubble = $('#bubble'), dots = $('#dots'), keypad = $('#keypad');
+  const nextBtn = $('#nextBtn'), hintBtn = $('#hintBtn'), delBtn = $('#delBtn'), actions = $('#actions');
+  const dotsPanel = $('#dotsPanel'), dotsBox = $('#dotsBox'), dotCap = $('#dotCap');
 
   // a problem is a x b = c; dividing asks c : a = b (so the answer is always the other factor)
   function makeProblems() {
     const pool = [];
     state.tables.forEach(a => { for (let b = 1; b <= 10; b++) {
-      pool.push({ a, b, c: a * b, op: 'x', ans: a * b });
-      if (state.div) pool.push({ a, b, c: a * b, op: ':', ans: b });
+      if (state.mode !== 'div') pool.push({ a, b, c: a * b, op: 'x', ans: a * b });
+      if (state.mode !== 'mul') pool.push({ a, b, c: a * b, op: ':', ans: b });
     } });
-    // the same product twice (3 x 4 and 4 x 3) is one problem too many for one round
+    // 3 x 4 and 4 x 3 are the same problem for one round
     const seen = new Set(), out = [];
     shuffle(pool).forEach(p => {
       const key = p.op === 'x' ? `x${Math.min(p.a, p.b)}${Math.max(p.a, p.b)}` : `:${p.c}:${p.a}`;
@@ -450,25 +446,19 @@ button.chip { cursor: pointer; }
     });
     return out.slice(0, ROUND);
   }
-  // Czech plural after a number: 1 tečku, 2–4 tečky, 5+ teček
-  const dotWord = n => n === 1 ? 'tečku' : n <= 4 ? 'tečky' : 'teček';
+  const left = p => p.op === 'x' ? p.a : p.c;
+  const right = p => p.op === 'x' ? p.b : p.a;
   const textOf = p => p.op === 'x' ? `${p.a} × ${p.b}` : `${p.c} : ${p.a}`;
   const spokenOf = p => p.op === 'x' ? `${p.a} krát ${p.b}` : `${p.c} děleno ${p.a}`;
+  // Czech plural after a number: 1 tečku, 2–4 tečky, 5+ teček
+  const dotWord = n => n === 1 ? 'tečku' : n <= 4 ? 'tečky' : 'teček';
 
-  function buildKeys() {
-    keysEl.innerHTML = '';
-    [1, 2, 3, 4, 5, 6, 7, 8, 9, 0].forEach(d => {
-      const b = el('button', 'key', keysEl, String(d));
-      b.type = 'button';
-      b.addEventListener('click', () => typeDigit(String(d)));
-    });
-    const del = el('button', 'key', keysEl, '⌫'); del.type = 'button'; del.setAttribute('aria-label', 'Smazat');
-    del.addEventListener('click', backspace);
-    const ok = el('button', 'key go', keysEl, 'OK'); ok.type = 'button';
-    ok.style.gridColumn = 'span 4';
-    ok.addEventListener('click', submit);
+  function say(html, cls) {
+    bubble.className = 'bubble' + (cls ? ' ' + cls : '');
+    // one child, because the bubble is a flex box and would lay out every <b> and <span> as its own item
+    bubble.innerHTML = `<div>${html}</div>`;
   }
-  const setKeys = on => keysEl.querySelectorAll('button').forEach(b => { b.disabled = !on; });
+  const setKeys = on => keypad.querySelectorAll('button').forEach(b => { b.disabled = !on; });
 
   function startRound(items) {
     state.gen++;
@@ -477,9 +467,8 @@ button.chip { cursor: pointer; }
     state.idx = 0;
     state.results = [];
     state.retry = !!items;
-    keysEl.hidden = false;
-    hintBtn.hidden = false;
-    $('#sayBtn').hidden = false;
+    keypad.parentElement.hidden = false;
+    actions.hidden = false;
     renderDots();
     showItem();
   }
@@ -493,32 +482,39 @@ button.chip { cursor: pointer; }
     });
   }
 
+  const cells = () => [...prompt.querySelectorAll('.res')];
+  function showTyped() {
+    const need = cells();
+    need.forEach((c, i) => { c.textContent = state.typed[i] || ''; c.classList.toggle('active', i === state.typed.length); });
+  }
+
   function showItem() {
     const p = state.round[state.idx];
     state.answered = false;
     state.busy = false;
     state.typed = '';
-    prompt.innerHTML = `<div class="eq">${textOf(p)} =<span class="gap" id="gap">&nbsp;</span></div>`;
-    prompt.firstElementChild.animate(
-      [{ transform: 'translateX(40px)', opacity: 0 }, { transform: 'none', opacity: 1 }],
-      { duration: T(350), easing: EASE },
-    );
-    feedback.innerHTML = '';
-    explainEl.innerHTML = '';
-    dotsBox.innerHTML = '<p class="placeholder">Tečky se ukážou, když klepneš na „Ukaž tečky“ nebo když se spleteš.</p>';
+    const n = String(p.ans).length;
+    prompt.innerHTML = `<div class="eqrow"><span class="d a">${left(p)}</span><span class="d sign">${p.op === 'x' ? '×' : ':'}</span><span class="d b">${right(p)}</span><span class="d sign">=</span>${'<span class="res"></span>'.repeat(n)}</div>`;
+    dotsPanel.hidden = true;
+    say(`Kolik je <span class="a">${left(p)}</span> ${p.op === 'x' ? '×' : ':'} <span class="b">${right(p)}</span>?`);
     nextBtn.hidden = true;
     nextBtn.classList.remove('glow');
+    hintBtn.hidden = false;
     hintBtn.disabled = false;
+    delBtn.hidden = false;
     setKeys(true);
+    showTyped();
     renderDots();
     speak(spokenOf(p));
   }
 
-  const showTyped = () => { $('#gap').innerHTML = state.typed || '&nbsp;'; };
-  function typeDigit(d) {
-    if (state.busy || state.answered || state.typed.length >= 3) return;
+  function onDigit(d) {
+    if (state.busy || state.answered) return;
+    const n = cells().length;
+    if (state.typed.length >= n) return;
     state.typed += d;
     showTyped();
+    if (state.typed.length === n) submit();
   }
   function backspace() {
     if (state.busy || state.answered) return;
@@ -526,53 +522,53 @@ button.chip { cursor: pointer; }
     showTyped();
   }
 
-  // rows of dots: a x b is a rows with b dots; the dividing problems show the same picture
+  // rows of dots: a rows with b dots each (dividing shows the same picture)
   function showDots(p) {
-    const a = p.a, b = p.op === 'x' ? p.b : p.ans;
+    const rows = p.a, per = p.op === 'x' ? p.b : p.ans;
     dotsBox.innerHTML = '';
     const grid = el('div', 'dotgrid', dotsBox);
-    grid.style.gridTemplateColumns = `repeat(${b}, 16px)`;
-    for (let r = 0; r < a; r++) for (let c = 0; c < b; c++) el('i', r % 2 ? 'row2' : '', grid);
-    grid.animate([{ opacity: 0, transform: 'scale(.9)' }, { opacity: 1, transform: 'none' }], { duration: T(300), easing: EASE });
-    return `${a} řádků po ${b} tečkách`;
+    grid.style.gridTemplateColumns = `repeat(${per}, 16px)`;
+    for (let r = 0; r < rows; r++) for (let c = 0; c < per; c++) el('i', r % 2 ? 'pb' : 'pa', grid);
+    dotsPanel.hidden = false;
+    dotCap.textContent = p.op === 'x'
+      ? `${rows} řádků po ${per} tečkách`
+      : `${p.c} teček do ${rows} řádků, v každém ${per}`;
+    grid.animate([{ opacity: 0, transform: 'scale(.9)' }, { opacity: 1, transform: 'none' }], { duration: T(300) });
   }
 
   async function submit() {
-    if (state.busy || state.answered || !state.typed || !state.round.length) return;
+    if (state.busy || state.answered || !state.round.length) return;
     const p = state.round[state.idx], g = state.gen;
     state.busy = true;
     state.answered = true;
     setKeys(false);
     hintBtn.disabled = true;
-    const gap = $('#gap');
-    const correct = Number(state.typed) === p.ans;
-    if (correct) {
-      gap.classList.add('ok');
-      gap.animate([{ transform: 'scale(1.35)' }, { transform: 'none' }], { duration: T(300), easing: EASE });
+    delBtn.hidden = true;
+    const cs = cells();
+    cs.forEach(c => c.classList.remove('active'));
+    if (Number(state.typed) === p.ans) {
+      cs.forEach(c => c.classList.add('ok'));
       state.results.push(true);
       renderDots();
-      feedback.innerHTML = `Správně! <b>${textOf(p)} = ${p.ans}</b>`;
+      say(`Správně! <b>${textOf(p)} = ${p.ans}</b>`, 'ok');
       await Promise.all([speak(String(p.ans)), sleep(W(1500))]);
       if (g !== state.gen) return;
       advance();
       return;
     }
-    gap.classList.add('bad');
-    await gap.animate([
+    cs.forEach(c => c.classList.add('wrong'));
+    await Promise.all(cs.map(c => c.animate([
       { transform: 'translateX(0)' }, { transform: 'translateX(-6px)' }, { transform: 'translateX(5px)' },
       { transform: 'translateX(-3px)' }, { transform: 'translateX(0)' },
-    ], { duration: T(380) }).finished;
+    ], { duration: T(380) }).finished));
     if (g !== state.gen) return;
-    gap.classList.remove('bad');
-    gap.textContent = p.ans;
-    gap.classList.add('ok');
+    cs.forEach((c, i) => { c.classList.remove('wrong'); c.classList.add('ok'); c.textContent = String(p.ans)[i]; });
     state.results.push(false);
     renderDots();
-    const what = showDots(p);
-    feedback.innerHTML = `Správně je <b>${p.ans}</b>. Podívej se na tečky.`;
-    explainEl.innerHTML = p.op === 'x'
-      ? `${p.a} × ${p.b} je ${what}. Dohromady <b>${p.c}</b>.`
-      : `${p.c} tuček rozdělíme do ${p.a} řádků. Každý řádek má <b>${p.ans}</b> ${dotWord(p.ans)}.`;
+    showDots(p);
+    say(`Správně je <b>${p.ans}</b>. Podívej se na tečky: ${p.op === 'x'
+      ? `<span class="a">${p.a}</span> řádků po <span class="b">${p.b}</span> ${dotWord(p.b)} je <b>${p.c}</b>.`
+      : `${p.c} teček do ${p.a} řádků, v každém <b>${p.ans}</b> ${dotWord(p.ans)}.`}`, 'hint');
     speak(`Správně je ${p.ans}.`);
     state.busy = false;
     nextBtn.hidden = false;
@@ -599,20 +595,15 @@ button.chip { cursor: pointer; }
       event: { kind: 'round', correct: good, total, retry: state.retry },
     }, '*');
     renderDots();
-    keysEl.hidden = true;
-    hintBtn.hidden = true;
-    nextBtn.hidden = true;
-    $('#sayBtn').hidden = true;
-    feedback.innerHTML = '';
-    explainEl.innerHTML = 'Kolo je hotové.';
-    dotsBox.innerHTML = '';
-
+    keypad.parentElement.hidden = true;
+    dotsPanel.hidden = true;
+    actions.hidden = true;
     const msg = good === total ? 'Bez jediné chyby!' : ratio >= .7 ? 'Moc pěkné!' : 'Dobrý začátek, zkus to znovu.';
+    say(msg, ratio >= .7 ? 'ok' : '');
     prompt.innerHTML = `
       <div class="result">
         <div class="big">${good} z ${total}</div>
         <div class="stars">${[0, 1, 2].map(i => STAR.replace('<svg', `<svg class="${i < earned ? 'on' : ''}"`)).join('')}</div>
-        <div>${msg}</div>
         ${missed.length ? `<h3>Tady byla chyba</h3><div class="miss">${missed.map(p => `<span>${textOf(p)} = ${p.ans}</span>`).join('')}</div>` : ''}
         <div class="actions">
           ${missed.length ? '<button type="button" class="btn" id="retryBtn">Procvičit chyby</button>' : ''}
@@ -621,7 +612,7 @@ button.chip { cursor: pointer; }
       </div>`;
     prompt.querySelectorAll('.stars svg').forEach((s, i) => s.animate(
       [{ transform: 'scale(0) rotate(-90deg)' }, { transform: 'scale(1.3)' }, { transform: 'none' }],
-      { duration: T(450), delay: RM ? 0 : 200 + i * 220, easing: EASE, fill: 'backwards' },
+      { duration: T(450), delay: RM ? 0 : 200 + i * 220, easing: 'cubic-bezier(.3,.7,.2,1)', fill: 'backwards' },
     ));
     $('#againBtn').addEventListener('click', () => startRound());
     const retry = $('#retryBtn');
@@ -632,8 +623,8 @@ button.chip { cursor: pointer; }
 
   function celebrate() {
     if (RM) return;
-    const r = prompt.getBoundingClientRect();
-    const cx = r.left + r.width / 2, cy = r.top + r.height / 3;
+    const r = bubble.getBoundingClientRect();
+    const cx = r.left + r.width / 2, cy = r.top + r.height;
     for (let i = 0; i < 16; i++) {
       const p = el('div', 'spark', document.body);
       p.innerHTML = STAR;
@@ -647,32 +638,32 @@ button.chip { cursor: pointer; }
     }
   }
 
-  nextBtn.addEventListener('click', () => { if (!state.busy) advance(); });
-  $('#sayBtn').addEventListener('click', () => {
-    const p = state.round[state.idx];
-    if (p) speak(spokenOf(p), true);
+  // ---------- keypad (the same keys as Sčítání pod sebou) ----------
+  [1, 2, 3, 4, 5, 6, 7, 8, 9, 0].forEach(n => {
+    const b = el('button', 'key' + (n === 0 ? ' zero' : ''), keypad, n);
+    b.type = 'button';
+    b.addEventListener('click', () => onDigit(n));
   });
+  document.addEventListener('keydown', e => {
+    if (e.metaKey || e.ctrlKey || e.altKey) return;
+    if (/^[0-9]$/.test(e.key)) onDigit(e.key);
+    else if (e.key === 'Backspace') backspace();
+    else if (e.key === 'Enter' && !nextBtn.hidden && !state.busy) { e.preventDefault(); advance(); }
+  });
+  delBtn.addEventListener('click', backspace);
+  nextBtn.addEventListener('click', () => { if (!state.busy) advance(); });
   hintBtn.addEventListener('click', () => {
     const p = state.round[state.idx];
     if (!p || state.answered) return;
     hintBtn.disabled = true;
-    const what = showDots(p);
-    explainEl.innerHTML = p.op === 'x' ? `Spočítej tečky: ${what}.` : `Rozděl ${p.c} teček do ${p.a} řádků.`;
-  });
-  document.addEventListener('keydown', e => {
-    if (e.metaKey || e.ctrlKey || e.altKey) return;
-    if (/^[0-9]$/.test(e.key)) typeDigit(e.key);
-    else if (e.key === 'Backspace') backspace();
-    else if (e.key === 'Enter') {
-      e.preventDefault();
-      if (!nextBtn.hidden && !state.busy) advance(); else submit();
-    }
+    showDots(p);
+    say(p.op === 'x' ? `Spočítej tečky: <span class="a">${p.a}</span> řádků po <span class="b">${p.b}</span>.` : `Rozděl ${p.c} teček do <span class="a">${p.a}</span> řádků.`, 'hint');
   });
 
-  buildKeys();
+  // ---------- settings ----------
   const tablePick = $('#tablePick');
   TABLES.forEach(n => {
-    const b = el('button', 'letter', tablePick, String(n));
+    const b = el('button', 'key small', tablePick, String(n));
     b.type = 'button';
     b.setAttribute('aria-pressed', String(state.tables.includes(n)));
     b.addEventListener('click', () => {
@@ -684,14 +675,15 @@ button.chip { cursor: pointer; }
       startRound();
     });
   });
-  const divBtn = $('#divBtn');
-  divBtn.setAttribute('aria-pressed', String(state.div));
-  divBtn.addEventListener('click', () => {
-    state.div = !state.div;
-    divBtn.setAttribute('aria-pressed', String(state.div));
+  function showMode() {
+    document.querySelectorAll('.modes button').forEach(b => b.setAttribute('aria-checked', String(b.dataset.mode === state.mode)));
+  }
+  document.querySelectorAll('.modes button').forEach(b => b.addEventListener('click', () => {
+    state.mode = b.dataset.mode;
+    showMode();
     persist();
     startRound();
-  });
+  }));
 
   const voiceBtn = $('#voiceBtn');
   voiceBtn.addEventListener('click', () => {
@@ -701,6 +693,7 @@ button.chip { cursor: pointer; }
     if (!state.voice) stopSpeech();
   });
   voiceBtn.setAttribute('aria-pressed', String(state.voice));
+  showMode();
   startRound();
 })();
 </script>

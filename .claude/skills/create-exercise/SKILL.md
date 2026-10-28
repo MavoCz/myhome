@@ -53,6 +53,7 @@ only, never copy their words, sentences or rule texts.
 2. `web-learning/src/state/types.ts`: a round-type exercise adds its id to `RoundExerciseId`; another event shape is added to `ExerciseEvent`.
 3. `web-learning/src/exercises.ts`: add an `EXERCISES` entry (title, subject, desc, src); a round exercise also goes into `ROUND_EXERCISES`, any other shape needs its own branch in `parseExerciseMessage` that validates every field with `count(...)`.
 4. `web-learning/src/state/economy.ts`: a rule in `rewardFor` (round-type events are already covered, no change).
+4b. `web-learning/src/screens/Home.tsx`: a cover picture for the home screen. Czech exercises add an entry to `WORD_COVERS` (a word with a gap and the choices); a new kind of exercise gets its own branch in `ExerciseCover`. Every exercise needs a picture that differs from the others.
 5. `web/src/modules/learning/pages/LearningPage.tsx`: a name in `EXERCISE_NAMES` for the parents' progress view.
 6. Backend needs no change (the exercise name is a free string, max 50 chars).
 7. Docs: one line in `web-learning/README.md` and in `docs/prd/learning-module-prd.md`.

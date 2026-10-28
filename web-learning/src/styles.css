@@ -188,7 +188,13 @@ section { display: flex; flex-direction: column; gap: 14px; }
 .gapword { font-family: var(--font-read); font-weight: 700; font-size: 3rem; text-align: center; }
 .gapword .g { display: inline-block; min-width: .6em; text-align: center; border-bottom: .08em solid var(--lang); color: var(--lang); line-height: 1; }
 .pair { display: flex; gap: 12px; margin-top: 8px; justify-content: center; font-family: var(--font-read); font-weight: 700; font-size: 1.6rem; }
-.pair span { width: 48px; height: 48px; display: grid; place-items: center; border-radius: 14px; border: 3px solid currentColor; }
+.pair span { min-width: 48px; height: 48px; padding: 0 10px; box-sizing: border-box; display: grid; place-items: center; border-radius: 14px; border: 3px solid currentColor; }
+.mult { display: flex; flex-direction: column; align-items: center; gap: 10px; font-family: var(--font-hand); }
+.mult .eq { font-size: 46px; line-height: 1; }
+.mult .a { color: var(--accent); } .mult .b { color: var(--math-b); }
+.dotpic { display: grid; grid-template-columns: repeat(4, 16px); gap: 6px; }
+.dotpic i { width: 16px; height: 16px; border-radius: 50%; background: var(--accent); }
+.dotpic i.b { background: var(--math-b); }
 .pair .i { color: var(--soft); }
 .pair .y { color: var(--lang); }
 

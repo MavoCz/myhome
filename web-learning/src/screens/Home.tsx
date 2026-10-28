@@ -6,7 +6,18 @@ import { AvatarImage, Toasts, Wallet, useToasts } from '../ui/bits';
 import { THUMBS } from '../zoo/thumbs';
 import type { Route } from '../App';
 
-function ExerciseCover({ id }: { id: string }) {
+/** a word with a gap and the choices that go into it; every Czech exercise gets its own picture */
+const WORD_COVERS: Record<string, { word: [string, string, string]; chips: string[] }> = {
+  vyjmenovana: { word: ['b', 'ý', 't'], chips: ['i', 'y'] },
+  souhlasky: { word: ['ch', 'y', 'ba'], chips: ['hy', 'ši'] },
+  parove: { word: ['chle', 'b', 'a'], chips: ['b', 'p'] },
+  bje: { word: ['', 'bě', 'žet'], chips: ['bě', 'bje'] },
+  koncovky: { word: ['mlad', 'ý', ''], chips: ['ý', 'í'] },
+  uu: { word: ['', 'ú', 'kol'], chips: ['ú', 'ů'] },
+  predpony: { word: ['', 'vz', 'létnout'], chips: ['s', 'z', 'vz'] },
+};
+
+export function ExerciseCover({ id }: { id: string }) {
   if (id === 'scitani') {
     return (
       <div className="cover math" aria-hidden="true">
@@ -19,11 +30,26 @@ function ExerciseCover({ id }: { id: string }) {
       </div>
     );
   }
+  if (id === 'nasobilka') {
+    return (
+      <div className="cover math" aria-hidden="true">
+        <div className="mult">
+          <div className="eq"><span className="a">3</span> × <span className="b">4</span></div>
+          <div className="dotpic">
+            {Array.from({ length: 12 }, (_, i) => <i key={i} className={Math.floor(i / 4) % 2 ? 'b' : 'a'} />)}
+          </div>
+        </div>
+      </div>
+    );
+  }
+  const c = WORD_COVERS[id] ?? WORD_COVERS.vyjmenovana;
   return (
     <div className="cover lang" aria-hidden="true">
       <div>
-        <div className="gapword">b<span className="g">ý</span>t</div>
-        <div className="pair"><span className="i">i</span><span className="y">y</span></div>
+        <div className="gapword">{c.word[0]}<span className="g">{c.word[1]}</span>{c.word[2]}</div>
+        <div className="pair">
+          {c.chips.map((ch, i) => <span key={ch} className={i % 2 ? 'y' : 'i'}>{ch}</span>)}
+        </div>
       </div>
     </div>
   );

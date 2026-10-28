@@ -28,6 +28,9 @@ services:
       SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in backend/.env}
       APP_JWT_SECRET: ${APP_JWT_SECRET:?set APP_JWT_SECRET in backend/.env}
       APP_REGISTRATION_SECRET: ${APP_REGISTRATION_SECRET:?set APP_REGISTRATION_SECRET in backend/.env}
+      # The app is reachable from the internet: do not publish the API spec or Swagger UI
+      SPRINGDOC_API_DOCS_ENABLED: "false"
+      SPRINGDOC_SWAGGER_UI_ENABLED: "false"
     depends_on:
       postgres:
         condition: service_healthy

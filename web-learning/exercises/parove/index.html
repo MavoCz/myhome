@@ -1,0 +1,724 @@
+<!doctype html>
+<html lang="cs">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<title>Párové souhlásky</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Andika:wght@400;700&family=Baloo+2:wght@500;600;700;800&display=swap">
+<style>
+/* Layout: a lined Czech exercise book (linkovaný sešit) with a red margin on the left,
+   the "row of listed words" panel on the right. Stacks to one column on phones. */
+:root {
+  --desk: #e7ebf2;
+  --paper: #fdfdfb;
+  --line: #cfdcf0;
+  --margin: #f0a3a3;
+  --ink: #1d2640;
+  --muted: #5b6985;
+  --accent: #2a5bd7;
+  --accent-deep: #1c43a6;
+  --on-accent: #ffffff;
+  --soft: #0b8467;          /* měkké i */
+  --soft-bg: rgba(11, 132, 103, .10);
+  --hard: #c2410c;          /* tvrdé y */
+  --hard-bg: rgba(194, 65, 12, .10);
+  --hi: rgba(255, 207, 51, .45);
+  --ok: #16914a;
+  --bad: #d23c3c;
+  --key: #ffffff;
+  --key-edge: #c5d1e4;
+  --star: #f2b100;
+  --focus-soft: rgba(42, 91, 215, .18);
+  --shadow: 0 1px 0 rgba(29, 38, 64, .05), 0 10px 28px -14px rgba(29, 38, 64, .30);
+  --font-ui: "Baloo 2", "Trebuchet MS", system-ui, sans-serif;
+  --font-read: "Andika", "Verdana", system-ui, sans-serif;
+  color-scheme: light;
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --desk: #0e1613; --paper: #1b2924; --line: rgba(220, 238, 228, .10); --margin: rgba(255, 140, 140, .35);
+    --ink: #eef4ef; --muted: #9fb5aa; --accent: #8db4ff; --accent-deep: #5b84d4; --on-accent: #0e1613;
+    --soft: #5fdcb8; --soft-bg: rgba(95, 220, 184, .12); --hard: #ffa064; --hard-bg: rgba(255, 160, 100, .13);
+    --hi: rgba(255, 220, 90, .22); --ok: #5fd68c; --bad: #ff7d7d; --key: #23342d; --key-edge: #3a4f46;
+    --focus-soft: rgba(141, 180, 255, .2); --shadow: 0 10px 28px -14px rgba(0, 0, 0, .7);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --desk: #0e1613; --paper: #1b2924; --line: rgba(220, 238, 228, .10); --margin: rgba(255, 140, 140, .35);
+  --ink: #eef4ef; --muted: #9fb5aa; --accent: #8db4ff; --accent-deep: #5b84d4; --on-accent: #0e1613;
+  --soft: #5fdcb8; --soft-bg: rgba(95, 220, 184, .12); --hard: #ffa064; --hard-bg: rgba(255, 160, 100, .13);
+  --hi: rgba(255, 220, 90, .22); --ok: #5fd68c; --bad: #ff7d7d; --key: #23342d; --key-edge: #3a4f46;
+  --focus-soft: rgba(141, 180, 255, .2); --shadow: 0 10px 28px -14px rgba(0, 0, 0, .7);
+  color-scheme: dark;
+}
+
+[hidden] { display: none !important; }
+html, body { min-height: 100%; }
+body {
+  margin: 0;
+  background: var(--desk);
+  color: var(--ink);
+  font-family: var(--font-ui);
+  font-size: 16px;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-user-select: none;
+  user-select: none;
+}
+button { font-family: inherit; color: inherit; cursor: pointer; }
+:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
+
+.app {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding-block: 14px 28px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  display: flex; flex-direction: column; gap: 14px;
+}
+
+/* Header */
+.top { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 18px; }
+.brand { display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px 12px; margin-right: auto; }
+h1 { margin: 0; font-size: clamp(1.45rem, 3.2vw, 2rem); font-weight: 800; line-height: 1.1; }
+.sub { color: var(--muted); font-weight: 600; white-space: nowrap; }
+.tabs {
+  display: inline-flex; padding: 3px; gap: 2px;
+  background: var(--key); border: 2px solid var(--key-edge); border-radius: 999px;
+}
+.tabs button {
+  border: 0; background: transparent; border-radius: 999px;
+  min-height: 42px; padding: 0 16px; font-size: 1rem; font-weight: 700; color: var(--muted);
+}
+.tabs button[aria-selected="true"] { background: var(--accent); color: var(--on-accent); }
+.tools { display: flex; align-items: center; gap: 10px; }
+.score { display: flex; align-items: center; gap: 6px; padding: 0 6px; font-weight: 800; font-size: 1.5rem; font-variant-numeric: tabular-nums; }
+.score svg { width: 30px; height: 30px; fill: var(--star); display: block; }
+.icon-btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  min-height: 44px; padding: 0 14px; border-radius: 999px;
+  background: var(--key); border: 2px solid var(--key-edge);
+  font-weight: 700; font-size: 1rem; color: var(--muted);
+}
+.icon-btn svg { width: 22px; height: 22px; }
+.icon-btn .off { display: none; }
+.icon-btn[aria-pressed="false"] .on { display: none; }
+.icon-btn[aria-pressed="false"] .off { display: inline; }
+
+/* Stage */
+.stage { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: 18px; align-items: start; }
+@media (max-width: 760px) { .stage { grid-template-columns: minmax(0, 1fr); } }
+
+.sheet {
+  --lh: 44px;
+  position: relative; min-width: 0;
+  background-color: var(--paper);
+  background-image:
+    linear-gradient(to right, transparent 0 34px, var(--margin) 34px 36px, transparent 36px),
+    repeating-linear-gradient(to bottom, transparent 0 calc(var(--lh) - 1px), var(--line) calc(var(--lh) - 1px) var(--lh));
+  border-radius: 6px 18px 18px 6px;
+  box-shadow: var(--shadow);
+  padding: 18px 18px 22px 52px;
+  display: flex; flex-direction: column; gap: 18px;
+}
+.sheet-top { display: flex; align-items: center; gap: 12px; }
+.dots { display: flex; flex-wrap: wrap; gap: 6px; margin-right: auto; }
+.dot { width: 16px; height: 16px; border-radius: 50%; border: 2px solid var(--key-edge); background: var(--paper); transition: background .3s, border-color .3s, transform .3s; }
+.dot.now { border-color: var(--accent); transform: scale(1.25); }
+.dot.ok { background: var(--ok); border-color: var(--ok); }
+.dot.bad { background: var(--bad); border-color: var(--bad); }
+.round-btn {
+  width: 52px; height: 52px; border-radius: 50%;
+  display: grid; place-items: center;
+  background: var(--key); border: 2px solid var(--key-edge); box-shadow: 0 3px 0 var(--key-edge);
+  color: var(--accent);
+}
+.round-btn svg { width: 26px; height: 26px; }
+
+.prompt {
+  min-height: 190px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px;
+  text-align: center; font-family: var(--font-read);
+}
+.word { font-size: clamp(3rem, 9vw, 5.4rem); font-weight: 700; line-height: 1.15; letter-spacing: .01em; }
+.sentence { font-size: clamp(1.6rem, 4.4vw, 2.5rem); line-height: 1.45; text-wrap: balance; }
+.sentence .w { font-weight: 700; }
+.gap {
+  display: inline-block; min-width: .62em; text-align: center;
+  border-bottom: .09em dashed var(--muted);
+  line-height: 1; padding-bottom: .02em;
+  transition: border-color .3s, color .3s;
+}
+.gap.ok { border-bottom-style: solid; border-color: var(--ok); color: var(--ok); }
+.gap.bad { border-bottom-style: solid; border-color: var(--bad); color: var(--bad); }
+.gap.fix { border-bottom-style: solid; border-color: var(--hard); color: var(--hard); }
+.gap.fix.soft { border-color: var(--soft); color: var(--soft); }
+
+.answers { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.ans {
+  min-height: 130px; border-radius: 22px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0;
+  background: var(--key); border: 3px solid currentColor; box-shadow: 0 5px 0 currentColor;
+  font-family: var(--font-read);
+}
+.answers.four { grid-template-columns: repeat(4, 1fr); gap: 10px; }
+.answers.four .ans .ch { font-size: clamp(2.6rem, 6vw, 3.6rem); }
+.answers.four .ans .nm { font-size: .85rem; text-align: center; }
+.ans .ch { font-size: clamp(3.6rem, 8vw, 4.8rem); font-weight: 700; line-height: 1; padding-bottom: .16em; }
+.ans .nm { font-family: var(--font-ui); font-size: 1.05rem; font-weight: 700; letter-spacing: .04em; }
+.ans.i { color: var(--soft); background: var(--soft-bg); }
+.ans.y { color: var(--hard); background: var(--hard-bg); }
+.ans:active:not(:disabled) { transform: translateY(4px); box-shadow: 0 1px 0 currentColor; }
+.ans:disabled { opacity: .45; cursor: default; }
+
+.feedback { min-height: 3.1em; font-size: clamp(1.05rem, 2.2vw, 1.25rem); font-weight: 600; line-height: 1.4; text-align: center; text-wrap: balance; }
+.feedback b { font-family: var(--font-read); font-weight: 700; }
+.feedback .yy { color: var(--hard); font-family: var(--font-read); font-weight: 700; }
+.feedback .ii { color: var(--soft); font-family: var(--font-read); font-weight: 700; }
+
+.actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; }
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  min-height: 54px; padding: 0 22px; border-radius: 16px;
+  font-size: 1.15rem; font-weight: 700;
+  background: var(--key); color: var(--ink);
+  border: 2px solid var(--key-edge); box-shadow: 0 3px 0 var(--key-edge);
+}
+.btn:active { transform: translateY(2px); box-shadow: 0 1px 0 var(--key-edge); }
+.btn:disabled { opacity: .5; cursor: default; }
+.btn.primary { background: var(--accent); color: var(--on-accent); border-color: var(--accent-deep); box-shadow: 0 3px 0 var(--accent-deep); }
+.btn.primary:active { box-shadow: 0 1px 0 var(--accent-deep); }
+.btn.glow { animation: nudge 1.3s ease-in-out infinite; }
+
+/* Results */
+.result { display: flex; flex-direction: column; align-items: center; gap: 12px; font-family: var(--font-ui); font-size: 1.2rem; }
+.result .big { font-size: clamp(2.6rem, 7vw, 4rem); font-weight: 800; line-height: 1; }
+.result .stars { display: flex; gap: 10px; }
+.result .stars svg { width: 54px; height: 54px; fill: var(--key-edge); }
+.result .stars svg.on { fill: var(--star); }
+.result h3 { margin: 6px 0 0; font-size: 1rem; color: var(--muted); text-transform: uppercase; letter-spacing: .1em; }
+.miss { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px 16px; font-family: var(--font-read); font-size: 1.5rem; }
+.miss .yy { color: var(--hard); font-weight: 700; }
+.miss .ii { color: var(--soft); font-weight: 700; }
+
+/* Side panel */
+.side { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+.panel { background: var(--paper); border-radius: 18px; box-shadow: var(--shadow); padding: 16px; min-width: 0; }
+.panel h2 { margin: 0 0 12px; font-size: .9rem; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .1em; }
+.panel h2 .L { color: var(--hard); font-size: 1.15rem; letter-spacing: 0; }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; min-height: 48px; align-content: flex-start; }
+.chip {
+  display: inline-flex; align-items: center;
+  min-height: 40px; padding: 0 12px; border-radius: 999px;
+  background: var(--key); border: 2px solid var(--key-edge);
+  font-family: var(--font-read); font-size: 1.12rem; font-weight: 400;
+  transition: background .12s, border-color .12s, transform .2s;
+}
+button.chip { cursor: pointer; }
+.chip.scan { background: var(--hi); border-color: var(--hi); }
+.chip.found { background: var(--hard-bg); border-color: var(--hard); color: var(--hard); font-weight: 700; transform: scale(1.12); }
+.chip.reading { background: var(--hi); border-color: var(--hard); transform: scale(1.08); }
+.placeholder { color: var(--muted); font-size: 1rem; line-height: 1.4; margin: 0; }
+.explain { margin-top: 14px; font-size: 1.1rem; font-weight: 600; line-height: 1.45; min-height: 1.5em; }
+.explain b { font-family: var(--font-read); }
+.explain .yy { color: var(--hard); font-family: var(--font-read); font-weight: 700; }
+.explain .ii { color: var(--soft); font-family: var(--font-read); font-weight: 700; }
+.stamp {
+  display: inline-block; margin-top: 12px; padding: 4px 14px; border: 3px solid var(--soft); border-radius: 10px;
+  color: var(--soft); font-weight: 800; font-size: 1.2rem; text-transform: uppercase; letter-spacing: .06em;
+  transform: rotate(-4deg);
+}
+.letters { display: flex; flex-wrap: wrap; gap: 8px; }
+.letter {
+  width: 52px; height: 52px; border-radius: 14px;
+  font-family: var(--font-read); font-size: 1.6rem; font-weight: 700;
+  background: var(--key); border: 2px solid var(--key-edge); color: var(--muted);
+  box-shadow: 0 3px 0 var(--key-edge);
+}
+.letter[aria-pressed="true"] { background: var(--hard-bg); border-color: var(--hard); color: var(--hard); box-shadow: 0 3px 0 var(--hard); }
+.note { margin: 10px 0 0; color: var(--muted); font-size: .95rem; }
+
+/* Learn tab */
+.learn { display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px; }
+.learn .sheet { gap: 16px; }
+.learn-head { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
+.learn-head .letters { margin-right: auto; }
+.learn .chips { gap: 10px; }
+.learn .chip { min-height: 52px; padding: 0 18px; font-size: clamp(1.25rem, 2.6vw, 1.6rem); }
+.related { min-height: 2.6em; font-size: 1.15rem; line-height: 1.45; }
+.related b { font-family: var(--font-read); color: var(--hard); }
+.related span { font-family: var(--font-read); }
+
+.flyer { position: fixed; z-index: 50; pointer-events: none; display: grid; place-items: center; font-family: var(--font-read); font-weight: 700; line-height: 1; }
+.spark { position: fixed; z-index: 60; width: 18px; height: 18px; pointer-events: none; }
+.spark svg { width: 100%; height: 100%; fill: var(--star); display: block; }
+
+@keyframes nudge { 50% { transform: translateY(-3px); box-shadow: 0 6px 0 var(--accent-deep), 0 0 0 6px var(--focus-soft); } }
+@media (prefers-reduced-motion: reduce) { .btn.glow { animation: none; } }
+</style>
+
+<style>
+#groupPick .letter { width: auto; min-width: 0; height: auto; min-height: 48px; padding: 0 16px; white-space: nowrap; font-size: 1.15rem; }
+.btn[aria-pressed="true"] { background: var(--hard-bg); border-color: var(--hard); color: var(--hard); }
+.answers.many .ans .ch { font-size: clamp(2.2rem, 5.5vw, 3.4rem); }
+.ans .ch.long { font-size: clamp(2rem, 5vw, 3rem); }
+.hintword { color: var(--muted); font-weight: 600; }
+.rules { display: flex; flex-direction: column; gap: 10px; }
+.rule { border: 2px solid var(--line); border-radius: 14px; padding: 10px 12px; transition: background .2s, border-color .2s; }
+.rule .rt { font-family: var(--font-read); font-size: 1.35rem; font-weight: 700; display: flex; flex-wrap: wrap; gap: 4px 14px; }
+.rule .rd { margin-top: 4px; color: var(--muted); font-size: .98rem; line-height: 1.35; }
+.rule.y .rt b { color: var(--hard); } .rule.i .rt b { color: var(--soft); }
+.rule.on.y { background: var(--hard-bg); border-color: var(--hard); }
+.rule.on.i { background: var(--soft-bg); border-color: var(--soft); }
+.rule .rt .cur { background: var(--hi); border-radius: 6px; padding: 0 4px; }
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="top">
+    <div class="brand">
+      <h1>Párové souhlásky</h1>
+      <span class="sub">b–p, d–t, ď–ť, v–f, h–ch, z–s, ž–š</span>
+    </div>
+    <div class="tools">
+      <button type="button" class="icon-btn" id="voiceBtn" aria-pressed="true">
+        <svg class="on" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9z"/><path d="M16.5 8.5a5 5 0 0 1 0 7"/><path d="M19 6a8.5 8.5 0 0 1 0 12"/></svg>
+        <svg class="off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9z"/><path d="M17 9l5 6M22 9l-5 6"/></svg>
+        <span>Hlas</span>
+      </button>
+    </div>
+  </header>
+
+  <main class="stage" id="practice">
+    <section class="sheet" aria-label="Sešit">
+      <div class="sheet-top">
+        <div class="dots" id="dots" aria-label="Postup kolem"></div>
+        <button type="button" class="round-btn" id="sayBtn" aria-label="Přečíst slovo">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9z"/><path d="M16.5 8.5a5 5 0 0 1 0 7"/></svg>
+        </button>
+      </div>
+      <div class="prompt" id="prompt"></div>
+      <div class="answers" id="answers"></div>
+      <div class="feedback" id="feedback" aria-live="polite"></div>
+      <div class="actions">
+        <button type="button" class="btn" id="hintBtn">Ukaž pravidlo</button>
+        <button type="button" class="btn primary" id="nextBtn" hidden>Dál</button>
+      </div>
+    </section>
+
+    <aside class="side">
+      <section class="panel">
+        <h2>Pravidlo</h2>
+        <div class="rules" id="rules"></div>
+        <div class="explain" id="explain"></div>
+      </section>
+      <section class="panel">
+        <h2>Co procvičovat</h2>
+        <div class="letters" id="groupPick"></div>
+        <p class="note">Každé kolo má 10 úloh.</p>
+      </section>
+    </aside>
+  </main>
+</div>
+
+<script id="data">
+const CFG = {"id":"parove","key":"parove","groups":{"bp":{"name":"b – p","opts":["b","p"],"desc":"b nebo p?","rule":"Slovo si změň, aby souhláska stála před samohláskou: chleba, chlapi. Slyšíš b, nebo p?"},"dt":{"name":"d – t","opts":["d","t"],"desc":"d nebo t?","rule":"Slovo si změň, aby souhláska stála před samohláskou: hrady, květy. Slyšíš d, nebo t?"},"dtm":{"name":"ď – ť","opts":["ď","ť"],"desc":"ď nebo ť?","rule":"Slovo si změň, aby souhláska stála před samohláskou: hodit, síť – sítě. Slyšíš ď, nebo ť?"},"vf":{"name":"v – f","opts":["v","f"],"desc":"v nebo f?","rule":"Slovo si změň, aby souhláska stála před samohláskou: ovce, kufry. Slyšíš v, nebo f?"},"hch":{"name":"h – ch","opts":["h","ch"],"desc":"h nebo ch?","rule":"Slovo si změň, aby souhláska stála před samohláskou: sněhy, mouchy. Slyšíš h, nebo ch?"},"zs":{"name":"z – s","opts":["z","s"],"desc":"z nebo s?","rule":"Slovo si změň, aby souhláska stála před samohláskou: mrazy, lesy. Slyšíš z, nebo s?"},"zss":{"name":"ž – š","opts":["ž","š"],"desc":"ž nebo š?","rule":"Slovo si změň, aby souhláska stála před samohláskou: nože, koše. Slyšíš ž, nebo š?"}},"items":[{"t":"chle_","a":"b","g":"bp","h":"chleba"},{"t":"zu_","a":"b","g":"bp","h":"zuby"},{"t":"klu_","a":"b","g":"bp","h":"kluby"},{"t":"holu_","a":"b","g":"bp","h":"holubi"},{"t":"hří_","a":"b","g":"bp","h":"hřiby"},{"t":"sli_","a":"b","g":"bp","h":"sliby"},{"t":"chla_","a":"p","g":"bp","h":"chlapi"},{"t":"stro_","a":"p","g":"bp","h":"stropy"},{"t":"siru_","a":"p","g":"bp","h":"sirupy"},{"t":"skle_","a":"p","g":"bp","h":"sklepy"},{"t":"ku_ka","a":"p","g":"bp","h":"kupky"},{"t":"hra_","a":"d","g":"dt","h":"hrady"},{"t":"le_","a":"d","g":"dt","h":"ledy"},{"t":"sa_","a":"d","g":"dt","h":"sady"},{"t":"zahra_a","a":"d","g":"dt","h":"zahrady"},{"t":"ví_et","a":"d","g":"dt","h":"vidět"},{"t":"mla_ý","a":"d","g":"dt","h":"mladá"},{"t":"kvě_","a":"t","g":"dt","h":"květy"},{"t":"plo_","a":"t","g":"dt","h":"ploty"},{"t":"svě_","a":"t","g":"dt","h":"světy"},{"t":"ví_ěz","a":"t","g":"dt","h":"vítězové"},{"t":"lé_o","a":"t","g":"dt","h":"léta"},{"t":"ho_","a":"ď","g":"dtm","h":"hodit"},{"t":"se_","a":"ď","g":"dtm","h":"sedět"},{"t":"je_","a":"ď","g":"dtm","h":"jedu"},{"t":"cho_","a":"ď","g":"dtm","h":"chodit"},{"t":"ve_","a":"ď","g":"dtm","h":"vedu"},{"t":"sí_","a":"ť","g":"dtm","h":"sítě"},{"t":"obě_","a":"ť","g":"dtm","h":"oběti"},{"t":"pamě_","a":"ť","g":"dtm","h":"paměti"},{"t":"chu_","a":"ť","g":"dtm","h":"chutě"},{"t":"pla_","a":"ť","g":"dtm","h":"platit"},{"t":"vra_","a":"ť","g":"dtm","h":"vrátit"},{"t":"tra_ka","a":"v","g":"vf","h":"travička"},{"t":"kro_","a":"v","g":"vf","h":"krovy"},{"t":"o_ce","a":"v","g":"vf","h":"ovce"},{"t":"ka_ka","a":"v","g":"vf","h":"kavky"},{"t":"pra_da","a":"v","g":"vf","h":"pravdivý"},{"t":"ku_r","a":"f","g":"vf","h":"kufry"},{"t":"šé_","a":"f","g":"vf","h":"šéfové"},{"t":"har_a","a":"f","g":"vf","h":"harfy"},{"t":"sně_","a":"h","g":"hch","h":"sněhy"},{"t":"bře_","a":"h","g":"hch","h":"břehy"},{"t":"ro_","a":"h","g":"hch","h":"rohy"},{"t":"prá_","a":"h","g":"hch","h":"prahy"},{"t":"kru_","a":"h","g":"hch","h":"kruhy"},{"t":"mu_","a":"ch","g":"hch","h":"mouchy"},{"t":"stře_a","a":"ch","g":"hch","h":"střechy"},{"t":"stra_","a":"ch","g":"hch","h":"strachy"},{"t":"du_","a":"ch","g":"hch","h":"duchové"},{"t":"smí_","a":"ch","g":"hch","h":"smíchy"},{"t":"mra_","a":"z","g":"zs","h":"mrazy"},{"t":"lá_ně","a":"z","g":"zs","h":"lázně"},{"t":"ná_ev","a":"z","g":"zs","h":"názvy"},{"t":"ře_","a":"z","g":"zs","h":"řezy"},{"t":"mo_ek","a":"z","g":"zs","h":"mozky"},{"t":"hla_","a":"s","g":"zs","h":"hlasy"},{"t":"le_","a":"s","g":"zs","h":"lesy"},{"t":"vla_","a":"s","g":"zs","h":"vlasy"},{"t":"ča_","a":"s","g":"zs","h":"časy"},{"t":"ko_","a":"s","g":"zs","h":"kosy"},{"t":"no_","a":"ž","g":"zss","h":"nože"},{"t":"kří_","a":"ž","g":"zss","h":"kříže"},{"t":"mu_","a":"ž","g":"zss","h":"muži"},{"t":"vě_","a":"ž","g":"zss","h":"věže"},{"t":"ko_","a":"š","g":"zss","h":"koše"},{"t":"my_","a":"š","g":"zss","h":"myši"},{"t":"de_ť","a":"š","g":"zss","h":"deště"},{"t":"plá_ť","a":"š","g":"zss","h":"pláště"}]};
+</script>
+
+<script>
+(() => {
+  const $ = s => document.querySelector(s);
+  const RM = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const T = ms => RM ? Math.min(ms, 120) : ms;
+  const W = ms => RM ? Math.round(ms * .7) : ms;
+  const sleep = ms => new Promise(r => setTimeout(r, ms));
+  const EASE = 'cubic-bezier(.3,.7,.2,1)';
+  const STAR = '<svg viewBox="0 0 24 24"><path d="M12 2.5l2.9 6.1 6.6.8-4.9 4.6 1.3 6.6L12 17.3l-5.9 3.3 1.3-6.6L2.5 9.4l6.6-.8z"/></svg>';
+  const KEYS = Object.keys(CFG.groups);
+  const ITEMS = CFG.items;
+  const ROUND = 10;
+
+  function el(tag, cls, parent, text) {
+    const e = document.createElement(tag);
+    if (cls) e.className = cls;
+    if (text !== undefined) e.textContent = text;
+    if (parent) parent.appendChild(e);
+    return e;
+  }
+  function shuffle(arr) {
+    const a = arr.slice();
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+  }
+  const opts = it => CFG.groups[it.g].opts;
+  // answers alternate between the green and the orange look
+  const cls = (it, o) => opts(it).indexOf(o) % 2 === 0 ? 'ii' : 'yy';
+  const full = it => it.t.replace('_', it.a);
+  const markedWord = it => it.t.replace('_', `<span class="${cls(it, it.a)}">${it.a}</span>`);
+  const colorVar = (it, o) => opts(it).indexOf(o) % 2 === 0 ? '--soft' : '--hard';
+
+  // ---------- saved settings ----------
+  const KEY = CFG.key;
+  function load() { try { return JSON.parse(localStorage.getItem(KEY)) || {}; } catch { return {}; } }
+  const saved = load();
+  const state = {
+    stars: saved.stars | 0,
+    voice: saved.voice === true,
+    groups: Array.isArray(saved.groups) && saved.groups.some(g => KEYS.includes(g))
+      ? saved.groups.filter(g => KEYS.includes(g)) : KEYS.slice(),
+    round: [], idx: 0, results: [], busy: false, answered: false, gen: 0, retry: false,
+  };
+  function persist() {
+    try { localStorage.setItem(KEY, JSON.stringify({ stars: state.stars, voice: state.voice, groups: state.groups })); } catch {}
+  }
+  // ---------- voice ----------
+  let interacted = false, csVoice = null;
+  const canSpeak = 'speechSynthesis' in window;
+  // iPad lists several Czech voices: the Eloquence ones (Eddy, Flo, Reed…) sound robotic, while a downloaded
+  // Zuzana (Enhanced / Premium) sounds natural. Take the best one installed, not the first one listed.
+  const ROBOTIC = /\b(eddy|flo|grandma|grandpa|reed|rocko|sandy|shelley)\b/i;
+  function voiceScore(v) {
+    const id = `${v.name} ${v.voiceURI}`;
+    if (ROBOTIC.test(id)) return 0;
+    if (/premium/i.test(id)) return 5;
+    if (/enhanced|natural|neural/i.test(id)) return 4;
+    if (/google/i.test(id)) return 3;
+    if (/zuzana/i.test(id)) return 2;
+    return 1;
+  }
+  function pickVoice() {
+    try {
+      const czech = speechSynthesis.getVoices().filter(v => /^cs([-_]|$)/i.test(v.lang));
+      csVoice = czech.sort((a, b) => voiceScore(b) - voiceScore(a))[0] || null;
+    } catch {}
+  }
+  if (canSpeak) { try { pickVoice(); speechSynthesis.addEventListener('voiceschanged', pickVoice); } catch {} }
+  const markInteracted = () => { interacted = true; };
+  document.addEventListener('pointerdown', markInteracted, { capture: true });
+  document.addEventListener('keydown', markInteracted, { capture: true });
+  function stopSpeech() { if (canSpeak) { try { speechSynthesis.cancel(); } catch {} } }
+  function speak(text, force) {
+    return new Promise(done => {
+      if (!canSpeak || (!state.voice && !force) || !interacted || !speechSynthesis.getVoices().length) return done();
+      try {
+        speechSynthesis.cancel();
+        const u = new SpeechSynthesisUtterance(text);
+        u.lang = 'cs-CZ';
+        if (csVoice) u.voice = csVoice;
+        u.rate = .9;
+        u.onend = done;
+        u.onerror = done;
+        // some devices never report the end of speech; do not keep the child waiting
+        setTimeout(done, Math.min(8000, 1200 + text.length * 70));
+        speechSynthesis.speak(u);
+      } catch { done(); }
+    });
+  }
+  const plain = html => { const d = document.createElement('div'); d.innerHTML = html; return d.textContent; };
+
+
+
+  // ---------- practice ----------
+  const prompt = $('#prompt'), feedback = $('#feedback'), dots = $('#dots'), answersEl = $('#answers');
+  const nextBtn = $('#nextBtn'), hintBtn = $('#hintBtn');
+  const rulesEl = $('#rules'), explainEl = $('#explain');
+
+  const ruleCards = {};
+  KEYS.forEach(k => {
+    const g = CFG.groups[k];
+    const card = el('div', 'rule i', rulesEl);
+    const rt = el('div', 'rt', card);
+    (g.chips || g.opts).forEach(c => { el('span', '', rt).innerHTML = c; });
+    el('div', 'rd', card, g.desc);
+    ruleCards[k] = card;
+  });
+  function highlight(g) {
+    Object.entries(ruleCards).forEach(([k, card]) => card.classList.toggle('on', k === g));
+  }
+
+  // answers are taken in turn so every answer shows up in a round
+  function buildRound(pool) {
+    const by = {};
+    shuffle(pool).forEach(it => (by[it.a] = by[it.a] || []).push(it));
+    const lists = shuffle(Object.values(by));
+    const pick = [];
+    while (pick.length < ROUND && lists.some(l => l.length)) lists.forEach(l => { if (l.length && pick.length < ROUND) pick.push(l.pop()); });
+    return shuffle(pick);
+  }
+
+  function startRound(items) {
+    state.gen++;
+    stopSpeech();
+    const pool = items || ITEMS.filter(it => state.groups.includes(it.g));
+    state.round = items ? shuffle(items) : buildRound(pool);
+    state.idx = 0;
+    state.results = [];
+    state.retry = !!items;
+    answersEl.hidden = false;
+    hintBtn.hidden = false;
+    $('#sayBtn').hidden = false;
+    renderDots();
+    showItem();
+  }
+
+  function renderDots() {
+    dots.innerHTML = '';
+    state.round.forEach((_, i) => {
+      const d = el('span', 'dot', dots);
+      if (i < state.results.length) d.classList.add(state.results[i] ? 'ok' : 'bad');
+      if (i === state.idx && i >= state.results.length) d.classList.add('now');
+    });
+  }
+
+  function itemHtml(it) {
+    const [before, after] = it.t.split('_');
+    const w = `${before}<span class="gap" id="gap">&nbsp;</span>${after}`;
+    return `<div class="word">${w}</div>`;
+  }
+
+  const btnFor = o => [...answersEl.children].find(b => b.dataset.o === o);
+
+  function showItem() {
+    const it = state.round[state.idx];
+    state.answered = false;
+    state.busy = false;
+    prompt.innerHTML = itemHtml(it);
+    prompt.firstElementChild.animate(
+      [{ transform: 'translateX(40px)', opacity: 0 }, { transform: 'none', opacity: 1 }],
+      { duration: T(350), easing: EASE },
+    );
+    const g = CFG.groups[it.g];
+    answersEl.innerHTML = '';
+    answersEl.style.gridTemplateColumns = `repeat(${g.opts.length}, 1fr)`;
+    answersEl.classList.toggle('many', g.opts.length > 2);
+    g.opts.forEach((o, i) => {
+      const b = el('button', `ans ${i % 2 === 0 ? 'i' : 'y'}`, answersEl);
+      b.type = 'button';
+      b.dataset.o = o;
+      el('span', o.length > 2 ? 'ch long' : 'ch', b, o);
+      if (g.names && g.names[i]) el('span', 'nm', b, g.names[i]);
+      b.addEventListener('click', () => answer(o));
+    });
+    feedback.innerHTML = '';
+    explainEl.innerHTML = '';
+    highlight(null);
+    nextBtn.hidden = true;
+    nextBtn.classList.remove('glow');
+    hintBtn.disabled = false;
+    renderDots();
+    speak(full(it));
+  }
+
+  const hintOf = it => it.h ? ` <span class="hintword">(${it.h})</span>` : '';
+  const reason = it => `<b>${full(it)}</b>${hintOf(it)}`;
+
+  async function answer(choice) {
+    if (state.busy || state.answered || !state.round.length || !$('#gap')) return;
+    const it = state.round[state.idx], g = state.gen;
+    state.busy = true;
+    state.answered = true;
+    [...answersEl.children].forEach(b => { b.disabled = true; });
+    hintBtn.disabled = true;
+    const correct = choice === it.a;
+    const css = getComputedStyle(document.documentElement);
+
+    await flyLetter(btnFor(choice), choice, css.getPropertyValue(colorVar(it, choice)));
+    if (g !== state.gen) return;
+    const gap = $('#gap');
+
+    if (correct) {
+      gap.classList.add('ok');
+      gap.animate([{ transform: 'scale(1.35)' }, { transform: 'none' }], { duration: T(300), easing: EASE });
+      state.results.push(true);
+      renderDots();
+      highlight(it.g);
+      feedback.innerHTML = `Správně! ${reason(it)}`;
+      await Promise.all([speak(full(it)), sleep(W(2100))]);
+      if (g !== state.gen) return;
+      advance();
+      return;
+    }
+
+    gap.classList.add('bad');
+    await gap.animate([
+      { transform: 'translateX(0)' }, { transform: 'translateX(-6px)' }, { transform: 'translateX(5px)' },
+      { transform: 'translateX(-3px)' }, { transform: 'translateX(0)' },
+    ], { duration: T(380) }).finished;
+    await gap.animate([{ transform: 'none', opacity: 1 }, { transform: 'translateY(40px) rotate(25deg)', opacity: 0 }], { duration: T(380), easing: 'ease-in' }).finished;
+    if (g !== state.gen) return;
+    gap.innerHTML = '&nbsp;';
+    gap.classList.remove('bad');
+    await flyLetter(btnFor(it.a), it.a, css.getPropertyValue(colorVar(it, it.a)));
+    if (g !== state.gen) return;
+    gap.classList.add('fix');
+    if (cls(it, it.a) === 'ii') gap.classList.add('soft');
+    state.results.push(false);
+    renderDots();
+    feedback.innerHTML = `Správně je <b>${markedWord(it)}</b>${hintOf(it)}. Podívej se proč.`;
+    speak(`Správně je ${full(it)}.`);
+    highlight(it.g);
+    explainEl.innerHTML = CFG.groups[it.g].rule;
+    explainEl.animate([{ opacity: 0 }, { opacity: 1 }], { duration: T(300) });
+    speak(plain(explainEl.innerHTML));
+    state.busy = false;
+    nextBtn.hidden = false;
+    nextBtn.classList.add('glow');
+    nextBtn.focus({ preventScroll: true });
+  }
+
+  function advance() {
+    state.idx++;
+    if (state.idx < state.round.length) showItem();
+    else showResult();
+  }
+
+  function showResult() {
+    const good = state.results.filter(Boolean).length;
+    const total = state.round.length;
+    const ratio = good / total;
+    const earned = ratio >= .9 ? 3 : ratio >= .7 ? 2 : 1;
+    const missed = state.round.filter((_, i) => !state.results[i]);
+    state.stars += earned;
+    persist();
+    window.parent.postMessage({
+      source: 'skolni-zoo-exercise', type: 'reward', exercise: CFG.id,
+      event: { kind: 'round', correct: good, total, retry: state.retry },
+    }, '*');
+    renderDots();
+    answersEl.hidden = true;
+    hintBtn.hidden = true;
+    nextBtn.hidden = true;
+    $('#sayBtn').hidden = true;
+    feedback.innerHTML = '';
+    highlight(null);
+    explainEl.innerHTML = 'Kolo je hotové.';
+
+    const msg = good === total ? 'Bez jediné chyby!' : ratio >= .7 ? 'Moc pěkné!' : 'Dobrý začátek, zkus to znovu.';
+    prompt.innerHTML = `
+      <div class="result">
+        <div class="big">${good} z ${total}</div>
+        <div class="stars">${[0, 1, 2].map(i => STAR.replace('<svg', `<svg class="${i < earned ? 'on' : ''}"`)).join('')}</div>
+        <div>${msg}</div>
+        ${missed.length ? `<h3>Tady byla chyba</h3><div class="miss">${missed.map(it => `<span>${markedWord(it)}</span>`).join('')}</div>` : ''}
+        <div class="actions">
+          ${missed.length ? '<button type="button" class="btn" id="retryBtn">Procvičit chyby</button>' : ''}
+          <button type="button" class="btn primary" id="againBtn">Nové kolo</button>
+        </div>
+      </div>`;
+    prompt.querySelectorAll('.stars svg').forEach((s, i) => s.animate(
+      [{ transform: 'scale(0) rotate(-90deg)' }, { transform: 'scale(1.3)' }, { transform: 'none' }],
+      { duration: T(450), delay: RM ? 0 : 200 + i * 220, easing: EASE, fill: 'backwards' },
+    ));
+    $('#againBtn').addEventListener('click', () => startRound());
+    const retry = $('#retryBtn');
+    if (retry) retry.addEventListener('click', () => startRound(missed));
+    speak(`${good} z ${total}. ${msg}`);
+    celebrate();
+  }
+
+  function celebrate() {
+    if (RM) return;
+    const r = prompt.getBoundingClientRect();
+    const cx = r.left + r.width / 2, cy = r.top + r.height / 3;
+    for (let i = 0; i < 16; i++) {
+      const p = el('div', 'spark', document.body);
+      p.innerHTML = STAR;
+      p.style.left = cx - 9 + 'px';
+      p.style.top = cy - 9 + 'px';
+      const ang = Math.random() * Math.PI * 2, dist = 90 + Math.random() * 140;
+      p.animate([
+        { transform: 'scale(.3)', opacity: 1 },
+        { transform: `translate(${Math.cos(ang) * dist}px, ${Math.sin(ang) * dist}px) scale(${.7 + Math.random() * .8}) rotate(${Math.random() * 360 - 180}deg)`, opacity: 0 },
+      ], { duration: 900 + Math.random() * 500, easing: 'cubic-bezier(.2,.8,.3,1)', fill: 'forwards' }).finished.then(() => p.remove());
+    }
+  }
+  // a letter flies from the pressed button into the gap
+  async function flyLetter(fromBtn, ch, color) {
+    const gap = $('#gap');
+    const from = fromBtn.querySelector('.ch').getBoundingClientRect();
+    const to = gap.getBoundingClientRect();
+    const toFont = parseFloat(getComputedStyle(gap).fontSize);
+    const fromFont = parseFloat(getComputedStyle(fromBtn.querySelector('.ch')).fontSize);
+    const f = el('div', 'flyer', document.body, ch);
+    Object.assign(f.style, {
+      left: from.left + 'px', top: from.top + 'px', width: from.width + 'px', height: from.height + 'px',
+      fontSize: fromFont + 'px', color,
+    });
+    const dx = (to.left + to.width / 2) - (from.left + from.width / 2);
+    const dy = (to.top + to.height / 2) - (from.top + from.height / 2);
+    const sc = toFont / fromFont;
+    await f.animate([
+      { transform: 'none' },
+      { transform: `translate(${dx * .5}px, ${dy * .5 - 50}px) scale(${(1 + sc) / 2})`, offset: .55 },
+      { transform: `translate(${dx}px, ${dy}px) scale(${sc})` },
+    ], { duration: T(520), easing: 'ease-in-out', fill: 'forwards' }).finished;
+    f.remove();
+    gap.textContent = ch;
+  }
+
+
+
+  nextBtn.addEventListener('click', () => { if (!state.busy) advance(); });
+  $('#sayBtn').addEventListener('click', () => {
+    const it = state.round[state.idx];
+    if (it) speak(full(it), true);
+  });
+  hintBtn.addEventListener('click', () => {
+    const it = state.round[state.idx];
+    if (!it || state.answered) return;
+    hintBtn.disabled = true;
+    highlight(it.g);
+    explainEl.innerHTML = CFG.groups[it.g].rule;
+    speak(plain(explainEl.innerHTML));
+  });
+  // digits pick the n-th button; a key picks an answer that is exactly that one character
+  document.addEventListener('keydown', e => {
+    if (e.metaKey || e.ctrlKey || e.altKey) return;
+    const it = state.round[state.idx];
+    const k = e.key.toLowerCase();
+    if (it && !state.answered && !state.busy) {
+      const o = /^[1-9]$/.test(k) ? opts(it)[k - 1] : opts(it).find(x => x === k);
+      if (o) { answer(o); return; }
+    }
+    if (k === 'enter' && !nextBtn.hidden && !state.busy) { e.preventDefault(); advance(); }
+  });
+
+  const groupPick = $('#groupPick');
+  KEYS.forEach(k => {
+    const b = el('button', 'letter', groupPick, CFG.groups[k].name);
+    b.type = 'button';
+    b.setAttribute('aria-pressed', String(state.groups.includes(k)));
+    b.addEventListener('click', () => {
+      const on = state.groups.includes(k);
+      if (on && state.groups.length === 1) return;
+      state.groups = on ? state.groups.filter(x => x !== k) : KEYS.filter(x => x === k || state.groups.includes(x));
+      b.setAttribute('aria-pressed', String(!on));
+      persist();
+      startRound();
+    });
+  });
+
+  const voiceBtn = $('#voiceBtn');
+  voiceBtn.addEventListener('click', () => {
+    state.voice = !state.voice;
+    voiceBtn.setAttribute('aria-pressed', String(state.voice));
+    persist();
+    if (!state.voice) stopSpeech();
+  });
+
+  voiceBtn.setAttribute('aria-pressed', String(state.voice));
+  startRound();
+})();
+</script>
+</body>
+</html>

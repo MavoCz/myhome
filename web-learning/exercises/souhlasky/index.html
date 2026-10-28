@@ -1,0 +1,817 @@
+<!doctype html>
+<html lang="cs">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<title>Měkké a tvrdé i/y</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Andika:wght@400;700&family=Baloo+2:wght@500;600;700;800&display=swap">
+<style>
+/* Layout: a lined Czech exercise book (linkovaný sešit) with a red margin on the left,
+   the "row of listed words" panel on the right. Stacks to one column on phones. */
+:root {
+  --desk: #e7ebf2;
+  --paper: #fdfdfb;
+  --line: #cfdcf0;
+  --margin: #f0a3a3;
+  --ink: #1d2640;
+  --muted: #5b6985;
+  --accent: #2a5bd7;
+  --accent-deep: #1c43a6;
+  --on-accent: #ffffff;
+  --soft: #0b8467;          /* měkké i */
+  --soft-bg: rgba(11, 132, 103, .10);
+  --hard: #c2410c;          /* tvrdé y */
+  --hard-bg: rgba(194, 65, 12, .10);
+  --hi: rgba(255, 207, 51, .45);
+  --ok: #16914a;
+  --bad: #d23c3c;
+  --key: #ffffff;
+  --key-edge: #c5d1e4;
+  --star: #f2b100;
+  --focus-soft: rgba(42, 91, 215, .18);
+  --shadow: 0 1px 0 rgba(29, 38, 64, .05), 0 10px 28px -14px rgba(29, 38, 64, .30);
+  --font-ui: "Baloo 2", "Trebuchet MS", system-ui, sans-serif;
+  --font-read: "Andika", "Verdana", system-ui, sans-serif;
+  color-scheme: light;
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --desk: #0e1613; --paper: #1b2924; --line: rgba(220, 238, 228, .10); --margin: rgba(255, 140, 140, .35);
+    --ink: #eef4ef; --muted: #9fb5aa; --accent: #8db4ff; --accent-deep: #5b84d4; --on-accent: #0e1613;
+    --soft: #5fdcb8; --soft-bg: rgba(95, 220, 184, .12); --hard: #ffa064; --hard-bg: rgba(255, 160, 100, .13);
+    --hi: rgba(255, 220, 90, .22); --ok: #5fd68c; --bad: #ff7d7d; --key: #23342d; --key-edge: #3a4f46;
+    --focus-soft: rgba(141, 180, 255, .2); --shadow: 0 10px 28px -14px rgba(0, 0, 0, .7);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --desk: #0e1613; --paper: #1b2924; --line: rgba(220, 238, 228, .10); --margin: rgba(255, 140, 140, .35);
+  --ink: #eef4ef; --muted: #9fb5aa; --accent: #8db4ff; --accent-deep: #5b84d4; --on-accent: #0e1613;
+  --soft: #5fdcb8; --soft-bg: rgba(95, 220, 184, .12); --hard: #ffa064; --hard-bg: rgba(255, 160, 100, .13);
+  --hi: rgba(255, 220, 90, .22); --ok: #5fd68c; --bad: #ff7d7d; --key: #23342d; --key-edge: #3a4f46;
+  --focus-soft: rgba(141, 180, 255, .2); --shadow: 0 10px 28px -14px rgba(0, 0, 0, .7);
+  color-scheme: dark;
+}
+
+[hidden] { display: none !important; }
+html, body { min-height: 100%; }
+body {
+  margin: 0;
+  background: var(--desk);
+  color: var(--ink);
+  font-family: var(--font-ui);
+  font-size: 16px;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-user-select: none;
+  user-select: none;
+}
+button { font-family: inherit; color: inherit; cursor: pointer; }
+:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
+
+.app {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding-block: 14px 28px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  display: flex; flex-direction: column; gap: 14px;
+}
+
+/* Header */
+.top { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 18px; }
+.brand { display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px 12px; margin-right: auto; }
+h1 { margin: 0; font-size: clamp(1.45rem, 3.2vw, 2rem); font-weight: 800; line-height: 1.1; }
+.sub { color: var(--muted); font-weight: 600; white-space: nowrap; }
+.tabs {
+  display: inline-flex; padding: 3px; gap: 2px;
+  background: var(--key); border: 2px solid var(--key-edge); border-radius: 999px;
+}
+.tabs button {
+  border: 0; background: transparent; border-radius: 999px;
+  min-height: 42px; padding: 0 16px; font-size: 1rem; font-weight: 700; color: var(--muted);
+}
+.tabs button[aria-selected="true"] { background: var(--accent); color: var(--on-accent); }
+.tools { display: flex; align-items: center; gap: 10px; }
+.score { display: flex; align-items: center; gap: 6px; padding: 0 6px; font-weight: 800; font-size: 1.5rem; font-variant-numeric: tabular-nums; }
+.score svg { width: 30px; height: 30px; fill: var(--star); display: block; }
+.icon-btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  min-height: 44px; padding: 0 14px; border-radius: 999px;
+  background: var(--key); border: 2px solid var(--key-edge);
+  font-weight: 700; font-size: 1rem; color: var(--muted);
+}
+.icon-btn svg { width: 22px; height: 22px; }
+.icon-btn .off { display: none; }
+.icon-btn[aria-pressed="false"] .on { display: none; }
+.icon-btn[aria-pressed="false"] .off { display: inline; }
+
+/* Stage */
+.stage { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: 18px; align-items: start; }
+@media (max-width: 760px) { .stage { grid-template-columns: minmax(0, 1fr); } }
+
+.sheet {
+  --lh: 44px;
+  position: relative; min-width: 0;
+  background-color: var(--paper);
+  background-image:
+    linear-gradient(to right, transparent 0 34px, var(--margin) 34px 36px, transparent 36px),
+    repeating-linear-gradient(to bottom, transparent 0 calc(var(--lh) - 1px), var(--line) calc(var(--lh) - 1px) var(--lh));
+  border-radius: 6px 18px 18px 6px;
+  box-shadow: var(--shadow);
+  padding: 18px 18px 22px 52px;
+  display: flex; flex-direction: column; gap: 18px;
+}
+.sheet-top { display: flex; align-items: center; gap: 12px; }
+.dots { display: flex; flex-wrap: wrap; gap: 6px; margin-right: auto; }
+.dot { width: 16px; height: 16px; border-radius: 50%; border: 2px solid var(--key-edge); background: var(--paper); transition: background .3s, border-color .3s, transform .3s; }
+.dot.now { border-color: var(--accent); transform: scale(1.25); }
+.dot.ok { background: var(--ok); border-color: var(--ok); }
+.dot.bad { background: var(--bad); border-color: var(--bad); }
+.round-btn {
+  width: 52px; height: 52px; border-radius: 50%;
+  display: grid; place-items: center;
+  background: var(--key); border: 2px solid var(--key-edge); box-shadow: 0 3px 0 var(--key-edge);
+  color: var(--accent);
+}
+.round-btn svg { width: 26px; height: 26px; }
+
+.prompt {
+  min-height: 190px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px;
+  text-align: center; font-family: var(--font-read);
+}
+.word { font-size: clamp(3rem, 9vw, 5.4rem); font-weight: 700; line-height: 1.15; letter-spacing: .01em; }
+.sentence { font-size: clamp(1.6rem, 4.4vw, 2.5rem); line-height: 1.45; text-wrap: balance; }
+.sentence .w { font-weight: 700; }
+.gap {
+  display: inline-block; min-width: .62em; text-align: center;
+  border-bottom: .09em dashed var(--muted);
+  line-height: 1; padding-bottom: .02em;
+  transition: border-color .3s, color .3s;
+}
+.gap.ok { border-bottom-style: solid; border-color: var(--ok); color: var(--ok); }
+.gap.bad { border-bottom-style: solid; border-color: var(--bad); color: var(--bad); }
+.gap.fix { border-bottom-style: solid; border-color: var(--hard); color: var(--hard); }
+.gap.fix.soft { border-color: var(--soft); color: var(--soft); }
+
+.answers { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.ans {
+  min-height: 130px; border-radius: 22px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0;
+  background: var(--key); border: 3px solid currentColor; box-shadow: 0 5px 0 currentColor;
+  font-family: var(--font-read);
+}
+.answers.four { grid-template-columns: repeat(4, 1fr); gap: 10px; }
+.answers.four .ans .ch { font-size: clamp(2.6rem, 6vw, 3.6rem); }
+.answers.four .ans .nm { font-size: .85rem; text-align: center; }
+.ans .ch { font-size: clamp(3.6rem, 8vw, 4.8rem); font-weight: 700; line-height: 1; padding-bottom: .16em; }
+.ans .nm { font-family: var(--font-ui); font-size: 1.05rem; font-weight: 700; letter-spacing: .04em; }
+.ans.i { color: var(--soft); background: var(--soft-bg); }
+.ans.y { color: var(--hard); background: var(--hard-bg); }
+.ans:active:not(:disabled) { transform: translateY(4px); box-shadow: 0 1px 0 currentColor; }
+.ans:disabled { opacity: .45; cursor: default; }
+
+.feedback { min-height: 3.1em; font-size: clamp(1.05rem, 2.2vw, 1.25rem); font-weight: 600; line-height: 1.4; text-align: center; text-wrap: balance; }
+.feedback b { font-family: var(--font-read); font-weight: 700; }
+.feedback .yy { color: var(--hard); font-family: var(--font-read); font-weight: 700; }
+.feedback .ii { color: var(--soft); font-family: var(--font-read); font-weight: 700; }
+
+.actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; }
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  min-height: 54px; padding: 0 22px; border-radius: 16px;
+  font-size: 1.15rem; font-weight: 700;
+  background: var(--key); color: var(--ink);
+  border: 2px solid var(--key-edge); box-shadow: 0 3px 0 var(--key-edge);
+}
+.btn:active { transform: translateY(2px); box-shadow: 0 1px 0 var(--key-edge); }
+.btn:disabled { opacity: .5; cursor: default; }
+.btn.primary { background: var(--accent); color: var(--on-accent); border-color: var(--accent-deep); box-shadow: 0 3px 0 var(--accent-deep); }
+.btn.primary:active { box-shadow: 0 1px 0 var(--accent-deep); }
+.btn.glow { animation: nudge 1.3s ease-in-out infinite; }
+
+/* Results */
+.result { display: flex; flex-direction: column; align-items: center; gap: 12px; font-family: var(--font-ui); font-size: 1.2rem; }
+.result .big { font-size: clamp(2.6rem, 7vw, 4rem); font-weight: 800; line-height: 1; }
+.result .stars { display: flex; gap: 10px; }
+.result .stars svg { width: 54px; height: 54px; fill: var(--key-edge); }
+.result .stars svg.on { fill: var(--star); }
+.result h3 { margin: 6px 0 0; font-size: 1rem; color: var(--muted); text-transform: uppercase; letter-spacing: .1em; }
+.miss { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px 16px; font-family: var(--font-read); font-size: 1.5rem; }
+.miss .yy { color: var(--hard); font-weight: 700; }
+.miss .ii { color: var(--soft); font-weight: 700; }
+
+/* Side panel */
+.side { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+.panel { background: var(--paper); border-radius: 18px; box-shadow: var(--shadow); padding: 16px; min-width: 0; }
+.panel h2 { margin: 0 0 12px; font-size: .9rem; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .1em; }
+.panel h2 .L { color: var(--hard); font-size: 1.15rem; letter-spacing: 0; }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; min-height: 48px; align-content: flex-start; }
+.chip {
+  display: inline-flex; align-items: center;
+  min-height: 40px; padding: 0 12px; border-radius: 999px;
+  background: var(--key); border: 2px solid var(--key-edge);
+  font-family: var(--font-read); font-size: 1.12rem; font-weight: 400;
+  transition: background .12s, border-color .12s, transform .2s;
+}
+button.chip { cursor: pointer; }
+.chip.scan { background: var(--hi); border-color: var(--hi); }
+.chip.found { background: var(--hard-bg); border-color: var(--hard); color: var(--hard); font-weight: 700; transform: scale(1.12); }
+.chip.reading { background: var(--hi); border-color: var(--hard); transform: scale(1.08); }
+.placeholder { color: var(--muted); font-size: 1rem; line-height: 1.4; margin: 0; }
+.explain { margin-top: 14px; font-size: 1.1rem; font-weight: 600; line-height: 1.45; min-height: 1.5em; }
+.explain b { font-family: var(--font-read); }
+.explain .yy { color: var(--hard); font-family: var(--font-read); font-weight: 700; }
+.explain .ii { color: var(--soft); font-family: var(--font-read); font-weight: 700; }
+.stamp {
+  display: inline-block; margin-top: 12px; padding: 4px 14px; border: 3px solid var(--soft); border-radius: 10px;
+  color: var(--soft); font-weight: 800; font-size: 1.2rem; text-transform: uppercase; letter-spacing: .06em;
+  transform: rotate(-4deg);
+}
+.letters { display: flex; flex-wrap: wrap; gap: 8px; }
+.letter {
+  width: 52px; height: 52px; border-radius: 14px;
+  font-family: var(--font-read); font-size: 1.6rem; font-weight: 700;
+  background: var(--key); border: 2px solid var(--key-edge); color: var(--muted);
+  box-shadow: 0 3px 0 var(--key-edge);
+}
+.letter[aria-pressed="true"] { background: var(--hard-bg); border-color: var(--hard); color: var(--hard); box-shadow: 0 3px 0 var(--hard); }
+.note { margin: 10px 0 0; color: var(--muted); font-size: .95rem; }
+
+/* Learn tab */
+.learn { display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px; }
+.learn .sheet { gap: 16px; }
+.learn-head { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
+.learn-head .letters { margin-right: auto; }
+.learn .chips { gap: 10px; }
+.learn .chip { min-height: 52px; padding: 0 18px; font-size: clamp(1.25rem, 2.6vw, 1.6rem); }
+.related { min-height: 2.6em; font-size: 1.15rem; line-height: 1.45; }
+.related b { font-family: var(--font-read); color: var(--hard); }
+.related span { font-family: var(--font-read); }
+
+.flyer { position: fixed; z-index: 50; pointer-events: none; display: grid; place-items: center; font-family: var(--font-read); font-weight: 700; line-height: 1; }
+.spark { position: fixed; z-index: 60; width: 18px; height: 18px; pointer-events: none; }
+.spark svg { width: 100%; height: 100%; fill: var(--star); display: block; }
+
+@keyframes nudge { 50% { transform: translateY(-3px); box-shadow: 0 6px 0 var(--accent-deep), 0 0 0 6px var(--focus-soft); } }
+@media (prefers-reduced-motion: reduce) { .btn.glow { animation: none; } }
+</style>
+
+<style>
+#groupPick .letter { width: auto; min-width: 0; height: auto; min-height: 48px; padding: 0 16px; white-space: nowrap; font-size: 1.15rem; }
+.btn[aria-pressed="true"] { background: var(--hard-bg); border-color: var(--hard); color: var(--hard); }
+#fourBtn { margin-top: 12px; }
+.rules { display: flex; flex-direction: column; gap: 10px; }
+.rule { border: 2px solid var(--line); border-radius: 14px; padding: 10px 12px; transition: background .2s, border-color .2s; }
+.rule .rt { font-family: var(--font-read); font-size: 1.35rem; font-weight: 700; display: flex; flex-wrap: wrap; gap: 4px 14px; }
+.rule .rd { margin-top: 4px; color: var(--muted); font-size: .98rem; line-height: 1.35; }
+.rule.y .rt b { color: var(--hard); } .rule.i .rt b { color: var(--soft); }
+.rule.on.y { background: var(--hard-bg); border-color: var(--hard); }
+.rule.on.i { background: var(--soft-bg); border-color: var(--soft); }
+.rule .rt .cur { background: var(--hi); border-radius: 6px; padding: 0 4px; }
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="top">
+    <div class="brand">
+      <h1>Měkké a tvrdé i/y</h1>
+      <span class="sub">po h, ch, k, r, ž, š, č, ř, c, j, d, t, n</span>
+    </div>
+    <div class="tools">
+      <button type="button" class="icon-btn" id="voiceBtn" aria-pressed="true">
+        <svg class="on" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9z"/><path d="M16.5 8.5a5 5 0 0 1 0 7"/><path d="M19 6a8.5 8.5 0 0 1 0 12"/></svg>
+        <svg class="off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9z"/><path d="M17 9l5 6M22 9l-5 6"/></svg>
+        <span>Hlas</span>
+      </button>
+    </div>
+  </header>
+
+  <main class="stage" id="practice">
+    <section class="sheet" aria-label="Sešit">
+      <div class="sheet-top">
+        <div class="dots" id="dots" aria-label="Postup kolem"></div>
+        <button type="button" class="round-btn" id="sayBtn" aria-label="Přečíst slovo">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9z"/><path d="M16.5 8.5a5 5 0 0 1 0 7"/></svg>
+        </button>
+      </div>
+      <div class="prompt" id="prompt"></div>
+      <div class="answers" id="answers">
+        <button type="button" class="ans i" id="ansI"><span class="ch">i</span><span class="nm">měkké</span></button>
+        <button type="button" class="ans i" id="ansIl" hidden><span class="ch">í</span><span class="nm">měkké dlouhé</span></button>
+        <button type="button" class="ans y" id="ansY"><span class="ch">y</span><span class="nm">tvrdé</span></button>
+        <button type="button" class="ans y" id="ansYl" hidden><span class="ch">ý</span><span class="nm">tvrdé dlouhé</span></button>
+      </div>
+      <div class="feedback" id="feedback" aria-live="polite"></div>
+      <div class="actions">
+        <button type="button" class="btn" id="hintBtn">Ukaž pravidlo</button>
+        <button type="button" class="btn primary" id="nextBtn" hidden>Dál</button>
+      </div>
+    </section>
+
+    <aside class="side">
+      <section class="panel">
+        <h2>Pravidlo</h2>
+        <div class="rules" id="rules"></div>
+        <div class="explain" id="explain"></div>
+      </section>
+      <section class="panel">
+        <h2>Co procvičovat</h2>
+        <div class="letters" id="groupPick"></div>
+        <button type="button" class="btn" id="fourBtn" aria-pressed="false">Délku volím sama</button>
+        <p class="note">Každé kolo má 10 slov. S „Délku volím sama“ vybíráš ze čtyř písmen: i, í, y, ý.</p>
+      </section>
+    </aside>
+  </main>
+</div>
+
+<script id="data">
+// Skupiny souhlásek. y = po nich píšeme vždy tvrdé y, i = vždy měkké i, mix = záleží na slově.
+const GROUPS = {
+  hard: { name: 'h ch k r', cons: ['h', 'ch', 'k', 'r'], kind: 'y', title: 'Tvrdé: hy chy ky ry',
+          rule: 'Po h, ch, k, r píšeme vždycky tvrdé y.', desc: 'Vždycky tvrdé y' },
+  soft: { name: 'ž š č ř c j', cons: ['ž', 'š', 'č', 'ř', 'c', 'j'], kind: 'i', title: 'Měkké: ži ši či ři ci ji',
+          rule: 'Po ž, š, č, ř, c, j píšeme vždycky měkké i.', desc: 'Vždycky měkké i' },
+  end:  { name: 'koncovky -ý -í', cons: [], kind: 'mix', chips: ['mlad<b>ý</b>', 'jarn<b>í</b>'], title: 'Koncovky přídavných jmen',
+          rule: 'U přídavných jmen poznáš koncovku podle vzoru: mladý, dřevěný, horký mají tvrdé ý. Jarní, cizí, letní mají měkké í.',
+          desc: 'mladý tvrdě, jarní měkce' },
+  vyj:  { name: 'vyjmenovaná', cons: ['b', 'l', 'm', 'p', 's', 'v', 'z'], kind: 'mix', chips: ['b l m p s v z'], title: 'Vyjmenovaná slova',
+          rule: 'Po b, l, m, p, s, v, z: je to vyjmenované slovo nebo slovo příbuzné? Pak píšeš y. Jinak píšeš i.',
+          desc: 'y jen ve vyjmenovaných a příbuzných slovech' },
+  dtn:  { name: 'd t n', cons: ['d', 't', 'n'], kind: 'mix', title: 'Tvrdé dy ty ny, měkké di ti ni',
+          rule: 'Po d, t, n záleží na slově. Řekni ho nahlas: slyšíš měkké ď, ť, ň (ďivadlo)? Pak píšeš i. Slyšíš tvrdé d, t, n (dynamit)? Pak píšeš y.',
+          desc: 'dy ty ny tvrdě, di ti ni měkce' },
+};
+
+// "_" je místo pro i/y. Souhláska před mezerou se zjistí z textu.
+const ITEMS = [];
+const add = (group, a, words) => words.split(' ').forEach(t => ITEMS.push({ t: t.replace('~', ' '), a, g: group }));
+
+// po h, ch, k, r vždy y
+add('hard', 'y', 'h_ena h_drant h_mna h_brid h_nout ch_ba ch_trý ch_tit ch_bět ch_ba k_selý k_nout k_j k_tara k_tka k_vadlo r_ba r_s r_chlý r_tíř r_k r_bník');
+add('hard', 'ý', 'h_bat ch_še k_chat k_vat k_bl r_ma r_že r_sovat r_pat');
+// po ž, š, č, ř, c, j vždy i
+add('soft', 'i', 'ž_rafa ž_la š_roký š_ška š_t č_stý č_slo č_nský ř_dič ř_kat c_rkus c_bule c_tron j_nak j_nde j_skra j_ný');
+add('soft', 'í', 'ž_vot ž_zeň š_tí č_st ř_zek ř_pa c_zí j_dlo j_zda j_st');
+// po d, t, n: tvrdé y
+add('dtn', 'y', 'd_namit d_namo t_č t_kev t_gr t_ran t_rannosaurus n_lon n_ní');
+add('dtn', 'ý', 'd_m d_ně t_den t_rat n_t');
+// po d, t, n: měkké i
+add('dtn', 'i', 'd_nosaurus d_voký d_vadlo t_cho t_sk t_chý t_tul n_kdo n_jak n_tro n_va');
+add('dtn', 'í', 'd_tě d_vka d_vat~se t_ha n_zký n_žina n_tě');
+
+// koncovky přídavných jmen (v dvojici se jménem, aby bylo poznat rod)
+add('end', 'ý', 'dřevěn_~vláček hork_~čaj druh_~den mlad_~pes nov_~dům velk_~strom');
+add('end', 'í', 'jarn_~den ciz_~jazyk letn_~den zimn_~bunda rann_~ptáče domác_~úkol');
+
+// vyjmenovaná slova a slova příbuzná (y), slova podobná bez y (i)
+add('vyj', 'y', 'b_dlet ob_vatel b_strý sl_šet pol_kat l_že m_š m_slit hm_z p_tel kop_to s_n s_kora v_soký v_dra zv_kat');
+add('vyj', 'ý', 's_r ml_n pl_tvat l_ko m_t p_cha s_ček v_t žv_kat');
+add('vyj', 'i', 'b_tva l_st m_lý p_vo s_lnice v_dět z_ma m_nuta');
+add('vyj', 'í', 'kl_č l_pa v_tr');
+
+const consOf = it => {
+  const before = it.t.slice(0, it.t.indexOf('_')).toLowerCase();
+  if (it.g === 'end') return '';
+  return before.endsWith('ch') ? 'ch' : before.slice(-1);
+};
+ITEMS.forEach(it => { it.c = consOf(it); });
+</script>
+
+<script>
+(() => {
+  const $ = s => document.querySelector(s);
+  const RM = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const T = ms => RM ? Math.min(ms, 120) : ms;
+  const W = ms => RM ? Math.round(ms * .7) : ms;
+  const sleep = ms => new Promise(r => setTimeout(r, ms));
+  const EASE = 'cubic-bezier(.3,.7,.2,1)';
+  const STAR = '<svg viewBox="0 0 24 24"><path d="M12 2.5l2.9 6.1 6.6.8-4.9 4.6 1.3 6.6L12 17.3l-5.9 3.3 1.3-6.6L2.5 9.4l6.6-.8z"/></svg>';
+  const KEYS = Object.keys(GROUPS);
+  const ROUND = 10;
+
+  function el(tag, cls, parent, text) {
+    const e = document.createElement(tag);
+    if (cls) e.className = cls;
+    if (text !== undefined) e.textContent = text;
+    if (parent) parent.appendChild(e);
+    return e;
+  }
+  function shuffle(arr) {
+    const a = arr.slice();
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+  }
+  const isY = it => it.a === 'y' || it.a === 'ý';
+  const isLong = it => it.a === 'í' || it.a === 'ý';
+  const full = it => it.t.replace('_', it.a);
+  const markLetter = it => `<span class="${isY(it) ? 'yy' : 'ii'}">${it.a}</span>`;
+  const markedWord = it => it.t.replace('_', markLetter(it));
+
+  // ---------- saved settings ----------
+  const KEY = 'mekke-tvrde-iy';
+  function load() { try { return JSON.parse(localStorage.getItem(KEY)) || {}; } catch { return {}; } }
+  const saved = load();
+  const state = {
+    stars: saved.stars | 0,
+    voice: saved.voice === true,
+    four: saved.four === true,
+    groups: Array.isArray(saved.groups) && saved.groups.some(g => KEYS.includes(g))
+      ? saved.groups.filter(g => KEYS.includes(g)) : KEYS.slice(),
+    round: [], idx: 0, results: [], busy: false, answered: false, gen: 0, retry: false,
+  };
+  function persist() {
+    try { localStorage.setItem(KEY, JSON.stringify({ stars: state.stars, voice: state.voice, four: state.four, groups: state.groups })); } catch {}
+  }
+  // ---------- voice ----------
+  let interacted = false, csVoice = null;
+  const canSpeak = 'speechSynthesis' in window;
+  // iPad lists several Czech voices: the Eloquence ones (Eddy, Flo, Reed…) sound robotic, while a downloaded
+  // Zuzana (Enhanced / Premium) sounds natural. Take the best one installed, not the first one listed.
+  const ROBOTIC = /\b(eddy|flo|grandma|grandpa|reed|rocko|sandy|shelley)\b/i;
+  function voiceScore(v) {
+    const id = `${v.name} ${v.voiceURI}`;
+    if (ROBOTIC.test(id)) return 0;
+    if (/premium/i.test(id)) return 5;
+    if (/enhanced|natural|neural/i.test(id)) return 4;
+    if (/google/i.test(id)) return 3;
+    if (/zuzana/i.test(id)) return 2;
+    return 1;
+  }
+  function pickVoice() {
+    try {
+      const czech = speechSynthesis.getVoices().filter(v => /^cs([-_]|$)/i.test(v.lang));
+      csVoice = czech.sort((a, b) => voiceScore(b) - voiceScore(a))[0] || null;
+    } catch {}
+  }
+  if (canSpeak) { try { pickVoice(); speechSynthesis.addEventListener('voiceschanged', pickVoice); } catch {} }
+  const markInteracted = () => { interacted = true; };
+  document.addEventListener('pointerdown', markInteracted, { capture: true });
+  document.addEventListener('keydown', markInteracted, { capture: true });
+  function stopSpeech() { if (canSpeak) { try { speechSynthesis.cancel(); } catch {} } }
+  function speak(text, force) {
+    return new Promise(done => {
+      if (!canSpeak || (!state.voice && !force) || !interacted || !speechSynthesis.getVoices().length) return done();
+      try {
+        speechSynthesis.cancel();
+        const u = new SpeechSynthesisUtterance(text);
+        u.lang = 'cs-CZ';
+        if (csVoice) u.voice = csVoice;
+        u.rate = .9;
+        u.onend = done;
+        u.onerror = done;
+        // some devices never report the end of speech; do not keep the child waiting
+        setTimeout(done, Math.min(8000, 1200 + text.length * 70));
+        speechSynthesis.speak(u);
+      } catch { done(); }
+    });
+  }
+  const plain = html => { const d = document.createElement('div'); d.innerHTML = html; return d.textContent; };
+
+
+  // ---------- practice ----------
+  const prompt = $('#prompt'), feedback = $('#feedback'), dots = $('#dots');
+  const ansI = $('#ansI'), ansIl = $('#ansIl'), ansY = $('#ansY'), ansYl = $('#ansYl'), answersEl = $('#answers'), nextBtn = $('#nextBtn'), hintBtn = $('#hintBtn');
+  const rulesEl = $('#rules'), explainEl = $('#explain');
+
+  // the rule cards; the one that applies lights up when the answer is explained
+  const ruleCards = {};
+  KEYS.forEach(k => {
+    const g = GROUPS[k];
+    const card = el('div', `rule ${g.kind === 'mix' ? 'y' : g.kind}`, rulesEl);
+    const rt = el('div', 'rt', card);
+    if (g.chips) {
+      g.chips.forEach(c => { el('span', '', rt).innerHTML = c; });
+    } else if (g.kind === 'mix') {
+      g.cons.forEach(c => { const s = el('span', '', rt); s.dataset.c = c; s.innerHTML = `${c}<b>y</b> / ${c}<b>i</b>`; });
+    } else {
+      g.cons.forEach(c => { const s = el('span', '', rt); s.dataset.c = c; s.innerHTML = `${c}<b>${g.kind}</b>`; });
+    }
+    el('div', 'rd', card, g.desc);
+    ruleCards[k] = card;
+  });
+  const allBtns = [ansI, ansIl, ansY, ansYl];
+  // the letter each button stands for; with the length chosen for the child only two buttons are shown
+  function setButtons(it) {
+    answersEl.classList.toggle('four', state.four);
+    ansIl.hidden = ansYl.hidden = !state.four;
+    const long = isLong(it);
+    const letters = state.four ? ['i', 'í', 'y', 'ý'] : [long ? 'í' : 'i', null, long ? 'ý' : 'y', null];
+    allBtns.forEach((b, k) => { if (letters[k]) { b.dataset.l = letters[k]; b.querySelector('.ch').textContent = letters[k]; } });
+  }
+  const btnFor = l => allBtns.find(b => !b.hidden && b.dataset.l === l);
+  // a key of the wanted type (i or y) becomes the right letter for this word
+  const letterFor = (k, it) => {
+    if (state.four) return ['i', 'í', 'y', 'ý'].includes(k) ? k : null;
+    if (k === 'i' || k === 'í') return isLong(it) ? 'í' : 'i';
+    if (k === 'y' || k === 'ý') return isLong(it) ? 'ý' : 'y';
+    return null;
+  };
+  function highlight(it) {
+    Object.entries(ruleCards).forEach(([k, card]) => {
+      const on = it && k === it.g;
+      card.classList.toggle('on', !!on);
+      card.querySelectorAll('.rt span').forEach(s => s.classList.toggle('cur', !!on && s.dataset.c === it.c));
+    });
+  }
+
+  function buildRound(pool) {
+    const ys = shuffle(pool.filter(isY)), is = shuffle(pool.filter(it => !isY(it)));
+    const nY = Math.min(ys.length, Math.round(ROUND / 2));
+    let pick = ys.slice(0, nY).concat(is.slice(0, ROUND - nY));
+    if (pick.length < ROUND) pick = pick.concat(ys.slice(nY, nY + ROUND - pick.length));
+    return shuffle(pick);
+  }
+
+  function startRound(items) {
+    state.gen++;
+    stopSpeech();
+    const pool = items || ITEMS.filter(it => state.groups.includes(it.g));
+    state.round = items ? shuffle(items) : buildRound(pool);
+    state.idx = 0;
+    state.results = [];
+    state.retry = !!items;
+    $('#answers').hidden = false;
+    hintBtn.hidden = false;
+    $('#sayBtn').hidden = false;
+    renderDots();
+    showItem();
+  }
+
+  function renderDots() {
+    dots.innerHTML = '';
+    state.round.forEach((_, i) => {
+      const d = el('span', 'dot', dots);
+      if (i < state.results.length) d.classList.add(state.results[i] ? 'ok' : 'bad');
+      if (i === state.idx && i >= state.results.length) d.classList.add('now');
+    });
+  }
+
+  function itemHtml(it) {
+    const [before, after] = it.t.split('_');
+    return `<div class="word">${before}<span class="gap" id="gap">&nbsp;</span>${after}</div>`;
+  }
+
+  function showItem() {
+    const it = state.round[state.idx];
+    state.answered = false;
+    state.busy = false;
+    prompt.innerHTML = itemHtml(it);
+    prompt.firstElementChild.animate(
+      [{ transform: 'translateX(40px)', opacity: 0 }, { transform: 'none', opacity: 1 }],
+      { duration: T(350), easing: EASE },
+    );
+    setButtons(it);
+    allBtns.forEach(b => { b.disabled = false; });
+    feedback.innerHTML = '';
+    explainEl.innerHTML = '';
+    highlight(null);
+    nextBtn.hidden = true;
+    nextBtn.classList.remove('glow');
+    hintBtn.disabled = false;
+    renderDots();
+    speak(full(it));
+  }
+
+  function reason(it) {
+    const g = GROUPS[it.g], w = `<b>${full(it)}</b>`;
+    const c = `<b>${it.c}</b>`;
+    if (g.kind === 'y') return `${w}: po ${c} píšeme vždycky tvrdé <span class="yy">y</span>.`;
+    if (g.kind === 'i') return `${w}: po ${c} píšeme vždycky měkké <span class="ii">i</span>.`;
+    if (it.g === 'end') return isY(it)
+      ? `${w}: přídavné jméno jako <b>mladý</b>, koncovka je tvrdé <span class="yy">${it.a}</span>.`
+      : `${w}: přídavné jméno jako <b>jarní</b>, koncovka je měkké <span class="ii">${it.a}</span>.`;
+    if (it.g === 'vyj') return isY(it)
+      ? `${w}: vyjmenované nebo příbuzné slovo po ${c}, píšeme <span class="yy">${it.a}</span>.`
+      : `${w}: po ${c} není vyjmenované ani příbuzné slovo, píšeme <span class="ii">${it.a}</span>.`;
+    return isY(it)
+      ? `${w}: po ${c} je tady tvrdé <span class="yy">${it.a}</span>. Slyšíš tvrdé ${it.c}, ne měkké.`
+      : `${w}: po ${c} je tady měkké <span class="ii">${it.a}</span>. Slyšíš měkké ${{ d: 'ď', t: 'ť', n: 'ň' }[it.c]}.`;
+  }
+
+  async function explain(it) {
+    highlight(it);
+    explainEl.innerHTML = reason(it);
+    explainEl.animate([{ opacity: 0 }, { opacity: 1 }], { duration: T(300) });
+  }
+  // a letter flies from the pressed button into the gap
+  async function flyLetter(fromBtn, ch, color) {
+    const gap = $('#gap');
+    const from = fromBtn.querySelector('.ch').getBoundingClientRect();
+    const to = gap.getBoundingClientRect();
+    const toFont = parseFloat(getComputedStyle(gap).fontSize);
+    const fromFont = parseFloat(getComputedStyle(fromBtn.querySelector('.ch')).fontSize);
+    const f = el('div', 'flyer', document.body, ch);
+    Object.assign(f.style, {
+      left: from.left + 'px', top: from.top + 'px', width: from.width + 'px', height: from.height + 'px',
+      fontSize: fromFont + 'px', color,
+    });
+    const dx = (to.left + to.width / 2) - (from.left + from.width / 2);
+    const dy = (to.top + to.height / 2) - (from.top + from.height / 2);
+    const sc = toFont / fromFont;
+    await f.animate([
+      { transform: 'none' },
+      { transform: `translate(${dx * .5}px, ${dy * .5 - 50}px) scale(${(1 + sc) / 2})`, offset: .55 },
+      { transform: `translate(${dx}px, ${dy}px) scale(${sc})` },
+    ], { duration: T(520), easing: 'ease-in-out', fill: 'forwards' }).finished;
+    f.remove();
+    gap.textContent = ch;
+  }
+
+
+  async function answer(ch) {
+    if (state.busy || state.answered || !state.round.length || !$('#gap')) return;
+    const it = state.round[state.idx], g = state.gen;
+    state.busy = true;
+    state.answered = true;
+    allBtns.forEach(b => { b.disabled = true; });
+    hintBtn.disabled = true;
+    const chY = ch === 'y' || ch === 'ý';
+    const btn = btnFor(ch);
+    const correct = ch === it.a;
+    const css = getComputedStyle(document.documentElement);
+
+    await flyLetter(btn, ch, css.getPropertyValue(chY ? '--hard' : '--soft'));
+    if (g !== state.gen) return;
+    const gap = $('#gap');
+
+    if (correct) {
+      gap.classList.add('ok');
+      gap.animate([{ transform: 'scale(1.35)' }, { transform: 'none' }], { duration: T(300), easing: EASE });
+      state.results.push(true);
+      renderDots();
+      highlight(it);
+      feedback.innerHTML = `Správně! ${reason(it)}`;
+      await Promise.all([speak(full(it)), sleep(W(2100))]);
+      if (g !== state.gen) return;
+      advance();
+      return;
+    }
+
+    gap.classList.add('bad');
+    await gap.animate([
+      { transform: 'translateX(0)' }, { transform: 'translateX(-6px)' }, { transform: 'translateX(5px)' },
+      { transform: 'translateX(-3px)' }, { transform: 'translateX(0)' },
+    ], { duration: T(380) }).finished;
+    await gap.animate([{ transform: 'none', opacity: 1 }, { transform: 'translateY(40px) rotate(25deg)', opacity: 0 }], { duration: T(380), easing: 'ease-in' }).finished;
+    if (g !== state.gen) return;
+    gap.innerHTML = '&nbsp;';
+    gap.classList.remove('bad');
+    const other = btnFor(it.a);
+    await flyLetter(other, it.a, css.getPropertyValue(isY(it) ? '--hard' : '--soft'));
+    if (g !== state.gen) return;
+    gap.classList.add('fix');
+    if (!isY(it)) gap.classList.add('soft');
+    state.results.push(false);
+    renderDots();
+    const lenNote = chY === isY(it) ? ` ${isY(it) ? 'Tvrdé' : 'Měkké'} písmeno máš dobře, ale tady je ${isLong(it) ? 'dlouhé' : 'krátké'}.` : '';
+    feedback.innerHTML = `Správně je <b>${markedWord(it)}</b>.${lenNote} Podívej se proč.`;
+    speak(`Správně je ${full(it)}.`);
+    await explain(it);
+    if (g !== state.gen) return;
+    speak(plain(explainEl.innerHTML));
+    state.busy = false;
+    nextBtn.hidden = false;
+    nextBtn.classList.add('glow');
+    nextBtn.focus({ preventScroll: true });
+  }
+
+  function advance() {
+    state.idx++;
+    if (state.idx < state.round.length) showItem();
+    else showResult();
+  }
+
+  function showResult() {
+    const good = state.results.filter(Boolean).length;
+    const total = state.round.length;
+    const ratio = good / total;
+    const earned = ratio >= .9 ? 3 : ratio >= .7 ? 2 : 1;
+    const missed = state.round.filter((_, i) => !state.results[i]);
+    state.stars += earned;
+    persist();
+    window.parent.postMessage({
+      source: 'skolni-zoo-exercise', type: 'reward', exercise: 'souhlasky',
+      event: { kind: 'round', correct: good, total, retry: state.retry },
+    }, '*');
+    renderDots();
+    $('#answers').hidden = true;
+    hintBtn.hidden = true;
+    nextBtn.hidden = true;
+    $('#sayBtn').hidden = true;
+    feedback.innerHTML = '';
+    highlight(null);
+    explainEl.innerHTML = 'Kolo je hotové.';
+
+    const msg = good === total ? 'Bez jediné chyby!' : ratio >= .7 ? 'Moc pěkné!' : 'Dobrý začátek, zkus to znovu.';
+    prompt.innerHTML = `
+      <div class="result">
+        <div class="big">${good} z ${total}</div>
+        <div class="stars">${[0, 1, 2].map(i => STAR.replace('<svg', `<svg class="${i < earned ? 'on' : ''}"`)).join('')}</div>
+        <div>${msg}</div>
+        ${missed.length ? `<h3>Tady byla chyba</h3><div class="miss">${missed.map(it => `<span>${markedWord(it)}</span>`).join('')}</div>` : ''}
+        <div class="actions">
+          ${missed.length ? '<button type="button" class="btn" id="retryBtn">Procvičit chyby</button>' : ''}
+          <button type="button" class="btn primary" id="againBtn">Nové kolo</button>
+        </div>
+      </div>`;
+    prompt.querySelectorAll('.stars svg').forEach((s, i) => s.animate(
+      [{ transform: 'scale(0) rotate(-90deg)' }, { transform: 'scale(1.3)' }, { transform: 'none' }],
+      { duration: T(450), delay: RM ? 0 : 200 + i * 220, easing: EASE, fill: 'backwards' },
+    ));
+    $('#againBtn').addEventListener('click', () => startRound());
+    const retry = $('#retryBtn');
+    if (retry) retry.addEventListener('click', () => startRound(missed));
+    speak(`${good} z ${total}. ${msg}`);
+    celebrate();
+  }
+
+  function celebrate() {
+    if (RM) return;
+    const r = prompt.getBoundingClientRect();
+    const cx = r.left + r.width / 2, cy = r.top + r.height / 3;
+    for (let i = 0; i < 16; i++) {
+      const p = el('div', 'spark', document.body);
+      p.innerHTML = STAR;
+      p.style.left = cx - 9 + 'px';
+      p.style.top = cy - 9 + 'px';
+      const ang = Math.random() * Math.PI * 2, dist = 90 + Math.random() * 140;
+      p.animate([
+        { transform: 'scale(.3)', opacity: 1 },
+        { transform: `translate(${Math.cos(ang) * dist}px, ${Math.sin(ang) * dist}px) scale(${.7 + Math.random() * .8}) rotate(${Math.random() * 360 - 180}deg)`, opacity: 0 },
+      ], { duration: 900 + Math.random() * 500, easing: 'cubic-bezier(.2,.8,.3,1)', fill: 'forwards' }).finished.then(() => p.remove());
+    }
+  }
+
+  allBtns.forEach(b => b.addEventListener('click', () => answer(b.dataset.l)));
+  nextBtn.addEventListener('click', () => { if (!state.busy) advance(); });
+  $('#sayBtn').addEventListener('click', () => {
+    const it = state.round[state.idx];
+    if (it) speak(full(it), true);
+  });
+  hintBtn.addEventListener('click', () => {
+    const it = state.round[state.idx];
+    if (!it || state.answered) return;
+    hintBtn.disabled = true;
+    highlight({ g: it.g, c: null });
+    explainEl.innerHTML = GROUPS[it.g].rule;
+    speak(plain(explainEl.innerHTML));
+  });
+  document.addEventListener('keydown', e => {
+    if (e.metaKey || e.ctrlKey || e.altKey) return;
+    const k = e.key.toLowerCase();
+    const it = state.round[state.idx];
+    const letter = it && letterFor(state.four && /^[1-4]$/.test(k) ? ['i', 'í', 'y', 'ý'][k - 1] : k, it);
+    if (letter) answer(letter);
+    else if (k === 'enter' && !nextBtn.hidden && !state.busy) { e.preventDefault(); advance(); }
+  });
+
+  // group filter
+  const groupPick = $('#groupPick');
+  KEYS.forEach(k => {
+    const b = el('button', 'letter', groupPick, GROUPS[k].name);
+    b.type = 'button';
+    b.setAttribute('aria-pressed', String(state.groups.includes(k)));
+    b.addEventListener('click', () => {
+      const on = state.groups.includes(k);
+      if (on && state.groups.length === 1) return;
+      state.groups = on ? state.groups.filter(x => x !== k) : KEYS.filter(x => x === k || state.groups.includes(x));
+      b.setAttribute('aria-pressed', String(!on));
+      persist();
+      startRound();
+    });
+  });
+
+  const fourBtn = $('#fourBtn');
+  fourBtn.setAttribute('aria-pressed', String(state.four));
+  fourBtn.addEventListener('click', () => {
+    state.four = !state.four;
+    fourBtn.setAttribute('aria-pressed', String(state.four));
+    persist();
+    startRound();
+  });
+
+  const voiceBtn = $('#voiceBtn');
+  voiceBtn.addEventListener('click', () => {
+    state.voice = !state.voice;
+    voiceBtn.setAttribute('aria-pressed', String(state.voice));
+    persist();
+    if (!state.voice) stopSpeech();
+  });
+
+  voiceBtn.setAttribute('aria-pressed', String(state.voice));
+  startRound();
+})();
+</script>
+</body>
+</html>

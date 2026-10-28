@@ -30,6 +30,13 @@ const TIMEZONE = Intl.DateTimeFormat().resolvedOptions().timeZone;
 const EXERCISE_NAMES: Record<string, string> = {
   scitani: 'Sčítání pod sebou',
   vyjmenovana: 'Vyjmenovaná slova',
+  souhlasky: 'Měkké a tvrdé i/y',
+  parove: 'Párové souhlásky',
+  bje: 'bě, bje, vě, vje, mě, mně',
+  koncovky: 'i/y v koncovkách',
+  uu: 'Ú nebo Ů',
+  predpony: 's, z, vz v předponách',
+  nasobilka: 'Násobilka',
 };
 
 function OpenZooButton() {

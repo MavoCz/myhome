@@ -1,6 +1,8 @@
-import type { ExerciseEvent } from './state/types';
+import type { ExerciseEvent, RoundExerciseId } from './state/types';
 
-export type ExerciseId = 'scitani' | 'vyjmenovana';
+export type ExerciseId = 'scitani' | RoundExerciseId;
+
+const ROUND_EXERCISES: readonly string[] = ['vyjmenovana', 'souhlasky', 'parove', 'bje', 'koncovky', 'uu', 'predpony', 'nasobilka'];
 
 export interface ExerciseInfo {
   id: ExerciseId;
@@ -13,6 +15,13 @@ export interface ExerciseInfo {
 export const EXERCISES: ExerciseInfo[] = [
   { id: 'scitani', title: 'Sčítání pod sebou', subject: 'Matematika', desc: 'Čísla do 100, s přechodem přes desítku', src: 'exercises/scitani/index.html' },
   { id: 'vyjmenovana', title: 'Vyjmenovaná slova', subject: 'Čeština', desc: 'i nebo y po B, L, M, P, S, V, Z', src: 'exercises/vyjmenovana/index.html' },
+  { id: 'souhlasky', title: 'Měkké a tvrdé i/y', subject: 'Čeština', desc: 'i nebo y po h, ch, k, r, ž, š, č, ř, c, j, d, t, n', src: 'exercises/souhlasky/index.html' },
+  { id: 'parove', title: 'Párové souhlásky', subject: 'Čeština', desc: 'b–p, d–t, ď–ť, v–f, h–ch, z–s, ž–š', src: 'exercises/parove/index.html' },
+  { id: 'bje', title: 'bě, bje, vě, vje, mě, mně', subject: 'Čeština', desc: 'Slabiky se ě a je', src: 'exercises/bje/index.html' },
+  { id: 'koncovky', title: 'i/y v koncovkách', subject: 'Čeština', desc: 'Podstatná jména, přídavná jména, slovesa', src: 'exercises/koncovky/index.html' },
+  { id: 'uu', title: 'Ú nebo Ů', subject: 'Čeština', desc: 'ú na začátku, ů uprostřed slova', src: 'exercises/uu/index.html' },
+  { id: 'predpony', title: 's, z, vz v předponách', subject: 'Čeština', desc: 'sbalit, zmenšit, vzlétnout', src: 'exercises/predpony/index.html' },
+  { id: 'nasobilka', title: 'Násobilka', subject: 'Matematika', desc: 'Násobení a dělení do 100', src: 'exercises/nasobilka/index.html' },
 ];
 
 /** The message an exercise page posts to the app when a piece of work is finished. */
@@ -32,10 +41,10 @@ export function parseExerciseMessage(data: unknown): ExerciseEvent | null {
     if (mistakes === null) return null;
     return { exercise: 'scitani', kind: 'problem', mistakes, carry: e.carry === true };
   }
-  if (d.exercise === 'vyjmenovana' && e.kind === 'round') {
+  if (typeof d.exercise === 'string' && ROUND_EXERCISES.includes(d.exercise) && e.kind === 'round') {
     const total = count(e.total, 50), correct = count(e.correct, 50);
     if (total === null || correct === null || correct > total || total === 0) return null;
-    return { exercise: 'vyjmenovana', kind: 'round', correct, total, retry: e.retry === true };
+    return { exercise: d.exercise as RoundExerciseId, kind: 'round', correct, total, retry: e.retry === true };
   }
   return null;
 }

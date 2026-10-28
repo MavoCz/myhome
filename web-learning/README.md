@@ -1,6 +1,6 @@
 # Školní zoo
 
-Cvičení pro děti (sčítání pod sebou, vyjmenovaná slova). Za vyřešená cvičení děti dostávají bodíky a za ně si staví vlastní zoo, kterou procházejí s postavičkou: krmí zvířátka, zalévají kytičky a navštěvují zoo sourozenců.
+Cvičení pro děti (sčítání pod sebou, vyjmenovaná slova, měkké a tvrdé i/y, párové souhlásky, bě/bje/mě/mně, i/y v koncovkách, ú/ů, s/z/vz v předponách, násobilka). Za vyřešená cvičení děti dostávají bodíky a za ně si staví vlastní zoo, kterou procházejí s postavičkou: krmí zvířátka, zalévají kytičky a navštěvují zoo sourozenců.
 
 ## Spuštění
 

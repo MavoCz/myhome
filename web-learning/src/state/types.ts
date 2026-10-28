@@ -59,6 +59,9 @@ export interface Profile extends ZooDoc {
   name: string;
 }
 
+/** exercises that report one finished round (10 items) */
+export type RoundExerciseId = 'vyjmenovana' | 'souhlasky' | 'parove' | 'bje' | 'koncovky' | 'uu' | 'predpony' | 'nasobilka';
+
 export type ExerciseEvent =
   | { exercise: 'scitani'; kind: 'problem'; mistakes: number; carry: boolean }
-  | { exercise: 'vyjmenovana'; kind: 'round'; correct: number; total: number; retry: boolean };
+  | { exercise: RoundExerciseId; kind: 'round'; correct: number; total: number; retry: boolean };

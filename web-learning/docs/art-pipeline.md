@@ -64,6 +64,7 @@ no ground, no text
 |---|---|---|---|---|
 | `src/zoo/art/img/giraffe.png` | paper cutout, "standing in side view facing right … plain white background" | 202 | white | made before the green-screen switch; the light-mode cut needed the colourless-shadow rule |
 | `src/zoo/art/img/penguin.png` | template above, details "small orange beak and feet, white belly" | 303 | green | |
+| `src/zoo/art/img/rabbit.png` | template above, details "light grey-brown fur, long upright ears with pink insides, white belly and white fluffy round tail" | 402 | green | `--max-size 256`; seeds 401 and 403 were close seconds |
 
 Task 001 props and icons all use this prop template (only `<view>`, `<subject>`, `<details>` and
 `<key>` change; `<text>` is "no text" except for the gate):
@@ -88,6 +89,7 @@ shapes, <details>, visible paper texture, centered on a flat solid bright <key> 
 | `bloom-<colour>.png` | single object, front · flower plant · green stem and leaves, three open `<colour>` flowers with round petals and yellow centers (pink, purple, red, orange, yellow) | 91 | blue | 224 |
 | `leaves.png` | single object, front · small bunch of fresh leaves on a twig · bright green leaves | 101 | magenta | 160 |
 | `fish.png` | single object, front · small fish · orange body, tiny dot eye, simple tail fin, side view facing left | 112 | green | 160 |
+| `carrot.png` | single object, front · carrot · one orange carrot with a few short green leaves on top, simple flat shapes | 411 | magenta | 160 |
 | `can.png` | side view · small watering can · blue body, long spout pointing right, round handle | 121 | green | 160 |
 | `heart.png` | single object, front · heart · pink and red layers | 132 | green | 96 |
 | `drop.png` | single object, front · water drop · light blue and blue layers | 141 | green | 160 |
@@ -128,6 +130,6 @@ Raw outputs (style comparison and all task 001 candidates) are kept locally in `
   bed picture plus one plant picture (seeds, sprout, bud, a bloom picked by the bed's id); need
   bubbles are the SVG frame with the food or drop picture drawn in by `textures.ts`.
 - Display size and motion per species live in `ANIMAL_ART` (`src/zoo/art/animals.ts`): world
-  height, bob and tilt. Motion is procedural in `src/zoo/game/animal.ts` (hop/lean/squash walk,
+  height, bob and tilt, walking speed and stride, and how high and how often it jumps in a trick. Motion is procedural in `src/zoo/game/animal.ts` (hop/lean/squash walk,
   breathing idle, squash-and-stretch tricks, bow when eating), so a single picture per animal is
   enough.

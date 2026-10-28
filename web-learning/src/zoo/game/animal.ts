@@ -41,7 +41,7 @@ export class AnimalView {
     this.scale = art.height / frame.height;
     this.halfWidth = (frame.width * this.scale) / 2;
     this.headHeight = art.height;
-    this.speed = species === 'giraffe' ? 42 : 34;
+    this.speed = art.speed;
 
     const start = this.randomSpot();
     this.root = scene.add.container(start.x, start.y);
@@ -78,14 +78,14 @@ export class AnimalView {
     this.mode = 'walk';
   }
 
-  /** Crouch, jump, land with a squash; the penguin hops a few times, the giraffe wiggles. */
+  /** Crouch, jump, land with a squash; a single jump ends with a wiggle. */
   trick() {
     if (this.mode === 'busy') return;
     this.mode = 'busy';
     const s = this.scale, b = this.body;
     b.setPosition(0, 0).setAngle(0).setScale(s);
     hearts(this.scene, this.x, this.y - this.headHeight);
-    const hop = this.species === 'penguin' ? 34 : 22;
+    const { jump: hop, jumps } = ANIMAL_ART[this.species];
     const once = [
       { scaleX: s * 1.12, scaleY: s * 0.86, duration: 120, ease: 'Quad.easeOut' },
       { y: -hop, scaleX: s * 0.92, scaleY: s * 1.1, duration: 230, ease: 'Quad.easeOut' },
@@ -96,7 +96,7 @@ export class AnimalView {
     const wiggle = [
       { angle: -7, duration: 110 }, { angle: 7, duration: 160 }, { angle: -5, duration: 140 }, { angle: 0, duration: 120 },
     ];
-    const tweens = this.species === 'penguin' ? [...once, ...once, ...once] : [...once, ...wiggle];
+    const tweens = jumps > 1 ? Array.from({ length: jumps }, () => once).flat() : [...once, ...wiggle];
     this.scene.tweens.chain({
       targets: b,
       tweens,
@@ -135,7 +135,7 @@ export class AnimalView {
     if (this.mode === 'walk') {
       const dx = this.target.x - this.x, dy = this.target.y - this.y;
       const d = Math.hypot(dx, dy), step = this.speed * dt;
-      this.phase += dt * (this.species === 'penguin' ? 13 : 9);
+      this.phase += dt * art.stride;
       if (d <= step) {
         this.root.setPosition(this.target.x, this.target.y);
         this.mode = 'idle';

@@ -34,7 +34,7 @@ interface Bubble {
 
 const PROPS: Partial<Record<Kind, PropName>> = { tree: 'tree', bush: 'bush', bench: 'bench', fountain: 'fountain' };
 
-const FED_WORD: Record<Species, string> = { giraffe: 'najedená', penguin: 'najedený' };
+const FED_WORD: Record<Species, string> = { giraffe: 'najedená', penguin: 'najedený', rabbit: 'najedený' };
 const BUBBLE_DEPTH = 1e6 - 2;
 /** need bubbles, in world pixels */
 const BUBBLE_SIZE = 44;
@@ -302,13 +302,13 @@ export class ZooScene extends Phaser.Scene {
 
   private createPen(o: PlacedObject, it: CatalogItem): ObjectView {
     const px = o.x * TILE, py = o.y * TILE, w = it.w * TILE, h = it.h * TILE;
-    const ice = it.biome === 'ice';
+    const ice = it.biome === 'ice', farm = it.biome === 'farm';
     const rnd = new Phaser.Math.RandomDataGenerator([o.id]);
 
     const floor = this.add.graphics().setDepth(-3);
-    const shade = ice ? 0x2f5f7a : 0x5a3c14;
-    layer(floor, sheet(rnd, px + 4, py + 4, w - 8, h - 8, 22, 4), ice ? 0xc3e0ef : 0xd9ad5e, 5);
-    layer(floor, sheet(rnd, px + 11, py + 10, w - 22, h - 20, 18, 4), ice ? 0xeaf6fc : 0xedc97c, 0);
+    const [shade, rim, top] = ice ? [0x2f5f7a, 0xc3e0ef, 0xeaf6fc] : farm ? [0x2f5a1e, 0x72ad4e, 0xb9dd7f] : [0x5a3c14, 0xd9ad5e, 0xedc97c];
+    layer(floor, sheet(rnd, px + 4, py + 4, w - 8, h - 8, 22, 4), rim, 5);
+    layer(floor, sheet(rnd, px + 11, py + 10, w - 22, h - 20, 18, 4), top, 0);
     const pond = (cx: number, cy: number, rx: number, ry: number) => {
       layer(floor, blob(rnd, cx, cy, rx, ry), ice ? 0x3f97cc : 0x4d9fcf, 3, shade);
       floor.fillStyle(ice ? 0x63b7e6 : 0x6fc2ea).fillPoints(blob(rnd, cx - 2, cy + 2, rx - 6, ry - 5), true);
@@ -318,6 +318,26 @@ export class ZooScene extends Phaser.Scene {
       pond(px + w * 0.7, py + h * 0.38, w * 0.2, h * 0.17);
       for (let i = 0; i < 5; i++) {
         layer(floor, blob(rnd, px + rnd.between(40, w * 0.45), py + rnd.between(h * 0.5, h - 40), rnd.between(14, 28), rnd.between(5, 8), 0.15), 0xffffff, 3, shade);
+      }
+    } else if (farm) {
+      // a hay pile in the back corner, a wooden trough of water and daisies in the grass
+      const hx = px + w * 0.2, hy = py + h * 0.36;
+      layer(floor, blob(rnd, hx, hy, 40, 22, 0.12), 0xc9962f, 4, shade);
+      layer(floor, blob(rnd, hx - 3, hy - 6, 32, 16, 0.14), 0xe2b64a, 2, shade);
+      layer(floor, blob(rnd, hx - 6, hy - 11, 20, 9, 0.15), 0xf2d478, 1, shade);
+      floor.lineStyle(2, 0xb3842a);
+      for (let i = 0; i < 7; i++) {
+        const sx = hx + rnd.between(-30, 26), sy = hy + rnd.between(-10, 12), lean = rnd.between(-8, 8);
+        floor.lineBetween(sx, sy, sx + lean, sy - 7);
+      }
+      const tx = px + w * 0.72, ty = py + h * 0.4;
+      layer(floor, sheet(rnd, tx - 44, ty - 14, 88, 28, 10, 2), 0x8a5528, 4, shade);
+      layer(floor, sheet(rnd, tx - 38, ty - 9, 76, 17, 7, 1.5), 0x4d9fcf, 0, shade);
+      floor.fillStyle(0x6fc2ea).fillPoints(blob(rnd, tx - 12, ty - 2, 20, 4, 0.15), true);
+      for (let i = 0; i < 12; i++) {
+        const x = px + rnd.between(30, w - 30), y = py + rnd.between(h * 0.55, h - 30);
+        layer(floor, blob(rnd, x, y, 4.5, 4, 0.15), 0xfffbef, 1.5, shade);
+        floor.fillStyle(0xffcf3f).fillCircle(x, y, 1.8);
       }
     } else {
       pond(px + w * 0.76, py + h * 0.7, 42, 18);

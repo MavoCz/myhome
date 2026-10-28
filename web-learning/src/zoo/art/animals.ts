@@ -1,6 +1,7 @@
 import type { Species } from '../../state/types';
 import giraffeUrl from './img/giraffe.png';
 import penguinUrl from './img/penguin.png';
+import rabbitUrl from './img/rabbit.png';
 
 /**
  * Animals are paper-cutout illustrations generated with Qwen Image 2.1 (see tools/) and cut out
@@ -13,9 +14,16 @@ export interface AnimalArt {
   /** how far it bobs and leans while walking */
   bob: number;
   tilt: number;
+  /** walking speed in world pixels per second and steps per second */
+  speed: number;
+  stride: number;
+  /** a trick is this many jumps this high; a single jump ends with a wiggle */
+  jump: number;
+  jumps: number;
 }
 
 export const ANIMAL_ART: Record<Species, AnimalArt> = {
-  giraffe: { src: giraffeUrl, height: 175, bob: 5, tilt: 2.5 },
-  penguin: { src: penguinUrl, height: 88, bob: 7, tilt: 6 },
+  giraffe: { src: giraffeUrl, height: 175, bob: 5, tilt: 2.5, speed: 42, stride: 9, jump: 22, jumps: 1 },
+  penguin: { src: penguinUrl, height: 88, bob: 7, tilt: 6, speed: 34, stride: 13, jump: 34, jumps: 3 },
+  rabbit: { src: rabbitUrl, height: 80, bob: 14, tilt: 4, speed: 40, stride: 8, jump: 42, jumps: 2 },
 };

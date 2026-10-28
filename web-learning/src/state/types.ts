@@ -1,17 +1,19 @@
-export type Species = 'giraffe' | 'penguin';
-export type Biome = 'savana' | 'ice';
+export type Species = 'giraffe' | 'penguin' | 'rabbit';
+export type Biome = 'savana' | 'ice' | 'farm';
 
 export type ItemId =
   | 'path'
   | 'pen-savana'
   | 'pen-ice'
+  | 'pen-farm'
   | 'tree'
   | 'bush'
   | 'bench'
   | 'flowerbed'
   | 'fountain'
   | 'animal-giraffe'
-  | 'animal-penguin';
+  | 'animal-penguin'
+  | 'animal-rabbit';
 
 export interface Avatar {
   hair: string;
@@ -22,7 +24,7 @@ export interface Avatar {
 /** Something built on the zoo grid. x/y is the top-left tile of its footprint. */
 export interface PlacedObject {
   id: string;
-  kind: Exclude<ItemId, 'animal-giraffe' | 'animal-penguin'>;
+  kind: Exclude<ItemId, `animal-${Species}`>;
   x: number;
   y: number;
   /** flowerbed growth, 0 = seeds … 3 = in bloom */

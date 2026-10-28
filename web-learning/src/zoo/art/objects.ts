@@ -30,6 +30,13 @@ export const PEN_ICE_ICON = penIcon(
   '<path d="M46 24 Q60 17 72 25 Q76 36 64 40 Q50 41 45 33 Q43 27 46 24Z" fill="#3f97cc"/><path d="M49 26 Q60 21 69 27 Q71 35 62 37 Q52 37 48 32 Q47 28 49 26Z" fill="#63b7e6"/>' +
   '<path d="M18 52 Q28 48 38 52 Q30 57 18 52Z M24 61 Q34 57 46 61 Q36 66 24 61Z" fill="#ffffff"/>',
 );
+export const PEN_FARM_ICON = penIcon(
+  '#72ad4e',
+  '#b9dd7f',
+  '<path d="M16 36 Q18 22 32 21 Q46 22 47 36 Q32 40 16 36Z" fill="#c9962f"/><path d="M20 33 Q23 24 32 24 Q41 25 43 33 Q32 36 20 33Z" fill="#e2b64a"/><path d="M26 28 Q31 25 37 28 Q32 30 26 28Z" fill="#f2d478"/>' +
+  '<path d="M52 44 H76 Q78 44 78 46 V54 Q78 56 76 56 H52 Q50 56 50 54 V46 Q50 44 52 44Z" fill="#8a5528"/><path d="M54 46 H74 V52 H54Z" fill="#4d9fcf"/>' +
+  '<circle cx="24" cy="58" r="3.4" fill="#fffbef"/><circle cx="24" cy="58" r="1.4" fill="#ffcf3f"/><circle cx="36" cy="62" r="3.4" fill="#fffbef"/><circle cx="36" cy="62" r="1.4" fill="#ffcf3f"/><circle cx="60" cy="64" r="3.4" fill="#fffbef"/><circle cx="60" cy="64" r="1.4" fill="#ffcf3f"/>',
+);
 export const PATH_ICON =
   `<defs>${PAPER_SHADOW}</defs><path d="M10 4 H78 Q84 4 84 10 V78 Q84 84 78 84 H10 Q4 84 4 78 V10 Q4 4 10 4Z" fill="#97cb6b"/>` +
   '<g filter="url(#lift)"><path d="M44 84 V54 Q44 40 58 40 H84" stroke="#caa66c" stroke-width="30" fill="none"/>' +

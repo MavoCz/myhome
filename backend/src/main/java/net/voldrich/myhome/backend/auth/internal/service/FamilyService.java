@@ -8,6 +8,7 @@ import net.voldrich.myhome.backend.auth.internal.dto.AddFamilyMemberRequest;
 import net.voldrich.myhome.backend.auth.internal.dto.FamilyMemberResponse;
 import net.voldrich.myhome.backend.auth.internal.dto.InviteFamilyMemberRequest;
 import net.voldrich.myhome.backend.auth.internal.repository.FamilyMemberRepository;
+import net.voldrich.myhome.backend.auth.internal.repository.RefreshTokenRepository;
 import net.voldrich.myhome.backend.auth.internal.repository.UserRepository;
 import net.voldrich.myhome.backend.auth.internal.security.AuthUserDetails;
 import org.springframework.context.ApplicationEventPublisher;
@@ -24,13 +25,16 @@ public class FamilyService {
 
     private final UserRepository userRepository;
     private final FamilyMemberRepository familyMemberRepository;
+    private final RefreshTokenRepository refreshTokenRepository;
     private final PasswordEncoder passwordEncoder;
     private final ApplicationEventPublisher eventPublisher;
 
     public FamilyService(UserRepository userRepository, FamilyMemberRepository familyMemberRepository,
+                         RefreshTokenRepository refreshTokenRepository,
                          PasswordEncoder passwordEncoder, ApplicationEventPublisher eventPublisher) {
         this.userRepository = userRepository;
         this.familyMemberRepository = familyMemberRepository;
+        this.refreshTokenRepository = refreshTokenRepository;
         this.passwordEncoder = passwordEncoder;
         this.eventPublisher = eventPublisher;
     }
@@ -99,6 +103,16 @@ public class FamilyService {
 
         eventPublisher.publishEvent(new FamilyMemberRemovedEvent(
                 familyId, userId, user.getDisplayName()));
+    }
+
+    /** Sets a new password for a member of the family and signs them out everywhere. */
+    @Transactional
+    public void resetPassword(Long familyId, Long userId, String newPassword) {
+        familyMemberRepository.findByFamilyAndUser(familyId, userId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Family member not found"));
+
+        userRepository.updatePasswordHash(userId, passwordEncoder.encode(newPassword));
+        refreshTokenRepository.revokeAllByUserId(userId);
     }
 
     @Transactional

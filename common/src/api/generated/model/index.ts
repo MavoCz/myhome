@@ -54,6 +54,7 @@ export * from './myZooResponseState';
 export * from './notificationResponse';
 export * from './progressParams';
 export * from './registerRequest';
+export * from './resetPasswordRequest';
 export * from './saveZooRequest';
 export * from './saveZooRequestState';
 export * from './saveZooResponse';

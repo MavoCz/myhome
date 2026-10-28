@@ -4,6 +4,7 @@ import jakarta.validation.Valid;
 import net.voldrich.myhome.backend.auth.internal.dto.AddFamilyMemberRequest;
 import net.voldrich.myhome.backend.auth.internal.dto.FamilyMemberResponse;
 import net.voldrich.myhome.backend.auth.internal.dto.InviteFamilyMemberRequest;
+import net.voldrich.myhome.backend.auth.internal.dto.ResetPasswordRequest;
 import net.voldrich.myhome.backend.auth.internal.dto.UpdateColorRequest;
 import net.voldrich.myhome.backend.auth.internal.dto.UpdateRoleRequest;
 import net.voldrich.myhome.backend.auth.internal.security.AuthUserDetails;
@@ -62,6 +63,16 @@ public class FamilyController {
             @PathVariable Long userId,
             @Valid @RequestBody UpdateRoleRequest request) {
         familyService.updateRole(currentUser.familyId(), userId, request.role(), currentUser.userId());
+        return ResponseEntity.ok().build();
+    }
+
+    @PutMapping("/members/{userId}/password")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Void> resetPassword(
+            @AuthenticationPrincipal AuthUserDetails currentUser,
+            @PathVariable Long userId,
+            @Valid @RequestBody ResetPasswordRequest request) {
+        familyService.resetPassword(currentUser.familyId(), userId, request.newPassword());
         return ResponseEntity.ok().build();
     }
 

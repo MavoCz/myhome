@@ -49,6 +49,7 @@ import type {
   NotificationResponse,
   ProgressParams,
   RegisterRequest,
+  ResetPasswordRequest,
   SaveZooRequest,
   SaveZooResponse,
   SplitConfigRequest,
@@ -362,6 +363,65 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       > => {
 
       const mutationOptions = getUpdateRoleMutationOptions(options);
+
+      return useMutation(mutationOptions);
+    }
+    
+export const resetPassword = (
+    userId: number,
+    resetPasswordRequest: ResetPasswordRequest,
+ options?: SecondParameter<typeof customFetch>,) => {
+      
+      
+      return customFetch<void>(
+      {url: `/api/family/members/${userId}/password`, method: 'PUT',
+      headers: {'Content-Type': 'application/json', },
+      data: resetPasswordRequest
+    },
+      options);
+    }
+  
+
+
+export const getResetPasswordMutationOptions = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof resetPassword>>, TError,{userId: number;data: ResetPasswordRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof resetPassword>>, TError,{userId: number;data: ResetPasswordRequest}, TContext> => {
+
+const mutationKey = ['resetPassword'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof resetPassword>>, {userId: number;data: ResetPasswordRequest}> = (props) => {
+          const {userId,data} = props ?? {};
+
+          return  resetPassword(userId,data,requestOptions)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ResetPasswordMutationResult = NonNullable<Awaited<ReturnType<typeof resetPassword>>>
+    export type ResetPasswordMutationBody = ResetPasswordRequest
+    export type ResetPasswordMutationError = unknown
+
+    export const useResetPassword = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof resetPassword>>, TError,{userId: number;data: ResetPasswordRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof resetPassword>>,
+        TError,
+        {userId: number;data: ResetPasswordRequest},
+        TContext
+      > => {
+
+      const mutationOptions = getResetPasswordMutationOptions(options);
 
       return useMutation(mutationOptions);
     }

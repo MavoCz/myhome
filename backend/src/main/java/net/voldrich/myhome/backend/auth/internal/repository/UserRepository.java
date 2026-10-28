@@ -38,6 +38,13 @@ public class UserRepository {
                 .fetchOne();
     }
 
+    public void updatePasswordHash(Long id, String passwordHash) {
+        dsl.update(USERS)
+                .set(USERS.PASSWORD_HASH, passwordHash)
+                .where(USERS.ID.eq(id))
+                .execute();
+    }
+
     public boolean existsByEmail(String email) {
         return dsl.fetchExists(
                 dsl.selectFrom(USERS).where(USERS.EMAIL.eq(email))

@@ -87,6 +87,40 @@ test.describe('Family Page', () => {
     await expect(authenticatedPage.getByTestId('add-member-dialog')).toBeVisible();
   });
 
+  test('admin can reset a member password', async ({ authenticatedPage, testAuth }) => {
+    const adminApi = await makeAuthApi(testAuth.accessToken ?? '');
+    const email = `pw-reset-${Date.now()}@example.com`;
+    const created = await adminApi.post('/api/family/members', {
+      data: { email, password: 'Password123!', displayName: 'Pw Reset', role: 'CHILD' },
+    });
+    const { userId } = (await created.json()) as { userId: number };
+
+    await authenticatedPage.goto('/family');
+    await authenticatedPage.getByTestId(`family-reset-password-btn-${userId}`).click();
+    await expect(authenticatedPage.getByTestId('reset-password-dialog')).toBeVisible();
+
+    // Too short: the server's message is shown and the dialog stays open
+    await authenticatedPage.getByTestId('reset-password-input').fill('short');
+    await authenticatedPage.getByTestId('reset-password-submit-btn').click();
+    await expect(authenticatedPage.getByTestId('reset-password-dialog')).toBeVisible();
+
+    await authenticatedPage.getByTestId('reset-password-input').fill('BrandNewPass456!');
+    await authenticatedPage.getByTestId('reset-password-submit-btn').click();
+    await expect(authenticatedPage.getByTestId('reset-password-success-alert')).toBeVisible();
+
+    const login = await adminApi.post('/api/auth/login', { data: { email, password: 'BrandNewPass456!' } });
+    expect(login.status()).toBe(200);
+
+    await authenticatedPage.getByTestId('reset-password-close-btn').click();
+    await expect(authenticatedPage.getByTestId('reset-password-dialog')).not.toBeVisible();
+  });
+
+  test('admin cannot reset their own password from the member list', async ({ authenticatedPage, testAuth }) => {
+    await authenticatedPage.goto('/family');
+    await expect(authenticatedPage.getByTestId(`family-member-row-${testAuth.user!.id}`)).toBeVisible();
+    await expect(authenticatedPage.getByTestId(`family-reset-password-btn-${testAuth.user!.id}`)).toHaveCount(0);
+  });
+
   test('admin can change a member role', async ({ authenticatedPage, testAuth }) => {
     const adminApi = await makeAuthApi(testAuth.accessToken ?? '');
     const ts = Date.now();

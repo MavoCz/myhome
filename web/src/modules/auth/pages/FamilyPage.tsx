@@ -25,6 +25,7 @@ import IconButton from '@mui/material/IconButton';
 import PersonAddIcon from '@mui/icons-material/PersonAdd';
 import DeleteIcon from '@mui/icons-material/Delete';
 import KeyIcon from '@mui/icons-material/Key';
+import LockResetIcon from '@mui/icons-material/LockReset';
 import Tooltip from '@mui/material/Tooltip';
 import { useQueryClient } from '@tanstack/react-query';
 import {
@@ -34,6 +35,7 @@ import {
   useRemoveMember,
   useUpdateRole,
   useUpdateColor,
+  useResetPassword,
   getListMembersQueryKey,
 } from '../../../api/generated/openAPIDefinition';
 type FamilyRole = 'ADMIN' | 'PARENT' | 'CHILD';
@@ -60,6 +62,7 @@ export function FamilyPage() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [confirmRemove, setConfirmRemove] = useState<{ userId: number; name: string } | null>(null);
   const [accessMember, setAccessMember] = useState<FamilyMemberResponse | null>(null);
+  const [resetMember, setResetMember] = useState<FamilyMemberResponse | null>(null);
 
   const removeMutation = useRemoveMember({
     mutation: {
@@ -185,6 +188,17 @@ export function FamilyPage() {
                           </Tooltip>
                         )}
                         {!isSelf && (
+                          <Tooltip title="Reset password">
+                            <IconButton
+                              aria-label="Reset password"
+                              onClick={() => setResetMember(member)}
+                              data-testid={`family-reset-password-btn-${member.userId}`}
+                            >
+                              <LockResetIcon />
+                            </IconButton>
+                          </Tooltip>
+                        )}
+                        {!isSelf && (
                           <IconButton
                             color="error"
                             onClick={() => setConfirmRemove({ userId: member.userId!, name: member.displayName ?? '' })}
@@ -213,6 +227,8 @@ export function FamilyPage() {
       />
 
       {isAdmin && <ModuleAccessDialog member={accessMember} onClose={() => setAccessMember(null)} />}
+
+      {isAdmin && <ResetPasswordDialog member={resetMember} onClose={() => setResetMember(null)} />}
 
       <Dialog open={!!confirmRemove} onClose={() => setConfirmRemove(null)} data-testid="remove-confirm-dialog">
         <DialogTitle>Remove Member</DialogTitle>
@@ -360,6 +376,80 @@ function AddMemberDialog({ open, onClose, onSuccess }: { open: boolean; onClose:
         >
           {isPending ? 'Adding...' : tab === 0 ? 'Create Account' : 'Send Invite'}
         </Button>
+      </DialogActions>
+    </Dialog>
+  );
+}
+
+function ResetPasswordDialog({ member, onClose }: { member: FamilyMemberResponse | null; onClose: () => void }) {
+  const [newPassword, setNewPassword] = useState('');
+  const [error, setError] = useState('');
+  const [done, setDone] = useState(false);
+
+  const resetMutation = useResetPassword({
+    mutation: {
+      onSuccess: () => setDone(true),
+      onError: (err: unknown) => {
+        const e = err as { message?: string };
+        setError(e.message || 'Failed to reset password');
+      },
+    },
+  });
+
+  const handleClose = () => {
+    setNewPassword('');
+    setError('');
+    setDone(false);
+    onClose();
+  };
+
+  const handleSubmit = (e: FormEvent) => {
+    e.preventDefault();
+    setError('');
+    if (member?.userId != null) {
+      resetMutation.mutate({ userId: member.userId, data: { newPassword } });
+    }
+  };
+
+  return (
+    <Dialog open={!!member} onClose={handleClose} maxWidth="xs" fullWidth data-testid="reset-password-dialog">
+      <DialogTitle>Reset Password</DialogTitle>
+      <DialogContent>
+        {done ? (
+          <Alert severity="success" data-testid="reset-password-success-alert">
+            Password changed for <strong>{member?.displayName}</strong>. They were signed out on all devices and need to
+            sign in with the new password.
+          </Alert>
+        ) : (
+          <Box component="form" id="reset-password-form" onSubmit={handleSubmit} sx={{ display: 'flex', flexDirection: 'column', gap: 2, pt: 1 }}>
+            <Typography>
+              Choose a new password for <strong>{member?.displayName}</strong> ({member?.email}).
+            </Typography>
+            {error && <Alert severity="error" data-testid="reset-password-error-alert">{error}</Alert>}
+            <PasswordField
+              label="New password"
+              testId="reset-password-input"
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+              helperText="At least 8 characters"
+              required
+            />
+          </Box>
+        )}
+      </DialogContent>
+      <DialogActions>
+        <Button onClick={handleClose} data-testid="reset-password-close-btn">{done ? 'Close' : 'Cancel'}</Button>
+        {!done && (
+          <Button
+            type="submit"
+            form="reset-password-form"
+            variant="contained"
+            disabled={resetMutation.isPending}
+            data-testid="reset-password-submit-btn"
+          >
+            {resetMutation.isPending ? 'Saving...' : 'Reset Password'}
+          </Button>
+        )}
       </DialogActions>
     </Dialog>
   );

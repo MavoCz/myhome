@@ -16,7 +16,7 @@ The auth module provides authentication and authorization for a family-oriented 
 
 | Role | Description |
 |------|-------------|
-| **ADMIN** | Family administrator. Full automatic access to all modules. Can manage family members (add, remove, change roles), invite existing users by email, and grant/revoke module access. |
+| **ADMIN** | Family administrator. Full automatic access to all modules. Can manage family members (add, remove, change roles, reset passwords), invite existing users by email, and grant/revoke module access. |
 | **PARENT** | Standard family member. Bypasses module access checks like an admin (see §6.1); grants recorded for a parent only take effect if the member later becomes a child. Cannot manage members or grants. |
 | **CHILD** | Restricted family member. No automatic module access — requires explicit grants from an admin. Subject to time and schedule restrictions. |
 
@@ -156,6 +156,7 @@ public interface AuthModuleApi {
 | POST | `/api/family/members/invite` | ADMIN | Invite an existing user by email to the family |
 | DELETE | `/api/family/members/{userId}` | ADMIN | Remove a family member |
 | PUT | `/api/family/members/{userId}/role` | ADMIN | Change a member's role |
+| PUT | `/api/family/members/{userId}/password` | ADMIN | Set a new password for a family member |
 
 **Add member** — `POST /api/family/members`
 ```json
@@ -175,10 +176,20 @@ public interface AuthModuleApi {
 { "userId": 3, "email": "existing-user@example.com", "displayName": "Charlie", "role": "PARENT" }
 ```
 
+**Reset password** — `PUT /api/family/members/{userId}/password`
+```json
+// Request
+{ "newPassword": "NewSecret123" }
+
+// Response: 200, empty body
+```
+There is no email-based "forgot password" flow (no mail service, and children may not have a mailbox): an admin chooses the new password and tells the member. Errors: `400` password shorter than 8 characters, `401`/`403` not an admin, `404` the user is not a member of the caller's family (their password is not touched).
+
 **Business rules:**
 - An admin cannot remove themselves from the family
 - An admin cannot change their own role
 - A user can only be invited if they exist and do not already belong to a family
+- Resetting a password revokes all of the member's refresh tokens, so they are signed out on every device (an already issued access token stays valid until it expires, at most 15 minutes). Admins reset other members' passwords only; there is no self-service change yet
 - Removing a member only detaches them from the family; their user account is kept. Adding them again with **Add member** therefore fails with `409` ("A user with this email already exists…"); use **Invite member** to bring them back (they keep their existing password)
 
 **Error responses:** failures raised deliberately by the services carry the reason in the body as `{ "status": 409, "message": "…" }` so the UI can show it. `IllegalArgumentException` maps to `400`; `ResponseStatusException` keeps its own status.
@@ -243,6 +254,10 @@ Family page (`/family`), admins only:
 - Client-side validation: valid until must be after valid from; every window needs at least one day and must end after it starts (windows cannot cross midnight, matching the backend's `start <= now < end` check); timezone must be a known IANA zone.
 - Duplicates are prevented: module/permission combinations the member already has are not offered (and **Grant Access** is disabled once all are granted). Server errors are shown inside the dialog with a status-specific message: `409` (member already has that permission for the module), `404` (the grant no longer exists, e.g. revoked in another window; a failed revoke also reloads the list), `400` (details rejected: member no longer in the family, schedule end not after start, or invalid timezone), `401`/`403`, and `5xx` (server error).
 - Non-admins see no access controls.
+
+### 7.5 Reset Password UI (web)
+
+Family page (`/family`), admins only: every member row except the admin's own has a **Reset password** button (lock icon). It opens a dialog with one visible-toggle password field (the admin picks the password and tells the member, so no retype); **Reset Password** calls `PUT /api/family/members/{userId}/password`. On success the dialog says the member was signed out on all devices; a server rejection (e.g. fewer than 8 characters) is shown in the dialog, which stays open. Non-admins do not see the button.
 
 ## 8. Database Schema
 

@@ -35,6 +35,7 @@ import type {
   NotificationResponse,
   ProgressParams,
   RegisterRequest,
+  ResetPasswordRequest,
   SaveZooRequest,
   SaveZooResponse,
   SplitConfigRequest,
@@ -213,6 +214,41 @@ export const updateRole = async (userId: number,
     headers: { 'Content-Type': 'application/json', ...options?.headers },
     body: JSON.stringify(
       updateRoleRequest,)
+  }
+);}
+
+
+
+export type resetPasswordResponse200 = {
+  data: void
+  status: 200
+}
+    
+export type resetPasswordResponseSuccess = (resetPasswordResponse200) & {
+  headers: Headers;
+};
+;
+
+export type resetPasswordResponse = (resetPasswordResponseSuccess)
+
+export const getResetPasswordUrl = (userId: number,) => {
+
+
+  
+
+  return `/api/family/members/${userId}/password`
+}
+
+export const resetPassword = async (userId: number,
+    resetPasswordRequest: ResetPasswordRequest, options?: RequestInit): Promise<resetPasswordResponse> => {
+  
+  return customFetch<resetPasswordResponse>(getResetPasswordUrl(userId),
+  {      
+    ...options,
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      resetPasswordRequest,)
   }
 );}
 

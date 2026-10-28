@@ -69,11 +69,26 @@ Drive the page with Playwright, not by reading code: open
 `pageerror`s, and look at a screenshot of mid-round and the result screen. `playwright-cli` is not installed here;
 use a small node script importing `playwright-core` from `node_modules/.pnpm/playwright-core@*/` and keep it in the
 scratchpad. Stop the preview server afterwards (`pkill -f "vite preview --port 4173"`).
-Check the content too: read every word list for spelling mistakes and wrong answers; they are written by Claude and
-no teacher has reviewed them. Tell the owner to skim them.
+Check the content too, in this order:
+1. **Spell-check with a dictionary:** `node tools/check-words.mjs [exercise-id ...]` from `web-learning/`. It uses the
+   Czech Hunspell dictionary of LibreOffice (GPL, downloaded into the git-ignored `tmp/dict/` on first use, never
+   committed) through `nspell`. For every item it fills the gap with the right answer and with each wrong option:
+   `ERROR` means the right word is not a word (a typo, a wrong gap such as `o_ekt` becoming "objeekt", the wrong
+   length í/i, or a rare word to look up); `AMBIGUOUS` means a wrong option is a real word too (být/bít, pil/pyl),
+   so the sentence or hint must decide, or the item should go. Fix every ERROR; judge every AMBIGUOUS. The first run
+   on the existing exercises found 24 real mistakes.
+2. **Rules** come from the Internetová jazyková příručka (https://prirucka.ujc.cas.cz/, Ústav pro jazyk český AV ČR):
+   look the rule up in its "Výkladová část" before writing a group's `rule` and `desc`, and write it in our own simple
+   words. Use it **only for rules, never to look up single words**: it is a public service run by a research institute
+   and must not be spammed (it also answers with empty pages when asked too much). Words are checked offline in step 1.
+3. The dictionary cannot tell whether an answer fits the rule (d/t pairs, endings: both forms are words). Read the
+   lists once yourself and tell the owner that no teacher has reviewed them.
+
+Then run the page once in the browser (see above) and rebuild: `node tools/build-choice.mjs && pnpm --filter web-learning build`.
 
 ## 5. Finish
 
-- Do not copy content from third-party sites (e.g. gramar.in); take the exercise idea only.
+- Do not copy content from third-party sites (e.g. gramar.in); take the exercise idea only. Rules come from the
+  Internetová jazyková příručka (see 4), written in our own simple words.
 - Commit and push only when asked; stage files by explicit path.
 - In `/Users/mavo/dev/docs/decisions.md` add a numbered entry (date, why, cost) and say in one line which docs you updated.

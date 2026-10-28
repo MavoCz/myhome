@@ -18,7 +18,7 @@ export default {
   },
   words: [
     ['s', 's', '_balit|spolu~do~kufru _vázat|spolu _jet|dolů _hodit|dolů _klopit|dolů _pojit|spolu'],
-    ['z', 'z', '_menšit|menší _lepšit|lepší _rychlit|rychlejší _drážit|dražší _horšit|horší _krátit|kratší _hubnout|hubenější _kusit|zkouška'],
+    ['z', 'z', '_menšit|menší _lepšit|lepší _rychlit|rychlejší _dražit|dražší _horšit|horší _krátit|kratší _hubnout|hubenější _kusit|zkouška'],
     ['vz', 'vz', '_létnout|nahoru _hlédnout|nahoru _ejít|nahoru _křísit|znovu~k~životu _přímit|nahoru _budit|probudit'],
   ],
 };

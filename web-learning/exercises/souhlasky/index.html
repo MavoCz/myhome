@@ -358,22 +358,22 @@ const add = (group, a, words) => words.split(' ').forEach(t => ITEMS.push({ t: t
 add('hard', 'y', 'h_ena h_drant h_mna h_brid h_nout ch_ba ch_trý ch_tit ch_bět ch_ba k_selý k_nout k_j k_tara k_tka k_vadlo r_ba r_s r_chlý r_tíř r_k r_bník');
 add('hard', 'ý', 'h_bat ch_še k_chat k_vat k_bl r_ma r_že r_sovat r_pat');
 // po ž, š, č, ř, c, j vždy i
-add('soft', 'i', 'ž_rafa ž_la š_roký š_ška š_t č_stý č_slo č_nský ř_dič ř_kat c_rkus c_bule c_tron j_nak j_nde j_skra j_ný');
-add('soft', 'í', 'ž_vot ž_zeň š_tí č_st ř_zek ř_pa c_zí j_dlo j_zda j_st');
+add('soft', 'i', 'ž_rafa ž_la š_roký š_ška š_t č_stý ž_vot š_tí c_zí ř_dič c_rkus c_bule c_tron j_nak j_nde j_skra j_ný');
+add('soft', 'í', 'č_slo č_nský ř_kat ž_zeň č_st ř_zek ř_pa j_dlo j_zda j_st');
 // po d, t, n: tvrdé y
-add('dtn', 'y', 'd_namit d_namo t_č t_kev t_gr t_ran t_rannosaurus n_lon n_ní');
+add('dtn', 'y', 'd_namit d_namo t_č t_kev t_gr t_ran n_lon n_ní');
 add('dtn', 'ý', 'd_m d_ně t_den t_rat n_t');
 // po d, t, n: měkké i
-add('dtn', 'i', 'd_nosaurus d_voký d_vadlo t_cho t_sk t_chý t_tul n_kdo n_jak n_tro n_va');
-add('dtn', 'í', 'd_tě d_vka d_vat~se t_ha n_zký n_žina n_tě');
+add('dtn', 'i', 'd_nosaurus d_voký d_vadlo t_cho t_sk t_chý t_tul n_kdo n_jak n_tro n_va n_tě');
+add('dtn', 'í', 'd_tě d_vka d_vat~se t_ha n_zký n_žina');
 
 // koncovky přídavných jmen (v dvojici se jménem, aby bylo poznat rod)
 add('end', 'ý', 'dřevěn_~vláček hork_~čaj druh_~den mlad_~pes nov_~dům velk_~strom');
 add('end', 'í', 'jarn_~den ciz_~jazyk letn_~den zimn_~bunda rann_~ptáče domác_~úkol');
 
 // vyjmenovaná slova a slova příbuzná (y), slova podobná bez y (i)
-add('vyj', 'y', 'b_dlet ob_vatel b_strý sl_šet pol_kat l_že m_š m_slit hm_z p_tel kop_to s_n s_kora v_soký v_dra zv_kat');
-add('vyj', 'ý', 's_r ml_n pl_tvat l_ko m_t p_cha s_ček v_t žv_kat');
+add('vyj', 'y', 'b_dlet ob_vatel b_strý sl_šet pol_kat l_že m_š m_slit hm_z p_tel kop_to s_n v_soký v_dra zv_kat');
+add('vyj', 'ý', 's_r s_kora ml_n pl_tvat l_ko m_t p_cha s_ček v_t žv_kat');
 add('vyj', 'i', 'b_tva l_st m_lý p_vo s_lnice v_dět z_ma m_nuta');
 add('vyj', 'í', 'kl_č l_pa v_tr');
 

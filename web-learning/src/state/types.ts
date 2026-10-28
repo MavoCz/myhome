@@ -60,7 +60,7 @@ export interface Profile extends ZooDoc {
 }
 
 /** exercises that report one finished round (10 items) */
-export type RoundExerciseId = 'vyjmenovana' | 'souhlasky' | 'parove' | 'bje' | 'koncovky' | 'uu' | 'predpony' | 'nasobilka';
+export type RoundExerciseId = 'vyjmenovana' | 'souhlasky' | 'parove' | 'bje' | 'koncovky' | 'uu' | 'predpony' | 'slovnidruhy' | 'nasobilka';
 
 export type ExerciseEvent =
   | { exercise: 'scitani'; kind: 'problem'; mistakes: number; carry: boolean }

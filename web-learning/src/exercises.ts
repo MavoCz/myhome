@@ -2,7 +2,7 @@ import type { ExerciseEvent, RoundExerciseId } from './state/types';
 
 export type ExerciseId = 'scitani' | RoundExerciseId;
 
-const ROUND_EXERCISES: readonly string[] = ['vyjmenovana', 'souhlasky', 'parove', 'bje', 'koncovky', 'uu', 'predpony', 'nasobilka'];
+const ROUND_EXERCISES: readonly string[] = ['vyjmenovana', 'souhlasky', 'parove', 'bje', 'koncovky', 'uu', 'predpony', 'slovnidruhy', 'nasobilka'];
 
 export interface ExerciseInfo {
   id: ExerciseId;
@@ -21,6 +21,7 @@ export const EXERCISES: ExerciseInfo[] = [
   { id: 'koncovky', title: 'i/y v koncovkách', subject: 'Čeština', desc: 'Podstatná jména, přídavná jména, slovesa', src: 'exercises/koncovky/index.html' },
   { id: 'uu', title: 'Ú nebo Ů', subject: 'Čeština', desc: 'ú na začátku, ů uprostřed slova', src: 'exercises/uu/index.html' },
   { id: 'predpony', title: 's, z, vz v předponách', subject: 'Čeština', desc: 'sbalit, zmenšit, vzlétnout', src: 'exercises/predpony/index.html' },
+  { id: 'slovnidruhy', title: 'Slovní druhy', subject: 'Čeština', desc: 'Podstatná jména, slovesa, předložky, spojky…', src: 'exercises/slovnidruhy/index.html' },
   { id: 'nasobilka', title: 'Násobilka', subject: 'Matematika', desc: 'Násobení a dělení do 100', src: 'exercises/nasobilka/index.html' },
 ];
 

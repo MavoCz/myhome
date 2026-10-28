@@ -36,6 +36,7 @@ const EXERCISE_NAMES: Record<string, string> = {
   koncovky: 'i/y v koncovkách',
   uu: 'Ú nebo Ů',
   predpony: 's, z, vz v předponách',
+  slovnidruhy: 'Slovní druhy',
   nasobilka: 'Násobilka',
 };
 

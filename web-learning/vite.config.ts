@@ -30,6 +30,7 @@ export default defineConfig({
         koncovky: resolve(root, 'exercises/koncovky/index.html'),
         uu: resolve(root, 'exercises/uu/index.html'),
         predpony: resolve(root, 'exercises/predpony/index.html'),
+        slovnidruhy: resolve(root, 'exercises/slovnidruhy/index.html'),
         nasobilka: resolve(root, 'exercises/nasobilka/index.html'),
       },
     },

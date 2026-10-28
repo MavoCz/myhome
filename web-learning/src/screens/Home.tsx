@@ -15,6 +15,7 @@ const WORD_COVERS: Record<string, { word: [string, string, string]; chips: strin
   koncovky: { word: ['mlad', 'ý', ''], chips: ['ý', 'í'] },
   uu: { word: ['', 'ú', 'kol'], chips: ['ú', 'ů'] },
   predpony: { word: ['', 'vz', 'létnout'], chips: ['s', 'z', 'vz'] },
+  slovnidruhy: { word: ['', 'pes', ' štěká'], chips: ['jméno', 'sloveso'] },
 };
 
 export function ExerciseCover({ id }: { id: string }) {

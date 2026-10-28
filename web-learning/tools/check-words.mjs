@@ -37,7 +37,9 @@ function collect(only) {
     const m = html.match(/const CFG = (\{.*\});\n/);
     if (m) {
       const cfg = JSON.parse(m[1]);
-      for (const it of cfg.items) out.push({ src: id, t: it.t, a: it.a, opts: cfg.groups[it.g].opts, hint: it.h });
+      // sentence pages: every word of the sentence must be a word; there is no gap to fill
+      for (const it of cfg.items.filter(i => !i.t.includes('_'))) out.push({ src: id, sentence: it.t.replace(/[\[\]]/g, '') });
+      for (const it of cfg.items.filter(i => i.t.includes('_'))) out.push({ src: id, t: it.t, a: it.a, opts: cfg.groups[it.g].opts, hint: it.h });
     } else if (/<script id="data">/.test(html) && id !== 'scitani' && id !== 'nasobilka') {
       const items = new Function(`${html.match(/<script id="data">([\s\S]*?)<\/script>/)[1]}\n;return ITEMS;`)();
       // i/y pages: the alternative is the same length with the other letter
@@ -53,6 +55,12 @@ const sp = await dictionary();
 const items = collect(process.argv.slice(2));
 const errors = [], ambiguous = [], hintErrors = new Set();
 for (const it of items) {
+  if (it.sentence) {
+    for (const w of it.sentence.split(/\s+/).map(x => x.replace(/[.,?!]/g, '')).filter(Boolean)) {
+      if (!sp.correct(w) && !sp.correct(w.toLowerCase())) errors.push(`${w}  (${it.src}: ${it.sentence})`);
+    }
+    continue;
+  }
   const right = token(it.t, it.a);
   if (!sp.correct(right) && !sp.correct(right.toLowerCase())) errors.push(`${right}  (${it.src})`);
   for (const o of it.opts.filter(x => x !== it.a)) {

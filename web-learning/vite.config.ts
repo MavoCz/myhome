@@ -17,6 +17,8 @@ export default defineConfig({
   build: {
     outDir: resolve(root, '../backend/src/main/resources/learning-static'),
     emptyOutDir: true,
+    // older iPads: without this the zoo chunk keeps class fields and the CSS keeps `inset`
+    target: 'safari13',
     // Phaser alone is ~1.2 MB; it sits in its own lazily loaded chunk
     chunkSizeWarningLimit: 1600,
     rollupOptions: {

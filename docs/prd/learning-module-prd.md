@@ -110,4 +110,5 @@ Migration: `V7__Create_learning_tables.sql`.
 
 - `pnpm --filter web-learning build` writes to `backend/src/main/resources/learning-static/`, outside `static/` because the web build empties that folder. `LearningResourceConfig` maps `/learning/**` to it and `SpaForwardingController` serves `/learning/` (and redirects `/learning`).
 - Exercises run in same-origin iframes, so `SecurityConfig` sends `X-Frame-Options: SAMEORIGIN`.
+- Older iPads are supported: the build targets Safari 13 and the zoo keeps its per-frame drawing small. If the zoo cannot load its pictures, the child sees a message instead of an endless loading screen.
 - Development: `pnpm dev:learning` (port 5175, `--host` for a tablet on the same Wi-Fi). The web dev server proxies `/learning/` to the backend.

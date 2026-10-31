@@ -10,7 +10,7 @@ import { PICTURE_FRAME, plantOf, type CanvasMap } from '../textures';
 import { COLS, GATE, ROWS, SPAWN, TILE, ZooGrid, footprintAt, tileAt, tileCenter, type Tile } from '../world';
 import { AnimalView, type Rect } from './animal';
 import { PlayerView } from './player';
-import { blob, layer, makePaperTexture, sheet } from './paper';
+import { blob, disc, layer, makePaperTexture, pill, sheet } from './paper';
 import { hearts, picture, pop } from './rig';
 
 type Kind = PlacedObject['kind'];
@@ -215,7 +215,7 @@ export class ZooScene extends Phaser.Scene {
         const n = Math.max(1, Math.ceil(a.distance(b) / 8));
         for (let i = 0; i <= n; i++) {
           const x = a.x + ((b.x - a.x) * i) / n, y = a.y + ((b.y - a.y) * i) / n;
-          g.fillCircle(x, y + dy, r + (hash(`${Math.round(x)},${Math.round(y)},${r}`) % 7) / 2);
+          disc(g, x, y + dy, r + (hash(`${Math.round(x)},${Math.round(y)},${r}`) % 7) / 2);
         }
       }
     };
@@ -337,7 +337,7 @@ export class ZooScene extends Phaser.Scene {
       for (let i = 0; i < 12; i++) {
         const x = px + rnd.between(30, w - 30), y = py + rnd.between(h * 0.55, h - 30);
         layer(floor, blob(rnd, x, y, 4.5, 4, 0.15), 0xfffbef, 1.5, shade);
-        floor.fillStyle(0xffcf3f).fillCircle(x, y, 1.8);
+        disc(floor.fillStyle(0xffcf3f), x, y, 1.8);
       }
     } else {
       pond(px + w * 0.76, py + h * 0.7, 42, 18);
@@ -355,14 +355,14 @@ export class ZooScene extends Phaser.Scene {
     const [postDark, postLight, railDark, railLight] = ice ? [0x5f7891, 0x8aa3ba, 0x8fa8be, 0xc2d6e6] : [0x6e4420, 0x9a6634, 0xa66a33, 0xcf9254];
     const rail = (g: Phaser.GameObjects.Graphics, x: number, y: number, len: number, vertical = false) => {
       const [rw, rh] = vertical ? [6, len] : [len, 6];
-      g.fillStyle(0x1e3c14, 0.16).fillRoundedRect(x, y + 3, rw, rh, 3);
-      g.fillStyle(railDark).fillRoundedRect(x, y, rw, rh, 3);
-      g.fillStyle(railLight).fillRoundedRect(x, y - 1, rw - (vertical ? 2 : 0), rh - (vertical ? 0 : 2), 3);
+      pill(g.fillStyle(0x1e3c14, 0.16), x, y + 3, rw, rh, 3);
+      pill(g.fillStyle(railDark), x, y, rw, rh, 3);
+      pill(g.fillStyle(railLight), x, y - 1, rw - (vertical ? 2 : 0), rh - (vertical ? 0 : 2), 3);
     };
     const post = (g: Phaser.GameObjects.Graphics, x: number, y: number, height: number) => {
-      g.fillStyle(0x1e3c14, 0.16).fillRoundedRect(x - 5, y + 3, 10, height, 5);
-      g.fillStyle(postDark).fillRoundedRect(x - 5, y, 10, height, 5);
-      g.fillStyle(postLight).fillRoundedRect(x - 5, y, 7, height - 2, { tl: 5, tr: 3, bl: 5, br: 3 });
+      pill(g.fillStyle(0x1e3c14, 0.16), x - 5, y + 3, 10, height, 5);
+      pill(g.fillStyle(postDark), x - 5, y, 10, height, 5);
+      pill(g.fillStyle(postLight), x - 5, y, 7, height - 2, [5, 3, 3, 5]);
     };
     const posts = (g: Phaser.GameObjects.Graphics, y: number, height: number) => {
       for (let i = 0; i <= it.w; i++) post(g, Phaser.Math.Clamp(px + i * TILE, px + 6, px + w - 6), y, height);

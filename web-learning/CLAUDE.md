@@ -53,6 +53,8 @@ React + TypeScript + Vite app (`src/`). Each child is a CHILD account in the myh
 - **The scene's source of truth is the Zustand store.** The scene subscribes and rebuilds the changed parts in `sync()`; scene code changes data only through store actions (`build`, `addAnimal`, `feed`, `water`…), never by mutating views.
 - **A new kind of change needs an `Op`.** Add it to `Op` and `applyOp`, keep `applyOp` pure (no `Date.now()`, no random ids inside), and make it skip quietly when it no longer fits (it may be replayed on a newer copy).
 - **Bump `schema` in `ZooDoc`** when the stored shape changes incompatibly, and migrate old documents when loading them.
+- **Keep the zoo light for an old iPad.** A Phaser `Graphics` is triangulated again on every frame and each arc has 100 points, so anything that stays on screen uses `disc()` and `pill()` from `game/paper.ts`, not `fillCircle` or `fillRoundedRect`. A zoo should stay near 25 000 triangles per frame.
+- **`build.target` is `safari13` on purpose** (`vite.config.ts`). Vite's default leaves class fields in the zoo chunk and `inset` in the CSS, so an older iPad can open the home screen but not the zoo.
 - **`sync()` runs during `create()`**, before Phaser marks the scene active, so guard with the `stopped` flag, not `sys.isActive()` (that bug hid all objects once).
 
 ## Art and animation
@@ -93,7 +95,7 @@ Full pipeline, prompt template, asset log and findings: `docs/art-pipeline.md`. 
 
 ## Testing in a browser
 
-`playwright-cli` is installed. Typical loop: `pnpm --filter web-learning build`, start `pnpm --filter web-learning exec vite preview --port 4173 --strictPort` as a background task, `playwright-cli open http://localhost:4173/learning/`, act, `playwright-cli screenshot --filename=…`, then read the image. Gotchas:
+`playwright-cli` is not installed on the hosting Mac; there, drive the build with a small Playwright script using `@playwright/test` from `e2e/` (Chromium and WebKit are installed). Typical loop elsewhere: `pnpm --filter web-learning build`, start `pnpm --filter web-learning exec vite preview --port 4173 --strictPort` as a background task, `playwright-cli open http://localhost:4173/learning/`, act, `playwright-cli screenshot --filename=…`, then read the image. Gotchas:
 
 - `playwright-cli eval` takes a **function expression** (`"() => …"` or `"async () => …"`), not an IIFE; an IIFE runs its side effects and then reports an error.
 - The canvas is driven with `playwright-cli mousemove x y` + `mousedown` + `mouseup` (a tap). Pinch zoom cannot be tested this way.

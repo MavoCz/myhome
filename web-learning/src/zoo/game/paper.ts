@@ -46,6 +46,34 @@ export function sheet(rnd: Rnd, x: number, y: number, w: number, h: number, r: n
   });
 }
 
+const DISC = Array.from({ length: 16 }, (_, i) => (i / 16) * Math.PI * 2);
+
+/**
+ * Phaser keeps a Graphics as a list of commands and triangulates it again on every frame, and it
+ * draws each arc with 100 points. Shapes that stay on screen therefore use these two instead of
+ * fillCircle and fillRoundedRect, otherwise paths and fences stall an older tablet.
+ */
+export function disc(g: Gfx, x: number, y: number, r: number) {
+  g.fillPoints(DISC.map(a => new Phaser.Math.Vector2(x + Math.cos(a) * r, y + Math.sin(a) * r)), true);
+}
+
+/** A rounded rectangle; `r` is one radius or [top left, top right, bottom right, bottom left]. */
+export function pill(g: Gfx, x: number, y: number, w: number, h: number, r: number | [number, number, number, number]) {
+  const max = Math.min(w, h) / 2;
+  const [tl, tr, br, bl] = (typeof r === 'number' ? [r, r, r, r] : r).map(v => Math.min(v, max));
+  const corners = [
+    [x + w - tr, y + tr, tr, -Math.PI / 2], [x + w - br, y + h - br, br, 0], [x + bl, y + h - bl, bl, Math.PI / 2], [x + tl, y + tl, tl, Math.PI],
+  ] as const;
+  const outline: Points = [];
+  for (const [cx, cy, radius, start] of corners) {
+    for (let i = 0; i <= 3; i++) {
+      const a = start + (i / 3) * (Math.PI / 2);
+      outline.push(new Phaser.Math.Vector2(cx + Math.cos(a) * radius, cy + Math.sin(a) * radius));
+    }
+  }
+  g.fillPoints(outline, true);
+}
+
 /** Fill a cut-out shape with the soft shadow a paper layer casts on the one below. */
 export function layer(g: Gfx, pts: Points, color: number, lift = 3, shadow = 0x1e3c14) {
   if (lift) g.fillStyle(shadow, 0.16).fillPoints(pts.map(p => new Phaser.Math.Vector2(p.x, p.y + lift)), true);

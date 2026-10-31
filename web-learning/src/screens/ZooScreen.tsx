@@ -15,6 +15,7 @@ export function ZooScreen({ hostId, go }: { hostId: string; go: (r: Route) => vo
   const ctl = useMemo(() => new ZooController(hostId, visitorId), [hostId, visitorId]);
   const stage = useRef<HTMLDivElement>(null);
   const [loading, setLoading] = useState(true);
+  const [failed, setFailed] = useState(false);
   const [mode, setMode] = useState(ctl.mode);
   const [tool, setTool] = useState<Tool>(ctl.tool);
   const [category, setCategory] = useState<Category>('zvirata');
@@ -34,6 +35,9 @@ export function ZooScreen({ hostId, go }: { hostId: string; go: (r: Route) => vo
       if (cancelled) return;
       game = createZooGame(el, ctl, canvases);
       setLoading(false);
+    }).catch(e => {
+      console.error(e);
+      if (!cancelled) setFailed(true);
     });
     return () => {
       cancelled = true;
@@ -58,7 +62,7 @@ export function ZooScreen({ hostId, go }: { hostId: string; go: (r: Route) => vo
   return (
     <div className="zoo-screen">
       <div className="zoo-stage" ref={stage} />
-      {loading && <div className="zoo-loading">Otevírám zoo…</div>}
+      {loading && <div className="zoo-loading">{failed ? 'Zoo se nepodařilo otevřít. Zkus to znovu.' : 'Otevírám zoo…'}</div>}
 
       <div className="zoo-top">
         <BackButton onClick={() => go({ name: 'home' })} />

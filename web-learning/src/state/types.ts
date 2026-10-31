@@ -65,5 +65,5 @@ export interface Profile extends ZooDoc {
 export type RoundExerciseId = 'vyjmenovana' | 'souhlasky' | 'parove' | 'bje' | 'koncovky' | 'uu' | 'predpony' | 'slovnidruhy' | 'nasobilka';
 
 export type ExerciseEvent =
-  | { exercise: 'scitani'; kind: 'problem'; mistakes: number; carry: boolean }
+  | { exercise: 'scitani' | 'odcitani'; kind: 'problem'; mistakes: number; carry: boolean }
   | { exercise: RoundExerciseId; kind: 'round'; correct: number; total: number; retry: boolean };

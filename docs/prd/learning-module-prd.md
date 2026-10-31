@@ -2,7 +2,7 @@
 
 ## 1. Overview
 
-Školní zoo is the kids' learning app (`web-learning/`): short school exercises (column addition, Czech "vyjmenovaná slova", soft and hard i/y after consonants, paired consonants, bě/bje, endings, ú/ů, prefixes s-/z-/vz-, parts of speech, multiplication table) on a tablet. Finished work earns coins ("bodíky"), and coins buy enclosures, animals and decorations in a walkable zoo. The `learning` backend module connects the app to myhome: every child is a CHILD member of the family, their zoo is stored on the server, and parents see progress and can give bonus coins from the myhome web app.
+Školní zoo is the kids' learning app (`web-learning/`): short school exercises (column addition and subtraction, Czech "vyjmenovaná slova", soft and hard i/y after consonants, paired consonants, bě/bje, endings, ú/ů, prefixes s-/z-/vz-, parts of speech, multiplication table) on a tablet. Finished work earns coins ("bodíky"), and coins buy enclosures, animals and decorations in a walkable zoo. The `learning` backend module connects the app to myhome: every child is a CHILD member of the family, their zoo is stored on the server, and parents see progress and can give bonus coins from the myhome web app.
 
 The kids' app is a separate Vite build served by the backend at `/learning/`. It has its own Czech, tablet-first UI and does not use MUI. The parents' overview is a regular module page in `web/` at `/learning-progress`.
 

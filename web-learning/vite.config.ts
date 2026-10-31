@@ -23,6 +23,7 @@ export default defineConfig({
       input: {
         main: resolve(root, 'index.html'),
         scitani: resolve(root, 'exercises/scitani/index.html'),
+        odcitani: resolve(root, 'exercises/odcitani/index.html'),
         vyjmenovana: resolve(root, 'exercises/vyjmenovana/index.html'),
         souhlasky: resolve(root, 'exercises/souhlasky/index.html'),
         parove: resolve(root, 'exercises/parove/index.html'),

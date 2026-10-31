@@ -57,11 +57,17 @@ chainsaws), not an exercise site. Claims such as "most used" or "more gamificati
 4. ✅ done (`uu`, `predpony`). **Ů/Ú** and **s/z in prefixes**: short, rule-based.
 5. **Exceptions article idea** (rizoto, princ, ski): a "výjimky" group in `souhlasky` for hard consonant + soft i.
 6. ✅ multiplication table done (`nasobilka`); the rest is open. **Maths**: matika.in grade 2 lists multiplication tables (Malá násobilka), pyramids, triangles, "hadi" (snake sums),
-   neighbours, clock reading ("Kolik je hodin?"), word problems. Only column addition exists today. Multiplication
+   neighbours, clock reading ("Kolik je hodin?"), word problems. Column addition and subtraction exist today. Multiplication
    table is the obvious next one.
 7. **Mix modes**: a summary mode across groups and a "choose the length yourself" mode are done in `souhlasky`.
 8. **Story-themed rounds** (mojecestina): text with several gaps instead of single words; not done yet.
 9. **Mistake pairs** (pravopisne.cz): a "which spelling is right" two-button exercise.
+
+## Column subtraction methods (checked 2026-10-31)
+
+Czech sources differ in how they handle a too-small top digit: matika.in counts up from the bottom digit and adds the
+1 to the next bottom digit (used in `odcitani`), umimematiku.cz describes borrowing a ten and subtracting 1 more in the
+next column, diktatyapriklady.cz adds 10 to the top digit. Ask which one the children's school uses before changing it.
 
 ## Not worth doing now
 

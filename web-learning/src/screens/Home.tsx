@@ -31,6 +31,17 @@ export function ExerciseCover({ id }: { id: string }) {
       </div>
     );
   }
+  if (id === 'odcitani') {
+    return (
+      <div className="cover math" aria-hidden="true">
+        <div className="sum wide">
+          <span /><span className="a">5</span><span className="a">3</span><span className="a hl">2</span>
+          <span>−</span><span className="b">2</span><span className="b">7</span><span className="b hl">8</span>
+          <span className="r" /><span className="r">2</span><span className="r">5</span><span className="r hl">4</span>
+        </div>
+      </div>
+    );
+  }
   if (id === 'nasobilka') {
     return (
       <div className="cover math" aria-hidden="true">

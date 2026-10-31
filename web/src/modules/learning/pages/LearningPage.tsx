@@ -29,6 +29,7 @@ const DAYS = 14;
 const TIMEZONE = Intl.DateTimeFormat().resolvedOptions().timeZone;
 const EXERCISE_NAMES: Record<string, string> = {
   scitani: 'Sčítání pod sebou',
+  odcitani: 'Odčítání pod sebou',
   vyjmenovana: 'Vyjmenovaná slova',
   souhlasky: 'Měkké a tvrdé i/y',
   parove: 'Párové souhlásky',

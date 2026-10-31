@@ -97,7 +97,7 @@ Full pipeline, prompt template, asset log and findings: `docs/art-pipeline.md`. 
 
 - `playwright-cli eval` takes a **function expression** (`"() => …"` or `"async () => …"`), not an IIFE; an IIFE runs its side effects and then reports an error.
 - The canvas is driven with `playwright-cli mousemove x y` + `mousedown` + `mouseup` (a tap). Pinch zoom cannot be tested this way.
-- Exercises can be solved from the parent page via `document.querySelector('iframe').contentDocument` and dispatched `keydown` events (digits for sčítání, `i`/`y`/`Enter` for vyjmenovaná slova).
+- Exercises can be solved from the parent page via `document.querySelector('iframe').contentDocument` and dispatched `keydown` events (digits for sčítání and odčítání, `i`/`y`/`Enter` for vyjmenovaná slova).
 - The app needs the backend: run it (`./gradlew bootRun` in `backend/`) and use `pnpm dev:learning`, or test the built app at `http://localhost:8080/learning/`. Create a family, add CHILD members and grant them the `learning` module (Family page or the API).
 - To test shopping, give the child coins with `POST /api/learning/grants` as a parent and reload.
 - Stop the preview server with TaskStop when done.

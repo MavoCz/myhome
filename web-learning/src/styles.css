@@ -179,6 +179,7 @@ section { display: flex; flex-direction: column; gap: 14px; }
 .book-title { font-size: 1.6rem; font-weight: 800; line-height: 1.1; }
 .book-desc { color: var(--muted); font-size: 1.02rem; }
 .sum { display: grid; grid-template-columns: repeat(3, 38px); grid-template-rows: 20px 40px 40px 40px; font-family: var(--font-hand); font-size: 36px; line-height: 1; text-align: center; }
+.sum.wide { grid-template-columns: repeat(4, 38px); grid-template-rows: 40px 40px 40px; }
 .sum span { display: grid; place-items: center; }
 .sum .c { font-size: 20px; color: var(--carry); }
 .sum .a { color: var(--accent); }

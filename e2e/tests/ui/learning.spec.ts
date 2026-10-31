@@ -114,6 +114,29 @@ test.describe('Školní zoo (kids app)', () => {
     await expect(page.getByTestId('learning-login-error')).toHaveText('Tohle je účet rodiče. Zoo mají jen děti.');
   });
 
+  test('a child solves a subtraction problem with a carry on the real page and earns coins', async ({ page, testAuth }) => {
+    const child = await addChild(testAuth, 'Ema');
+    await page.goto('/learning/');
+    await startZoo(page, child);
+
+    await page.getByTestId('home-exercise-btn-odcitani').click();
+    const frame = page.frameLocator('iframe');
+    await frame.getByRole('radio', { name: 'S přechodem' }).click();
+    const number = async (row: string) =>
+      Number((await frame.locator(`.d.${row}`).allTextContents()).reverse().join(''));
+    const answer = String((await number('a')) - (await number('b')));
+
+    for (const [i, digit] of [...answer].reverse().entries()) {
+      await expect(frame.locator(`#res-${i}.active`)).toBeVisible();
+      await frame.getByRole('button', { name: digit, exact: true }).click();
+    }
+
+    await expect(page.getByText('Příklad bez chyby')).toBeVisible();
+    await page.getByRole('button', { name: /domů/i }).click();
+    // 40 to start + 3 for the problem + 5 daily bonus
+    await expect(page.getByTestId('home-wallet')).toHaveText('48');
+  });
+
   test('coins earned in an exercise are saved on the server and show up on another tablet', async ({
     page,
     browser,

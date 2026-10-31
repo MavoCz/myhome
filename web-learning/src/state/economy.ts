@@ -17,7 +17,7 @@ export interface Reward {
 
 /** Coins for one finished piece of work. Effort counts, speed does not. */
 export function rewardFor(e: ExerciseEvent): Reward {
-  if (e.exercise === 'scitani') {
+  if (e.kind === 'problem') {
     let coins = 1;
     if (e.mistakes === 0) coins += 1;
     if (e.carry) coins += 1;

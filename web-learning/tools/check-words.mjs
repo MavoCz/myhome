@@ -40,7 +40,7 @@ function collect(only) {
       // sentence pages: every word of the sentence must be a word; there is no gap to fill
       for (const it of cfg.items.filter(i => !i.t.includes('_'))) out.push({ src: id, sentence: it.t.replace(/[\[\]]/g, '') });
       for (const it of cfg.items.filter(i => i.t.includes('_'))) out.push({ src: id, t: it.t, a: it.a, opts: cfg.groups[it.g].opts, hint: it.h });
-    } else if (/<script id="data">/.test(html) && id !== 'scitani' && id !== 'nasobilka') {
+    } else if (/<script id="data">/.test(html) && id !== 'scitani' && id !== 'odcitani' && id !== 'nasobilka') {
       const items = new Function(`${html.match(/<script id="data">([\s\S]*?)<\/script>/)[1]}\n;return ITEMS;`)();
       // i/y pages: the alternative is the same length with the other letter
       const flip = { i: 'y', y: 'i', í: 'ý', ý: 'í' };

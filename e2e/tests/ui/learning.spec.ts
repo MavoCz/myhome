@@ -211,6 +211,49 @@ test.describe('Školní zoo (kids app)', () => {
     await expect(page.getByText('Bonus od rodičů: za úkoly')).toBeVisible();
     await expect(page.getByTestId('home-wallet')).toHaveText('55');
   });
+
+  test('an elephant moves in with the giraffe in the savanna and eats salad', async ({ page, testAuth }) => {
+    const child = await addChild(testAuth, 'Ema');
+    await page.goto('/learning/');
+    await startZoo(page, child);
+    await expect.poll(async () => (await serverZoo(child)).version).toBe(1);
+    const parentApi = await backend(testAuth.accessToken);
+    await parentApi.post('/api/learning/grants', { data: { userId: child.userId, amount: 60, note: 'na slona' } });
+    await parentApi.dispose();
+    await page.reload();
+    await expect(page.getByTestId('home-wallet')).toHaveText('100');
+
+    await page.getByTestId('home-my-zoo-btn').click();
+    await expect(page.locator('.zoo-loading')).toBeHidden({ timeout: 20_000 });
+    const tapPen = () => page.mouse.click(1000, 300);
+
+    await page.getByRole('radio', { name: 'Stavění' }).click();
+    await page.getByRole('tab', { name: 'Výběhy a cesty' }).click();
+    await page.getByRole('button', { name: /Výběh savana/ }).click();
+    await expect(page.locator('.shop-hint')).toContainText('Pro žirafy a slony');
+    await tapPen();
+
+    await page.getByRole('tab', { name: 'Zvířata' }).click();
+    await page.getByRole('button', { name: /Slon/ }).click();
+    await expect(page.locator('.shop-hint')).toContainText('Bydlí ve výběhu savana. Má rád salát.');
+    await tapPen();
+
+    // feed it while it is alone: a tap feeds whichever animal is under the finger, and they wander
+    await page.getByRole('radio', { name: 'Procházka' }).click();
+    await tapPen();
+    await expect(page.getByText('Slon si pochutnává.')).toBeVisible({ timeout: 20_000 });
+    await tapPen();
+    await expect(page.getByText('Slon už je najedený. Zkus to zase později.')).toBeVisible({ timeout: 20_000 });
+
+    await page.getByRole('radio', { name: 'Stavění' }).click();
+    await page.getByRole('button', { name: /Žirafa/ }).click();
+    await tapPen();
+    await expect
+      .poll(async () => ((await serverZoo(child)).state as { animals: { species: string }[] }).animals.map(a => a.species).sort())
+      .toEqual(['elephant', 'giraffe']);
+    const { animals } = (await serverZoo(child)).state as { animals: { penId: string }[] };
+    expect(animals[0].penId).toBe(animals[1].penId);
+  });
 });
 
 test.describe('Learning page (parents)', () => {

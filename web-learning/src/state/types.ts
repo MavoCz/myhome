@@ -1,4 +1,4 @@
-export type Species = 'giraffe' | 'penguin' | 'rabbit';
+export type Species = 'giraffe' | 'penguin' | 'rabbit' | 'elephant';
 export type Biome = 'savana' | 'ice' | 'farm';
 
 export type ItemId =
@@ -13,7 +13,8 @@ export type ItemId =
   | 'fountain'
   | 'animal-giraffe'
   | 'animal-penguin'
-  | 'animal-rabbit';
+  | 'animal-rabbit'
+  | 'animal-elephant';
 
 export interface Avatar {
   hair: string;

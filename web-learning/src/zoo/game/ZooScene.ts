@@ -34,7 +34,7 @@ interface Bubble {
 
 const PROPS: Partial<Record<Kind, PropName>> = { tree: 'tree', bush: 'bush', bench: 'bench', fountain: 'fountain' };
 
-const FED_WORD: Record<Species, string> = { giraffe: 'najedená', penguin: 'najedený', rabbit: 'najedený' };
+const FED_WORD: Record<Species, string> = { giraffe: 'najedená', penguin: 'najedený', rabbit: 'najedený', elephant: 'najedený' };
 const BUBBLE_DEPTH = 1e6 - 2;
 /** need bubbles, in world pixels */
 const BUBBLE_SIZE = 44;
@@ -394,7 +394,7 @@ export class ZooScene extends Phaser.Scene {
   private penArea(pen: PlacedObject, species: Species): Rect {
     const it = item(pen.kind);
     const px = pen.x * TILE, py = pen.y * TILE, w = it.w * TILE, h = it.h * TILE;
-    const mx = species === 'giraffe' ? 80 : 44;
+    const mx = species === 'giraffe' ? 80 : species === 'elephant' ? 88 : 44;
     return { x: px + mx, y: py + h * 0.45, w: w - mx * 2, h: h * 0.55 - 30 };
   }
 

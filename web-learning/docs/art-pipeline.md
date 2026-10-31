@@ -76,6 +76,7 @@ no ground, no text
 | `src/zoo/art/img/giraffe.png` | paper cutout, "standing in side view facing right … plain white background" | 202 | white | made before the green-screen switch; the light-mode cut needed the colourless-shadow rule |
 | `src/zoo/art/img/penguin.png` | template above, details "small orange beak and feet, white belly" | 303 | green | |
 | `src/zoo/art/img/rabbit.png` | template above, details "light grey-brown fur, long upright ears with pink insides, white belly and white fluffy round tail" | 402 | green | `--max-size 256`; seeds 401 and 403 were close seconds |
+| `src/zoo/art/img/elephant.png` | template with `--transparent`, details "soft grey body, big round ears with pink insides, short curled trunk, small white tusks, four sturdy legs, small tail" | 702 | real alpha | `--max-size 560` (shown about 176 px wide); seed 703 came out opaque |
 
 Task 001 props and icons all use this prop template (only `<view>`, `<subject>`, `<details>` and
 `<key>` change; `<text>` is "no text" except for the gate):
@@ -101,6 +102,7 @@ shapes, <details>, visible paper texture, centered on a flat solid bright <key> 
 | `leaves.png` | single object, front · small bunch of fresh leaves on a twig · bright green leaves | 101 | magenta | 160 |
 | `fish.png` | single object, front · small fish · orange body, tiny dot eye, simple tail fin, side view facing left | 112 | green | 160 |
 | `carrot.png` | single object, front · carrot · one orange carrot with a few short green leaves on top, simple flat shapes | 411 | magenta | 160 |
+| `salad.png` | single object, front · head of green lettuce salad · round head of fresh ruffled bright green leaves, simple flat shapes (`--transparent`, which gave no alpha) | 711 | white | 160 |
 | `can.png` | side view · small watering can · blue body, long spout pointing right, round handle | 121 | green | 160 |
 | `heart.png` | single object, front · heart · pink and red layers | 132 | green | 96 |
 | `drop.png` | single object, front · water drop · light blue and blue layers | 141 | green | 160 |
@@ -117,7 +119,9 @@ Raw outputs (style comparison and all task 001 candidates) are kept locally in `
 - **Real transparency works on the LAN generator** with `transparent: true` (2026-10-31): an
   elephant and two white geese came out with clean edges, and white bodies survive. The local
   ComfyUI workflow gives no alpha: it comes out opaque (min ~224), and asking for a "transparent
-  background" there paints a checkerboard. No picture in the game uses real alpha yet.
+  background" there paints a checkerboard. `elephant.png` is the first game picture with real alpha. Alpha is not reliable: 2 of 3 elephants and
+  0 of 3 salads kept it, so check `getextrema()` of each candidate. Lettuce under a magenta key drifted
+  to photographic leaves; the opaque white candidate was the most paper-like and `cutout.py` cut it cleanly.
 - Edit mode with a reference image is very slow on the local ComfyUI (one run took ~19 min); text-to-image
   takes ~1–1.5 min. Prefer text-to-image with the fixed template for consistency.
 - For objects the model readily paints photographic materials (soil, pebbles, stone) or

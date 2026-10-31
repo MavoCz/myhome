@@ -17,6 +17,7 @@ import fountainUrl from './img/fountain.png';
 import gateUrl from './img/gate.png';
 import heartUrl from './img/heart.png';
 import leavesUrl from './img/leaves.png';
+import saladUrl from './img/salad.png';
 import seedsUrl from './img/seeds.png';
 import sproutUrl from './img/sprout.png';
 import treeUrl from './img/tree.png';
@@ -55,7 +56,7 @@ export const PLANT_ART = {
   blooms: [bloomPinkUrl, bloomPurpleUrl, bloomRedUrl, bloomOrangeUrl, bloomYellowUrl].map(src => ({ src, height: 54 })),
 };
 
-export type FxName = 'heart' | 'drop' | 'leaves' | 'fish' | 'carrot' | 'can';
+export type FxName = 'heart' | 'drop' | 'leaves' | 'fish' | 'carrot' | 'salad' | 'can';
 
 /** Small effect pictures with their size in world pixels along the longer side. */
 export const FX_ART: Record<FxName, { src: string; size: number }> = {
@@ -64,10 +65,11 @@ export const FX_ART: Record<FxName, { src: string; size: number }> = {
   leaves: { src: leavesUrl, size: 34 },
   fish: { src: fishUrl, size: 35 },
   carrot: { src: carrotUrl, size: 34 },
+  salad: { src: saladUrl, size: 34 },
   can: { src: canUrl, size: 42 },
 };
 
-export const SPECIES_FOOD: Record<Species, FxName> = { giraffe: 'leaves', penguin: 'fish', rabbit: 'carrot' };
+export const SPECIES_FOOD: Record<Species, FxName> = { giraffe: 'leaves', penguin: 'fish', rabbit: 'carrot', elephant: 'salad' };
 
 /** The currency: a gold token with a paw print. */
 export const COIN_URL = coinUrl;

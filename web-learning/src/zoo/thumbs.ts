@@ -13,6 +13,7 @@ export const THUMBS: Record<ItemId, string> = {
   'animal-giraffe': ANIMAL_ART.giraffe.src,
   'animal-penguin': ANIMAL_ART.penguin.src,
   'animal-rabbit': ANIMAL_ART.rabbit.src,
+  'animal-elephant': ANIMAL_ART.elephant.src,
   flowerbed: PLANT_ART.blooms[0].src,
   bush: PROP_ART.bush.src,
   tree: PROP_ART.tree.src,

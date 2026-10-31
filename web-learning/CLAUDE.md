@@ -61,11 +61,12 @@ React + TypeScript + Vite app (`src/`). Each child is a CHILD account in the myh
 
 Full pipeline, prompt template, asset log and findings: `docs/art-pipeline.md`. The essentials:
 
-- Animals are paper-cutout pictures generated with Qwen Image 2.1 in the parent's local ComfyUI
-  (`tools/comfy_gen.py`), keyed out of a green background (`tools/cutout.py`), listed in
-  `ANIMAL_ART` (`src/zoo/art/animals.ts`) and animated procedurally (`game/animal.ts`).
-- The parent starts ComfyUI; never start it for them. Qwen Image 2.1 gives no real transparency
-  here, so never rely on alpha from the model.
+- Animals are paper-cutout pictures generated with Qwen Image 2.1 on the LAN image generator
+  (`tools/imagegen.py`, model `qwen` only), cropped with `tools/cutout.py`, listed in `ANIMAL_ART`
+  (`src/zoo/art/animals.ts`) and animated procedurally (`game/animal.ts`). The
+  `add-zoo-content` skill has the full steps for a new animal or pen.
+- The parent's local ComfyUI (`tools/comfy_gen.py`) made the older art. The parent starts it; never
+  start it for them. Its workflow gives no real alpha, unlike `--transparent` on the LAN generator.
 - Pictures are loaded onto power-of-two canvases (frame `pic`) so WebGL 1 can build mipmaps;
   without them the paper texture shimmers when zoomed out.
 - Props, flower stages and effect icons are pictures too (`src/zoo/art/pictures.ts`, sizes in world

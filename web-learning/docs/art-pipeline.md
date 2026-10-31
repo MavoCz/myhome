@@ -16,20 +16,29 @@ palette), and the avatar (SVG rig, task 002).
 
 ## Tools
 
-- **Qwen Image 2.1** in the parent's local ComfyUI, `~/Documents/personal/dev/ComfyUI`. The parent
-  starts it themselves (do not start it for them):
+- **Image generator on the LAN**, `http://192.168.2.225:8290` (docs at `/api/docs`): Qwen Image 2.1
+  at 25 steps, about 20 s per 1024² image plus about 50 s after idle. Text-to-image only. Use model
+  `qwen` only; the server's other checkpoints are not suitable for a children's app.
+- `tools/imagegen.py`: queues jobs, saves the PNGs and removes the jobs from the server. Python
+  stdlib plus `curl`: macOS Local Network privacy blocks Python's own sockets in `herdr-core`
+  sessions ("No route to host"), while `curl` gets through.
+- **Local ComfyUI** on the parent's other Mac, `~/Documents/personal/dev/ComfyUI`, used for the art
+  made before 2026-10-31 and still the only way to edit from a reference image. The parent starts
+  it themselves (do not start it for them):
   `cd ~/Documents/personal/dev/ComfyUI && .venv/bin/python main.py --listen 127.0.0.1 --port 8188`.
-  Port 9300 on this machine is an unrelated work service, not ComfyUI.
-  Models: `qwen_image_2.1_turbo_Q6_K.gguf` (4 steps, ~1–1.5 min per 1024² image on this Mac) and
-  `qwen_image_2.1_Q8_0.gguf` (25 steps, slower). Turbo has been good enough.
-- `tools/comfy_gen.py`: queues a text-to-image (or edit) job and saves the PNG. Python stdlib only.
-  Source/reference images keep their alpha (LoadImage + JoinImageWithAlpha).
+  Port 9300 on that machine is an unrelated work service, not ComfyUI.
+  Models: `qwen_image_2.1_turbo_Q6_K.gguf` (4 steps, ~1–1.5 min per 1024² image there) and
+  `qwen_image_2.1_Q8_0.gguf` (25 steps, slower).
+- `tools/comfy_gen.py`: talks to that ComfyUI, not to the LAN generator. Queues a text-to-image (or
+  edit) job and saves the PNG. Python stdlib only. Source/reference images keep their alpha
+  (LoadImage + JoinImageWithAlpha).
   The parent's own `user/qwen_gen.py` in the ComfyUI folder does the same without alpha; leave it alone.
 - `tools/cutout.py`: removes the background, crops to the figure, scales to at most `--max-size`
-  (default 640) px. The chroma key works for keys with one strong channel (green, blue) or two
-  (magenta).
-  Run it with the ComfyUI venv's Python (Pillow, numpy, scipy):
-  `~/Documents/personal/dev/ComfyUI/.venv/bin/python tools/cutout.py in.png out.png`.
+  (default 640) px. A picture with real transparency keeps it and is only cropped and scaled. The
+  chroma key works for keys with one strong channel (green, blue) or two (magenta).
+  Needs Pillow, numpy and scipy. On the hosting Mac use a venv in the git-ignored `tmp/`:
+  `python3 -m venv tmp/venv && tmp/venv/bin/pip install pillow numpy scipy`, then
+  `tmp/venv/bin/python tools/cutout.py in.png out.png`.
 
 ## Prompt template
 
@@ -41,6 +50,8 @@ no ground, no text
 ```
 
 - Animals face **right**; the game flips them.
+- With `tools/imagegen.py --transparent`, replace the background part with "centered on a transparent
+  background". No key is needed, so the notes on key colours below apply only without it.
 - **Background green**, not white. `cutout.py` sees a saturated border colour and switches to chroma
   keying: transparency follows how much of the background hue a pixel carries, so the background's
   own shadows go too, edges stay soft, and green spill is removed. On a white background the
@@ -103,12 +114,11 @@ Raw outputs (style comparison and all task 001 candidates) are kept locally in `
 
 ## Findings
 
-- **No real transparency from Qwen Image 2.1 here.** Its VAE decodes four channels (RGBA) and
-  SaveImage writes RGBA PNGs, but alpha comes out opaque (min ~224). Asking for a "transparent
-  background" makes the model paint a checkerboard instead, which looks transparent in image
-  viewers but is not. A fully transparent source image in edit mode did not help either. If the
-  model authors publish a way to trigger alpha, revisit; until then, key out a green background.
-- Edit mode with a reference image is very slow on this Mac (one run took ~19 min); text-to-image
+- **Real transparency works on the LAN generator** with `transparent: true` (2026-10-31): an
+  elephant and two white geese came out with clean edges, and white bodies survive. The local
+  ComfyUI workflow gives no alpha: it comes out opaque (min ~224), and asking for a "transparent
+  background" there paints a checkerboard. No picture in the game uses real alpha yet.
+- Edit mode with a reference image is very slow on the local ComfyUI (one run took ~19 min); text-to-image
   takes ~1–1.5 min. Prefer text-to-image with the fixed template for consistency.
 - For objects the model readily paints photographic materials (soil, pebbles, stone) or
   multicoloured collage and rainbow edge layers ("layered" invites them). Naming plain

@@ -7,6 +7,7 @@ Generate on a solid bright green background ("flat solid bright green background
 key green"): the background hue is keyed out, its shadows included, and white parts of the
 character (a penguin's belly) are safe. A plain white or light background also works, but then
 everything light that touches the border is removed, so it suits characters without white parts.
+A picture that already has real transparency keeps it.
 The result is cropped to the character and scaled so its longer side is at most --max-size pixels.
 
 Needs Pillow, numpy and scipy (the ComfyUI virtualenv has them).
@@ -86,7 +87,10 @@ def main():
     ap.add_argument("--max-size", type=int, default=640)
     args = ap.parse_args()
 
-    img = cut(Image.open(args.input), args.threshold)
+    src = Image.open(args.input)
+    # a picture with real transparency only needs the crop and the scaling
+    has_alpha = src.mode == "RGBA" and src.getchannel("A").getextrema()[0] < 16
+    img = src if has_alpha else cut(src, args.threshold)
     box = img.getchannel("A").point(lambda a: 255 if a > 8 else 0).getbbox()
     if not box:
         raise SystemExit("nothing left after removing the background; try a lower --threshold")
